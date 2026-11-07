@@ -148,7 +148,7 @@
   };
 
   function dispatch(e, kind) {
-    const el = e.target.closest('[data-act]');
+    const el = e.target.closest(kind === 'input' ? '[data-live]' : '[data-act]');
     if (!el || el.closest('.modal-backdrop')) return;
     const tag = el.tagName;
     const isField = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';

@@ -76,7 +76,8 @@
     ['doctor', 'doctors', 'clinician', 'clinicians', 'health professionals', 'gynecologist', 'gynaecologist', 'endocrinologist', 'physician'],
     ['pcos', 'pmos', 'polycystic'],
     ['wearable', 'sensor', 'smartwatch'],
-    ['screening', 'screen', 'check', 'test']
+    ['screening', 'screen', 'check', 'test'],
+    ['delay', 'delayed', 'long', 'wait', 'waited', 'late']
   ];
 
   const needs = [
