@@ -159,12 +159,19 @@
     // "Gibson-Helm, M." / "Melanie Gibson-Helm" / "M. Gibson-Helm" -> "M. Gibson-Helm"
     const s = String(name).trim();
     if (!s) return '';
+    if (/\b(Group|Network|Consortium|Organi[sz]ation|Government|Ministry|Council)\b/.test(s)) return s;
     if (s.includes(',')) {
       const [last, first] = s.split(',').map((x) => x.trim());
       return (first ? first.split(/[\s.]+/).filter(Boolean).map((p) => p.split('-').map((q) => q[0].toUpperCase() + '.').join('-')).join(' ') + ' ' : '') + last;
     }
     const parts = s.split(/\s+/);
     if (parts.length === 1) return s;
+    const isInitial = (p) => /^[A-Z]\.(-[A-Z]\.)?$/.test(p);
+    if (isInitial(parts[0])) {
+      let i = 0;
+      while (i < parts.length - 1 && isInitial(parts[i])) i++;
+      return parts.slice(0, i).join(' ') + ' ' + parts.slice(i).join(' ');
+    }
     const last = parts.pop();
     return parts.map((p) => (/\.$/.test(p) && p.length <= 3 ? p : p[0].toUpperCase() + '.')).join(' ') + ' ' + last;
   }
@@ -178,21 +185,28 @@
     return a.slice(0, -1).join(', ') + ', and ' + a[a.length - 1];
   }
 
+  const MONTHS = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
+  function formatDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    return m ? MONTHS[Number(m[2]) - 1] + ' ' + Number(m[3]) + ', ' + m[1] : String(iso);
+  }
+
   /** IEEE-style reference string (without the [n] prefix). */
   function formatIEEE(ref) {
     const parts = [];
-    const authors = formatAuthors(ref.authors);
+    const authors = ref.org || formatAuthors(ref.authors);
     if (authors) parts.push(authors + ',');
     const t = ref.title ? '“' + ref.title + ',”' : '';
     if (ref.type === 'journal' || ref.type === 'guideline' || ref.type === 'review') {
       parts.push(t);
       const v = [ref.venue ? ref.venue : '', ref.volume ? 'vol. ' + ref.volume : '', ref.issue ? 'no. ' + ref.issue : '',
-        ref.pages ? (/^\d+$/.test(ref.pages) || /^e/.test(ref.pages) ? 'Art. no. ' + ref.pages : 'pp. ' + ref.pages.replace('-', '–')) : '', ref.year].filter(Boolean).join(', ');
+        ref.pages ? (/\d\s*-\s*\d/.test(ref.pages) ? 'pp. ' + ref.pages.replace(/\s*-\s*/, '–') : 'Art. no. ' + ref.pages) : '', ref.year].filter(Boolean).join(', ');
       parts.push(v + (ref.doi ? ', doi: ' + ref.doi + '.' : '.'));
     } else {
       parts.push(t);
       const v = [ref.venue, ref.year].filter(Boolean).join(', ');
-      parts.push((v ? v + '.' : '') + (ref.url ? ' [Online]. Available: ' + ref.url : '') + (ref.doi ? ' doi: ' + ref.doi + '.' : ''));
+      parts.push((v ? v + '.' : '') + (ref.accessed ? ' Accessed: ' + formatDate(ref.accessed) + '.' : '') +
+        (ref.url ? ' [Online]. Available: ' + ref.url : '') + (ref.doi ? ' doi: ' + ref.doi + '.' : ''));
     }
     return parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
   }
