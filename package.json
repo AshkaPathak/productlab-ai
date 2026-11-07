@@ -4,7 +4,7 @@
   "description": "ProductLab AI: an evidence-linked product strategy and innovation intelligence platform (DE 401 Creative Intelligence for Engineers).",
   "private": true,
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test tests/*.test.js",
     "report": "node cli/productlab.js report",
     "audit": "node cli/productlab.js audit",
     "serve": "node cli/serve.js"
