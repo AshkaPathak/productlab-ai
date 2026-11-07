@@ -64,7 +64,7 @@
     { id: 'impact', name: 'Impact', weight: 20 },
     { id: 'novelty', name: 'Novelty', weight: 10 }
   ];
-  const r = (value) => ({ value, note: 'Illustrative rating - replace with your team’s score.', evidence: [] });
+  const r = (value) => ({ value, note: '', evidence: [] });
   const ratings = {
     C1: { desirability: r(4), feasibility: r(4), viability: r(4), impact: r(4), novelty: r(3) },
     C2: { desirability: r(3), feasibility: r(3), viability: r(3), impact: r(4), novelty: r(4) },
