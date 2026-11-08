@@ -168,6 +168,17 @@
     if (k.realtime) add('Realtime', k.budget === 'low' ? 'Supabase Realtime channels' : 'WebSockets (Socket.IO) or managed pub/sub', ['Realtime updates were required'], ['Server-sent events']);
     add('Analytics', k.sensitiveData ? 'Privacy-friendly product analytics (self-hosted PostHog) with no health fields in events' : 'PostHog / Google Analytics', ['Measure activation and retention for MVP learning'], []);
     add('CI/CD & quality', 'GitHub Actions: lint, unit tests, build; Expo EAS / Vercel for releases', ['Automated checks on every change for a multi-developer team'], []);
+    // Programming languages implied by the picks above
+    const langs = [];
+    const want = (l) => { if (!langs.includes(l)) langs.push(l); };
+    rec.forEach((r) => {
+      const c = r.choice;
+      if (/React|NestJS|Node\.js|TensorFlow\.js|ONNX/.test(c)) want('TypeScript / JavaScript');
+      if (/Flutter/.test(c)) want('Dart');
+      if (/FastAPI|scikit|Python|Django/.test(c)) want('Python');
+      if (/Supabase|PostgreSQL|SQLite/.test(c)) want('SQL');
+    });
+    rec.unshift({ layer: 'Languages', choice: langs.join(', ') || 'TypeScript / JavaScript', why: ['Follows from the framework choices below'].concat(js ? ['Matches the team\u2019s existing JavaScript/TypeScript skills'] : []), alternatives: [] });
     return rec;
   }
 
