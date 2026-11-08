@@ -12,7 +12,7 @@
   'use strict';
 
   const PRESETS = {
-    gemini: { label: 'Google Gemini (free tier available)', provider: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.5-flash' },
+    gemini: { label: 'Google Gemini (free tier available)', provider: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-3.5-flash' },
     openai: { label: 'OpenAI', provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
     groq: { label: 'Groq (OpenAI-compatible)', provider: 'openai', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
     openrouter: { label: 'OpenRouter (OpenAI-compatible)', provider: 'openai', baseUrl: 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct' },
