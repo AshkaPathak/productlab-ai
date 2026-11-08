@@ -17,7 +17,7 @@
     const filter = u.status || '';
     const items = a.items.filter((it) => !filter || (filter === 'problems' ? !['supported', 'partial'].includes(it.result.status) : it.result.status === filter));
     return '<div class="stats">' + C.stat('Traceability index', pct(s.traceability), 'claims with supporting evidence') + C.stat('Supported', s.supported) + C.stat('Partially supported', s.partial) +
-      C.stat('Problems', s.unsupported + s.invalid + s.uncited, s.unsupported + ' not supported · ' + s.invalid + ' missing · ' + s.uncited + ' uncited') + C.stat('Evidence coverage', s.evidenceUsed + '/' + s.evidenceTotal, 'findings cited at least once') + '</div>' +
+      C.stat('Problems', s.unsupported + s.invalid + s.uncited, s.unsupported + ' not supported, ' + s.invalid + ' missing, ' + s.uncited + ' uncited') + C.stat('Evidence coverage', s.evidenceUsed + '/' + s.evidenceTotal, 'findings cited at least once') + '</div>' +
       '<div class="grid two"><div class="card"><h2>By section</h2><div class="table-wrap"><table><thead><tr><th>Section</th><th class="num">Claims</th><th class="num">Traced</th><th class="num">%</th></tr></thead><tbody>' +
       Object.keys(s.byGroup).map((g) => '<tr><td>' + esc(g) + '</td><td class="num">' + s.byGroup[g].total + '</td><td class="num">' + s.byGroup[g].traced + '</td><td class="num">' + pct(s.byGroup[g].traced / s.byGroup[g].total) + '</td></tr>').join('') +
       '</tbody></table></div></div><div class="card"><h2>How the guard works</h2><p class="small">Each claim is vectorised with TF-IDF (domain synonyms folded) and compared with every evidence finding it cites by cosine similarity.</p><ul class="small">' +

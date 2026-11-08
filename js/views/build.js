@@ -23,7 +23,7 @@
         const f = r.feature; const id = esc(f.id); const base = 'features.' + id;
         return '<div class="card"><div class="row"><span class="pill">#' + r.rank + '</span><span class="mono muted">' + id + '</span>' +
           '<input style="flex:1;min-width:200px;font-weight:700" data-act="set" data-path="' + base + '.name" value="' + esc(f.name) + '">' +
-          '<span class="small">RICE <b>' + fix(r.raw, 1) + '</b> → adjusted <b>' + fix(r.adjusted, 1) + '</b> · evidence ' + pct(r.evidence) + '</span>' +
+          '<span class="small">RICE <b>' + fix(r.raw, 1) + '</b>, adjusted to <b>' + fix(r.adjusted, 1) + '</b> for ' + pct(r.evidence) + ' evidence</span>' +
           '<button class="icon-btn" data-act="del" data-path="' + base + '" data-confirm="Delete feature ' + esc(f.name) + '?" aria-label="Delete">✕</button></div>' +
           '<div class="row small" style="margin-top:8px">' +
           '<label>Reach %</label><input type="number" min="0" max="100" data-act="set" data-type="number" data-path="' + base + '.reach" value="' + esc(f.reach) + '">' +
@@ -52,7 +52,7 @@
       '<p class="muted small">Features are scheduled in dependency order, then by MoSCoW and evidence-adjusted RICE. "Won’t" features are left out. Capacity = team × focus person-weeks per week.</p>' +
       (s.cyclic.length ? '<div class="warnbox">Dependency cycle between ' + esc(s.cyclic.join(', ')) + ' — these features cannot be scheduled. Fix "Depends on".</div>' : '') +
       '<div class="table-wrap">' + C.gantt(s) + '</div></div>' +
-      '<div class="stats">' + s.phases.map((ph) => C.stat(ph.name, ph.tasks.length ? 'Week ' + Math.ceil(ph.weeks) : '–', ph.tasks.length + ' features · ' + fix(ph.effort, 1) + ' person-weeks')).join('') + C.stat('Total effort', fix(s.totalEffort, 1), 'person-weeks incl. buffer') + '</div>';
+      '<div class="stats">' + s.phases.map((ph) => C.stat(ph.name, ph.tasks.length ? 'Week ' + Math.ceil(ph.weeks) : '–', ph.tasks.length + ' features, ' + fix(ph.effort, 1) + ' person-weeks')).join('') + C.stat('Total effort', fix(s.totalEffort, 1), 'person-weeks incl. buffer') + '</div>';
   }
 
   function stackTab(ctx) {

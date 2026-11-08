@@ -78,7 +78,7 @@
     const seed = Number(u.seed || 7);
     const prompts = I.randomAssociation(p.needs, { seed, count: 4 });
     return '<div class="card"><div class="row between"><div><h2>Random association</h2><p class="muted small" style="margin:0">Unrelated stimulus words force new connections with a real need. Shuffle until a prompt sparks an idea, then capture it.</p></div><button class="btn primary" data-act="shuffle">Shuffle</button></div></div>' +
-      '<div class="grid two">' + prompts.map((x, i) => '<div class="card"><div class="prompt"><span class="stim">' + esc(x.stimulus) + '</span> → <i>' + esc(x.attribute) + '</i><br>' + esc(x.prompt) + '</div>' +
+      '<div class="grid two">' + prompts.map((x, i) => '<div class="card"><div class="prompt"><span class="stim">' + esc(x.stimulus) + '</span> applied to <i>' + esc(x.attribute) + '</i><br>' + esc(x.prompt) + '</div>' +
         '<div class="row" style="margin-top:10px"><span class="muted small">Need ' + esc(x.need || '–') + '</span><span class="spacer"></span><button class="btn small" data-act="capture" data-i="' + i + '">Capture idea as concept</button></div></div>').join('') + '</div>' +
       '<p class="muted small">Session seed ' + seed + ' (record it to reproduce the same prompts). Stimuli: ' + esc(I.STIMULI.map((s) => s.word).join(', ')) + '.</p>';
   }

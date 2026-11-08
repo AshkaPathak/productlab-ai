@@ -87,7 +87,7 @@
       rows.map((f) => {
         const r = refs.get(f.ref);
         const used = use.get(f.id) || [];
-        return '<tr><td class="mono">' + esc(f.id) + '</td><td>' + esc(f.text) + ((f.tags || []).length ? '<div class="muted">' + esc(f.tags.join(' · ')) + '</div>' : '') + '</td>' +
+        return '<tr><td class="mono">' + esc(f.id) + '</td><td>' + esc(f.text) + ((f.tags || []).length ? '<div class="muted">' + esc(f.tags.join(', ')) + '</div>' : '') + '</td>' +
           '<td><span class="pill grey">' + esc(f.kind || '') + '</span></td>' +
           '<td class="small"><span title="' + esc(r ? r.title : '') + '">' + esc(f.ref || '') + ' ' + esc(refShort(r)) + '</span><br>' + C.strengthDots(r ? r.strength : 0) + (f.locator ? ' <span class="muted">' + esc(f.locator) + '</span>' : '') + '</td>' +
           '<td class="small"><span title="' + esc(used.join('\n')) + '">' + (used.length ? used.length + ' claim' + (used.length > 1 ? 's' : '') : '<span class="muted">unused</span>') + '</span></td>' +

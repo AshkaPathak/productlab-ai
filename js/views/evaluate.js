@@ -68,7 +68,7 @@
       '<div class="card"><div class="row between"><h2>Monte Carlo robustness</h2><div class="row small"><label>Weight spread</label><select data-act="uiset" data-view="evaluate" data-key="spread">' + [0.1, 0.2, 0.3, 0.5].map((x) => '<option value="' + x + '"' + (x === spread ? ' selected' : '') + '>±' + x * 100 + '%</option>').join('') + '</select>' +
       '<label>Rating noise</label><select data-act="uiset" data-view="evaluate" data-key="noise">' + [0, 0.25, 0.5, 1].map((x) => '<option value="' + x + '"' + (x === noise ? ' selected' : '') + '>±' + x + '</option>').join('') + '</select></div></div>' +
       '<p class="muted small">2,000 simulated panels: every weight is multiplied by a random factor within the spread (and ratings jittered by the noise), then re-ranked. Seeded, so results are reproducible.</p>' +
-      C.stackedBars(mc.map((m) => ({ label: m.name, total: m.winRate, display: pct(m.winRate, 1) + ' wins · mean rank ' + fix(m.meanRank, 1), segments: [{ value: m.winRate, label: 'Win rate' }] })), null, { max: 1, width: 720 }) + '</div>';
+      C.stackedBars(mc.map((m) => ({ label: m.name, total: m.winRate, display: pct(m.winRate, 1) + ' wins, mean rank ' + fix(m.meanRank, 1), segments: [{ value: m.winRate, label: 'Win rate' }] })), null, { max: 1, width: 720 }) + '</div>';
   }
 
   function competitorsTab(ctx) {

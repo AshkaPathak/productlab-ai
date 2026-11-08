@@ -295,7 +295,7 @@
       project.ratings = ev.ratings; project.risks = ev.risks;
       const ranked = D.wdm(project.concepts, project.criteria, project.ratings);
       project.selectedConcept = ranked[0].id;
-      mark('evaluate', 'done', ranked.map((x) => x.name + ' ' + x.total.toFixed(2)).join(' · '));
+      mark('evaluate', 'done', ranked.map((x) => x.name + ' ' + x.total.toFixed(2)).join(', '));
     } catch (e) { project.selectedConcept = project.concepts[0].id; mark('evaluate', 'failed', e.message); }
 
     // 6. build
