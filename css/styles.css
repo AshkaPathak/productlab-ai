@@ -489,7 +489,7 @@ pre.code { background: rgba(47, 33, 66, .92); color: #ece6f7; padding: 14px; bor
 .chapter { --p: 1; min-height: 88vh; display: flex; flex-direction: column; justify-content: center; padding: 9vh 0; }
 .chapter .kicker { font-weight: 600; color: var(--cyan-ink); margin: 0 0 10px; display: inline-flex; align-items: center; gap: 8px; }
 .chapter .kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
-.chapter h2.big { font-family: var(--serif); font-weight: 400; font-size: clamp(2.2rem, 5.2vw, 4.2rem); line-height: 1.02; letter-spacing: -.01em; margin: 0 0 14px; max-width: 18ch; text-wrap: balance; }
+.chapter h2.big { hyphens: manual; font-family: var(--serif); font-weight: 400; font-size: clamp(2.2rem, 5.2vw, 4.2rem); line-height: 1.02; letter-spacing: -.01em; margin: 0 0 14px; max-width: 18ch; text-wrap: balance; }
 .chapter .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 56ch; margin: 0 0 30px; text-wrap: pretty; }
 .chapter .countup { font-variant-numeric: tabular-nums; font-style: italic; background: linear-gradient(180deg, #7b5ea7, #2f2142); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .04em; }
 .chapter .kicker, .chapter h2.big, .chapter .lede { opacity: calc(.08 + .92 * var(--p)); transform: translateY(calc((1 - var(--p)) * 56px)); will-change: transform, opacity; }

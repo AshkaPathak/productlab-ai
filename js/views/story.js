@@ -75,7 +75,7 @@
         const sens = D.sensitivity(p.concepts, p.criteria, p.ratings);
         const flips = sens.filter((s) => s.flip).map((s) => Math.abs(Math.round(s.flip.delta * 100)));
         const minShift = flips.length ? Math.min(...flips) : null;
-        out.push(chapter('robust', 'Would it still win?', minShift == null ? 'No single weight change flips it.' : 'It takes a ' + count(minShift) + '-point shift to change the winner.',
+        out.push(chapter('robust', 'Would it still win?', minShift == null ? 'No single weight change flips it.' : 'It takes a ' + count(minShift) + '\u2011point shift to change the winner.',
           'Each bar shows how far one weight must move before another idea wins. Short pink bars are the fragile ones.', F().tornado(sens)));
       }
     }
