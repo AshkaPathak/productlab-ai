@@ -31,6 +31,16 @@ Projects are saved in the browser. Use **Export JSON** on the Projects page to b
 
 ---
 
+## Home page
+
+The app opens on **Home**, written for people with no background in product design or research:
+
+- what ProductLab does, in two sentences, with a button to see a finished example (the PCOS/PMOS case study as a scrolling story);
+- **What problem are you trying to solve?**, a box for the problem in everyday words, with tips (who has it, what goes wrong, why it matters) and three examples to try;
+- **How it works**: the six steps, each with what happens and what you get, plus the claim check that follows;
+- **Words you'll see**: plain definitions of finding, persona, need, concept, decision matrix, sensitivity, RICE and MoSCoW, tech stack and traceability;
+- **Common questions**: whether expertise is needed, what you need to start, how made-up facts are caught and where work is saved.
+
 ## Start from a problem statement
 
 Type a problem in one or two sentences, for example *"People save posts on Instagram, YouTube and X but can never find them again"*. Then click **Run autopilot**. In about two minutes ProductLab produces:
@@ -167,7 +177,7 @@ docs/                 methodology, evaluation protocol, case-study evidence
 
 ## Using it for your own problem
 
-1. **Start from a problem** to let autopilot draft everything, or **Projects → Blank project** to build it by hand.
+1. On **Home**, describe a problem to let autopilot draft everything, or **Projects → Blank project** to build it by hand.
 2. **Evidence.** Add sources (papers, reports, laws, your own interviews) and break them into one-fact findings. Paste interview notes to turn each line into evidence.
 3. **Overview → Domain vocabulary.** Add synonym groups for your field. This noticeably improves matching.
 4. Work through **Discover → Ideate → Evaluate → Build plan**. Cite evidence wherever the badge says *Uncited*.
