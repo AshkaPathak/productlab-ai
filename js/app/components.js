@@ -56,7 +56,7 @@
 
   /* ---------------- charts (plain SVG) ---------------- */
 
-  const PALETTE = ['#7c5cff', '#22b8cf', '#f59f00', '#e64980', '#40c057', '#5c7cfa', '#fd7e14', '#868e96'];
+  const PALETTE = ['#22112f', '#19c8f2', '#f6c49b', '#8d7fa3', '#0a6a86', '#d9cfe2', '#e8935a', '#4e3e5e'];
 
   /** Horizontal stacked bars. rows: [{label, segments:[{value,label}], total}] */
   function stackedBars(rows, legend, options) {
@@ -108,7 +108,7 @@
     const labelW = 220; const W = 760; const rowH = 24; const top = 30;
     const pw = (W - labelW - 10) / weeks;
     const H = top + tasks.length * rowH + 10;
-    const col = { Must: '#7c5cff', Should: '#22b8cf', Could: '#f59f00' };
+    const col = { Must: '#22112f', Should: '#19c8f2', Could: '#f6c49b' };
     let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Roadmap">';
     const sprint = sched.settings.sprintWeeks;
     for (let wk = 0; wk <= weeks; wk += sprint) {
@@ -186,8 +186,8 @@
     for (let l = 1; l <= 5; l++) {
       for (let i = 1; i <= 5; i++) {
         const sev = l * i;
-        const fill = sev >= 15 ? '#e64980' : sev >= 8 ? '#f59f00' : '#40c057';
-        svg += '<rect x="' + (m + (i - 1) * cell) + '" y="' + (10 + (5 - l) * cell) + '" width="' + (cell - 2) + '" height="' + (cell - 2) + '" fill="' + fill + '" opacity="0.18" rx="4"/>';
+        const fill = sev >= 15 ? '#b3263e' : sev >= 8 ? '#e8935a' : '#24804f';
+        svg += '<rect x="' + (m + (i - 1) * cell) + '" y="' + (10 + (5 - l) * cell) + '" width="' + (cell - 2) + '" height="' + (cell - 2) + '" fill="' + fill + '" opacity="0.22" rx="4"/>';
       }
     }
     const byCell = {};
@@ -201,5 +201,125 @@
     return svg + '</svg>';
   }
 
-  PL.comp = { badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
+  /* ---------------- halftone graphics ---------------- */
+
+  const INK = { ink: '#22112f', ink2: '#4e3e5e', cyan: '#19c8f2', cyanSoft: '#dcf6fd', apricot: '#f6c49b', apricotSoft: '#fcebdc', paper: '#f2f0f5' };
+  let uid = 0;
+
+  /**
+   * A halftone sphere: a dot screen whose dots grow toward the shadow side.
+   * density 0..1 scales the dots; tone is the dot colour; base fills the disc.
+   */
+  function halftone(cx, cy, r, o) {
+    const opt = Object.assign({ density: 1, tone: INK.ink, base: 'none', cell: 7, light: [0.32, 0.28] }, o || {});
+    const id = 'ht' + (++uid);
+    const maxR = opt.cell * 0.52 * Math.max(0.15, Math.min(1, opt.density));
+    let dots = '';
+    const lx = cx - r + 2 * r * opt.light[0]; const ly = cy - r + 2 * r * opt.light[1];
+    for (let y = cy - r; y <= cy + r; y += opt.cell) {
+      const row = Math.round((y - (cy - r)) / opt.cell);
+      for (let x = cx - r + (row % 2 ? opt.cell / 2 : 0); x <= cx + r; x += opt.cell) {
+        const d = Math.hypot(x - cx, y - cy);
+        if (d > r - 1.5) continue;
+        const shade = Math.min(1, Math.hypot(x - lx, y - ly) / (1.55 * r));
+        const rr = maxR * (0.18 + 0.82 * shade);
+        if (rr < 0.35) continue;
+        dots += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + rr.toFixed(2) + '"/>';
+      }
+    }
+    return '<g class="ht" data-id="' + id + '"><circle class="disc" cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + opt.base + '"/><g class="dots" fill="' + opt.tone + '">' + dots + '</g></g>';
+  }
+
+  function logo() {
+    return '<svg class="logo" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="' + INK.apricot + '"/>' + halftone(17, 17, 15, { cell: 3.6, density: 1, tone: INK.ink }) + '<circle cx="12" cy="12" r="5" fill="' + INK.cyan + '"/></svg>';
+  }
+
+  /** Small mark beside page titles: a halftone disc with the accent "you are here" dot. */
+  function motif() {
+    return '<svg viewBox="0 0 40 40" aria-hidden="true">' + halftone(20, 20, 18, { cell: 4.2, base: INK.apricot }) + '<circle cx="13" cy="13" r="5.5" fill="' + INK.cyan + '"/></svg>';
+  }
+
+  /** Large halftone artwork for dark heroes (dots in paper colour). */
+  function heroArt() {
+    return '<svg class="hero-art" viewBox="0 0 380 300" aria-hidden="true">' +
+      '<circle cx="230" cy="160" r="128" fill="' + INK.apricot + '" opacity=".95"/>' + halftone(230, 160, 128, { cell: 9, tone: INK.ink, light: [0.25, 0.2] }) +
+      '<circle cx="128" cy="92" r="38" fill="' + INK.cyan + '"/></svg>';
+  }
+
+  /**
+   * The signature graphic: a row of halftone spheres, one per stage.
+   * stages: [{label, state: pending|running|done|warn|failed|skipped, fill (0..1), big, sub, href, current}]
+   */
+  function press(stages, options) {
+    const o = Object.assign({ r: 66, gap: 168, label: 'Pipeline', enter: false }, options || {});
+    const r = o.r; const n = stages.length;
+    const W = 2 * r + (n - 1) * o.gap + 24; const cy = r + 12; const H = cy + r + 60;
+    let svg = '<svg class="press' + (o.enter ? ' enter' : '') + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.label) + '">';
+    // connecting thread
+    svg += '<line x1="' + (12 + r) + '" y1="' + cy + '" x2="' + (12 + r + (n - 1) * o.gap) + '" y2="' + cy + '" stroke="' + INK.ink + '" stroke-width="1.5"/>';
+    stages.forEach((s, i) => {
+      const cx = 12 + r + i * o.gap;
+      const st = s.state || 'pending';
+      const pending = st === 'pending' || st === 'skipped';
+      const accent = st === 'running' || s.current;
+      const density = pending ? 0.18 : st === 'running' ? 0.55 : Math.max(0.25, Math.min(1, s.fill == null ? 1 : s.fill));
+      const base = accent ? INK.cyan : pending ? INK.paper : INK.apricot;
+      const body = '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 6) + '" fill="' + INK.paper + '"/>' +
+        halftone(cx, cy, r, { density, base, tone: INK.ink }) +
+        '<circle class="ring' + (pending ? ' pending' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>' +
+        (st === 'failed' ? '<path class="failmark" d="M' + (cx - 16) + ' ' + (cy - 16) + 'l32 32M' + (cx + 16) + ' ' + (cy - 16) + 'l-32 32"/>' : '') +
+        (s.big != null && st !== 'failed' && !pending ? '<text class="big" x="' + cx + '" y="' + (cy + 13) + '">' + esc(s.big) + '</text>' : '') +
+        '<text class="lbl" x="' + cx + '" y="' + (cy + r + 28) + '">' + esc(s.label) + '</text>' +
+        (s.sub ? '<text class="sub" x="' + cx + '" y="' + (cy + r + 47) + '">' + esc(s.sub) + '</text>' : '');
+      const cls = 'stage' + (st === 'running' ? ' running' : '') + (s.justDone ? ' just-done' : '');
+      svg += s.href ? '<a class="' + cls + '" style="--i:' + i + '" href="' + esc(s.href) + '" aria-label="' + esc(s.label + (s.sub ? ': ' + s.sub : '')) + '">' + body + '</a>'
+        : '<g class="' + cls + '" style="--i:' + i + '">' + body + '</g>';
+    });
+    return svg + '</svg>';
+  }
+
+  function hash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+
+  /** Abstract halftone portrait generated from a name (no photos, no real faces). */
+  function avatar(name) {
+    const h = hash(String(name || '?'));
+    const hx = 28 + (h % 9); const sw = 21 + ((h >> 4) % 7); const accent = ((h >> 8) % 3) === 0;
+    const extra = ((h >> 11) % 3) === 0 ? '<rect x="' + (hx - 11) + '" y="23" width="22" height="4.5" rx="2.25" fill="' + INK.ink + '"/>'
+      : ((h >> 11) % 3) === 1 ? '<path d="M' + (hx - 14) + ' 21 Q' + hx + ' 3 ' + (hx + 14) + ' 21 Z" fill="' + INK.ink + '"/>' : '';
+    return '<svg class="avatar" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="' + (accent ? INK.cyanSoft : INK.apricotSoft) + '"/>' +
+      '<clipPath id="avc' + h + '"><rect width="64" height="64" rx="18"/></clipPath><g clip-path="url(#avc' + h + ')">' +
+      halftone(32, 66, sw + 2, { cell: 3.4, base: accent ? INK.cyan : INK.apricot, light: [0.3, 0.1] }) +
+      halftone(hx, 27, 12.5, { cell: 3, base: INK.paper }) + extra + '</g></svg>';
+  }
+
+  /** Stack of plates: [{label, value}] */
+  function plates(rows) {
+    return '<ol class="plates stagger">' + rows.map((r, i) => '<li class="plate" style="--i:' + i + '"><b>' + esc(r.label) + '</b><span>' + esc(r.value) + '</span></li>').join('') + '</ol>';
+  }
+
+  /** Progress of each workflow step for a project. */
+  function stepProgress(p, audit) {
+    const rated = p.concepts.length && p.concepts.every((c) => p.criteria.every((k) => p.ratings[c.id] && p.ratings[c.id][k.id] && p.ratings[c.id][k.id].value !== '' && p.ratings[c.id][k.id].value != null));
+    const a = audit || PL.evidence.audit(p);
+    return [
+      { id: 'evidence', label: 'Evidence', done: Math.min(1, p.findings.length / 10), big: p.findings.length, sub: p.references.length + ' sources', detail: p.findings.length + ' findings from ' + p.references.length + ' sources' },
+      { id: 'discover', label: 'People & needs', done: Math.min(1, p.needs.length / 4), big: p.needs.length, sub: p.personas.length + ' personas', detail: p.needs.length + ' needs and ' + p.personas.length + ' personas' },
+      { id: 'ideate', label: 'Ideas', done: Math.min(1, p.concepts.length / 3), big: p.concepts.length, sub: 'concepts', detail: p.concepts.length + ' concepts' },
+      { id: 'evaluate', label: 'Decision', done: rated ? 1 : p.concepts.length ? 0.4 : 0, big: rated ? '✓' : '–', sub: rated ? 'all rated' : 'rate concepts', detail: rated ? 'Every concept is rated' : 'Rate every concept' },
+      { id: 'build', label: 'Build plan', done: Math.min(1, p.features.length / 5), big: p.features.length, sub: 'features', detail: p.features.length + ' features planned' },
+      { id: 'report', label: 'Traced', done: a.summary.total ? Math.min(1, a.summary.traceability / 0.8) : 0, big: a.summary.total ? Math.round(a.summary.traceability * 100) + '%' : '–', sub: 'claims backed', detail: 'Traceability ' + pct(a.summary.traceability) }
+    ];
+  }
+
+  /** Sidebar rail node showing how complete a step is. */
+  function railNode(done) {
+    const r = 2.5 + 6 * Math.max(0, Math.min(1, done || 0));
+    return '<svg class="node" viewBox="0 0 28 28" aria-hidden="true"><circle class="bg" cx="14" cy="14" r="12"/>' + (done ? '<circle class="fill" cx="14" cy="14" r="' + r.toFixed(1) + '"/>' : '') + '</svg>';
+  }
+
+  PL.comp = { INK, halftone, logo, motif, heroArt, press, avatar, plates, stepProgress, railNode, badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

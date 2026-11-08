@@ -10,14 +10,23 @@
     { id: 'projects', label: 'Projects', icon: '▦', group: 'Workspace' },
     { id: 'overview', label: 'Overview', icon: '◎', group: 'Workspace', needsProject: true },
     { id: 'evidence', label: 'Evidence', icon: '≡', group: 'Workflow', step: 1, needsProject: true, hint: 'Research synthesizer & evidence graph' },
-    { id: 'discover', label: 'Discover', icon: '✦', group: 'Workflow', step: 2, needsProject: true, hint: 'Opportunity miner & personas' },
-    { id: 'ideate', label: 'Ideate', icon: '✵', group: 'Workflow', step: 3, needsProject: true, hint: 'Random association, morphological analysis, AI assist' },
-    { id: 'evaluate', label: 'Evaluate', icon: '⚖', group: 'Workflow', step: 4, needsProject: true, hint: 'Decision matrix, sensitivity, competitors, risks' },
+    { id: 'discover', label: 'People & needs', icon: '✦', group: 'Workflow', step: 2, needsProject: true, hint: 'Opportunity miner & personas' },
+    { id: 'ideate', label: 'Ideas', icon: '✵', group: 'Workflow', step: 3, needsProject: true, hint: 'Random association, morphological analysis, AI assist' },
+    { id: 'evaluate', label: 'Decision', icon: '⚖', group: 'Workflow', step: 4, needsProject: true, hint: 'Decision matrix, sensitivity, competitors, risks' },
     { id: 'build', label: 'Build plan', icon: '⚒', group: 'Workflow', step: 5, needsProject: true, hint: 'Features, roadmap, tech stack, business model' },
-    { id: 'report', label: 'Report', icon: '⎙', group: 'Workflow', step: 6, needsProject: true, hint: 'Traceability audit & strategy report' },
+    { id: 'report', label: 'Audit & report', icon: '⎙', group: 'Workflow', step: 6, needsProject: true, hint: 'Traceability audit & strategy report' },
     { id: 'study', label: 'Evaluation study', icon: 'Σ', group: 'Research', needsProject: true, hint: 'Compare against ordinary AI brainstorming' },
     { id: 'settings', label: 'Settings', icon: '⚙', group: 'Research' }
   ];
+
+  const ICONS = {
+    start: '<path d="M12 4v16M4 12h16"/>',
+    projects: '<rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>',
+    overview: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>',
+    study: '<path d="M9 4h6M10 4v5l-5 9a1.5 1.5 0 0 0 1.3 2h11.4a1.5 1.5 0 0 0 1.3-2l-5-9V4"/><path d="M7.5 15h9"/>',
+    settings: '<path d="M5 7h14M5 17h14"/><circle cx="9" cy="7" r="2.2"/><circle cx="15" cy="17" r="2.2"/>'
+  };
+  const icon = (id) => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[id] || '') + '</svg>';
 
   let route = 'projects';
   let cachedIndex = null; let cachedKey = '';
@@ -57,18 +66,24 @@
   }
 
   function sidebar(project) {
-    let groups = '';
-    let last = '';
-    NAV.forEach((n) => {
-      if (n.group !== last) { groups += (last ? '</div>' : '') + '<div class="nav-group"><div class="nav-title">' + esc(n.group) + '</div>'; last = n.group; }
+    const C = PL.comp;
+    let prog = null;
+    if (project) { try { prog = C.stepProgress(project, PL.evidence.audit(project, indexFor(project))); } catch (e) { prog = null; } }
+    const item = (n) => {
       const disabled = n.needsProject && !project;
-      groups += '<a href="#/' + n.id + '" class="nav-item' + (route === n.id ? ' active' : '') + (disabled ? ' disabled' : '') + '"' + (n.hint ? ' title="' + esc(n.hint) + '"' : '') + (disabled ? ' aria-disabled="true" tabindex="-1"' : '') + '>' +
-        '<span class="nav-icon" aria-hidden="true">' + (n.step ? n.step : n.icon) + '</span><span>' + esc(n.label) + '</span></a>';
-    });
-    groups += '</div>';
-    return '<aside class="sidebar"><a class="brand" href="#/projects"><span class="logo" aria-hidden="true">◈</span><span>ProductLab <b>AI</b></span></a>' +
-      '<div class="brand-sub">Evidence-linked product strategy</div>' + groups +
-      '<div class="side-foot">' + (S.state.persisted ? 'Saved in this browser' : '<span class="bad-text">Not saved – export your work</span>') + '</div></aside>';
+      const p = n.step && prog ? prog[n.step - 1] : null;
+      return '<a href="#/' + n.id + '" class="nav-item' + (route === n.id ? ' active' : '') + (disabled ? ' disabled' : '') + '"' + (route === n.id ? ' aria-current="page"' : '') + (n.hint ? ' title="' + esc(n.hint) + '"' : '') + (disabled ? ' aria-disabled="true" tabindex="-1"' : '') + '>' +
+        (n.step ? C.railNode(p ? p.done : 0) : '<span class="nav-icon">' + icon(n.id) + '</span>') + '<span>' + esc(n.label) + '</span>' +
+        (p && p.big != null && p.big !== '\u2013' ? '<small>' + esc(p.big) + '</small>' : '') + '</a>';
+    };
+    const groups = [
+      '<div class="nav-group">' + NAV.filter((n) => n.group === 'Workspace').map(item).join('') + '</div>',
+      '<div class="nav-group"><div class="nav-title">' + (project ? esc(project.name.length > 30 ? project.name.slice(0, 29) + '\u2026' : project.name) : 'Workflow') + '</div><div class="rail">' + NAV.filter((n) => n.group === 'Workflow').map(item).join('') + '</div></div>',
+      '<div class="nav-group">' + NAV.filter((n) => n.group === 'Research').map(item).join('') + '</div>'
+    ].join('');
+    return '<aside class="sidebar"><a class="brand" href="#/start">' + C.logo() + '<span>ProductLab</span></a>' +
+      '<div class="brand-sub">From problem to product, with sources</div>' + groups +
+      '<div class="side-foot">' + (S.state.persisted ? 'Saved in this browser' : '<span class="bad-text">Not saved. Export your project to keep it.</span>') + '</div></aside>';
   }
 
   function render() {
@@ -87,7 +102,7 @@
       body = '<div class="card"><h2>Something went wrong</h2><p class="muted">' + esc(e.message) + '</p><button class="btn" data-act="go" data-to="projects">Back to projects</button></div>';
     }
     const head = ctx.project && nav && nav.needsProject
-      ? '<header class="topbar"><div><div class="crumb">' + esc(ctx.project.domain || 'Project') + '</div><h1>' + esc(ctx.project.name) + '</h1></div><div class="topbar-step">' + (nav.step ? 'Step ' + nav.step + ' of 6 · ' : '') + esc(nav.label) + '</div></header>'
+      ? '<header class="topbar"><div><div class="crumb">' + esc(ctx.project.domain || 'Project') + '</div><h1>' + esc(ctx.project.name) + '</h1></div><div class="topbar-step">' + PL.comp.motif() + '<span>' + (nav.step ? 'Step ' + nav.step + ' of 6: ' : '') + esc(nav.label) + '</span></div></header>'
       : '';
     app.innerHTML = sidebar(ctx.project) + '<main class="main" id="main" tabindex="-1">' + head + '<div class="view view-' + esc(route) + '">' + body + '</div></main>';
     if (view.after) { try { view.after(ctx, app); } catch (e) { console.error(e); } }
