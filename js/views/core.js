@@ -97,6 +97,7 @@
           : '<div class="next"><b>Every step has content.</b><span class="muted small">Check the audit, then export the report.</span><a class="btn primary" href="#/report">Open the audit</a></div>') +
         '<div class="press-wrap">' + C.press(stagesP, { label: 'Project progress' }) + '</div>' +
         (top ? '<p class="lead">Leading idea: <b>' + esc(top.name) + '</b>, scoring ' + fix(top.total) + ' out of 5' + (sched ? '. Its first release takes about ' + Math.ceil(sched.mvpWeeks) + ' weeks.' : '.') + '</p>' : '') +
+        '<a class="more" href="#/story">Scroll through the whole project as a story</a>' +
         '<div class="grid two"><div class="card"><h2>Project brief</h2>' +
         '<div class="field"><label>Name</label><input class="wide" data-act="set" data-path="name" value="' + esc(p.name) + '"></div>' +
         '<div class="field"><label>Domain</label><input class="wide" data-act="set" data-path="domain" value="' + esc(p.domain) + '"></div>' +

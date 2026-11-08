@@ -94,7 +94,7 @@
           (scores ? '<td class="num">' + fix(scores.get(f.id)) + '</td>' : '') +
           '<td><button class="icon-btn" data-act="edit-finding" data-id="' + esc(f.id) + '" aria-label="Edit ' + esc(f.id) + '">✎</button><button class="icon-btn" data-act="del" data-path="findings.' + esc(f.id) + '" data-confirm="Delete evidence ' + esc(f.id) + '? Claims citing it will show as citing missing evidence." aria-label="Delete ' + esc(f.id) + '">✕</button></td></tr>';
       }).join('') + '</tbody></table></div>' : C.empty(u.q ? 'No evidence matches “' + u.q + '”.' : 'No evidence yet. Add findings from papers, reports, interviews or surveys.');
-    return '<div class="card"><div class="row" style="margin-bottom:12px"><input type="search" placeholder="Semantic search: e.g. “how long does diagnosis take”" style="flex:1;min-width:220px" data-live="search" data-focus="ev-search" value="' + esc(u.q || '') + '" aria-label="Search evidence">' +
+    return (u.q || u.kind ? '' : '<div class="card"><h2>Evidence in use</h2>' + PL.fig.evidenceUse(p) + '</div>') + '<div class="card"><div class="row" style="margin-bottom:12px"><input type="search" placeholder="Semantic search: e.g. “how long does diagnosis take”" style="flex:1;min-width:220px" data-live="search" data-focus="ev-search" value="' + esc(u.q || '') + '" aria-label="Search evidence">' +
       '<select data-act="uiset" data-view="evidence" data-key="kind" aria-label="Filter by kind"><option value="">All kinds</option>' + KINDS.map((k) => '<option' + (u.kind === k ? ' selected' : '') + '>' + k + '</option>').join('') + '</select>' +
       '<button class="btn primary" data-act="add-finding">+ Add evidence</button></div>' + table + '</div>';
   }
@@ -102,7 +102,7 @@
   function sourcesTab(ctx) {
     const p = ctx.project;
     const count = (id) => p.findings.filter((f) => f.ref === id).length;
-    return '<div class="card"><div class="row between" style="margin-bottom:10px"><p class="muted small" style="margin:0">References are formatted in IEEE style, ready for your paper. Source strength weights how much a citation counts.</p>' +
+    return '<div class="card"><h2>Where the evidence comes from</h2>' + PL.fig.sourceMap(p) + '</div><div class="card"><div class="row between" style="margin-bottom:10px"><p class="muted small" style="margin:0">References are formatted in IEEE style, ready for your paper. Source strength weights how much a citation counts.</p>' +
       '<div class="row"><button class="btn" data-act="ieee">Download IEEE list</button><button class="btn primary" data-act="add-ref">+ Add source</button></div></div>' +
       (p.references.length ? '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Reference (IEEE)</th><th>Strength</th><th class="num">Findings</th><th></th></tr></thead><tbody>' +
         p.references.map((r) => '<tr><td class="mono">' + esc(r.id) + '</td><td class="small">' + esc(PL.evidence.formatIEEE(r)) + (r.url ? ' <a href="' + esc(r.url) + '" target="_blank" rel="noopener">open</a>' : r.doi ? ' <a href="https://doi.org/' + esc(r.doi) + '" target="_blank" rel="noopener">doi</a>' : '') + '</td>' +

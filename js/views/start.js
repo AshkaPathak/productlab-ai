@@ -121,7 +121,7 @@
     }
     if (Object.values(run.steps).some((x) => x.status === 'skipped')) out += '<div class="infobox">This run gathered research only. <a href="#/settings">Add a free Gemini key</a> and run it again to get people, ideas, scores and a build plan.</div>';
     out += '<p class="muted small">' + Math.round(audit.summary.traceability * 100) + '% of claims are backed by the evidence they cite' + (audit.summary.invalid ? '; ' + audit.summary.invalid + ' made-up citation' + (audit.summary.invalid > 1 ? 's were' : ' was') + ' caught and flagged' : '') + '.</p>';
-    out += '<div class="row"><button class="btn primary" data-act="go" data-to="overview">Open the project</button><button class="btn" data-act="go" data-to="report">Audit and report</button><button class="btn ghost" data-act="again">Try another problem</button></div>';
+    out += '<div class="row"><button class="btn accent" data-act="go" data-to="story">Scroll through the story</button><button class="btn primary" data-act="go" data-to="overview">Open the project</button><button class="btn" data-act="go" data-to="report">Audit and report</button><button class="btn ghost" data-act="again">Try another problem</button></div>';
     return out;
   }
 

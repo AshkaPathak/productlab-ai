@@ -9,6 +9,7 @@
     { id: 'start', label: 'Start from a problem', icon: '✦', group: 'Workspace', hint: 'Autopilot: problem statement to users, concepts, decision matrix and requirements' },
     { id: 'projects', label: 'Projects', icon: '▦', group: 'Workspace' },
     { id: 'overview', label: 'Overview', icon: '◎', group: 'Workspace', needsProject: true },
+    { id: 'story', label: 'Story', icon: '◐', group: 'Workspace', needsProject: true, hint: 'Scroll through the whole project, one graphic at a time' },
     { id: 'evidence', label: 'Evidence', icon: '≡', group: 'Workflow', step: 1, needsProject: true, hint: 'Research synthesizer & evidence graph' },
     { id: 'discover', label: 'People & needs', icon: '✦', group: 'Workflow', step: 2, needsProject: true, hint: 'Opportunity miner & personas' },
     { id: 'ideate', label: 'Ideas', icon: '✵', group: 'Workflow', step: 3, needsProject: true, hint: 'Random association, morphological analysis, AI assist' },
@@ -23,12 +24,14 @@
     start: '<path d="M12 4v16M4 12h16"/>',
     projects: '<rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>',
     overview: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>',
+    story: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/>',
     study: '<path d="M9 4h6M10 4v5l-5 9a1.5 1.5 0 0 0 1.3 2h11.4a1.5 1.5 0 0 0 1.3-2l-5-9V4"/><path d="M7.5 15h9"/>',
     settings: '<path d="M5 7h14M5 17h14"/><circle cx="9" cy="7" r="2.2"/><circle cx="15" cy="17" r="2.2"/>'
   };
   const icon = (id) => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[id] || '') + '</svg>';
 
   let route = 'projects';
+  let renderedRoute = null;
   let cachedIndex = null; let cachedKey = '';
 
   function indexFor(project) {
@@ -101,16 +104,18 @@
       console.error(e);
       body = '<div class="card"><h2>Something went wrong</h2><p class="muted">' + esc(e.message) + '</p><button class="btn" data-act="go" data-to="projects">Back to projects</button></div>';
     }
-    const head = ctx.project && nav && nav.needsProject
+    const head = ctx.project && nav && nav.needsProject && nav.id !== 'story'
       ? '<header class="topbar"><div><div class="crumb">' + esc(ctx.project.domain || 'Project') + '</div><h1>' + esc(ctx.project.name) + '</h1></div><div class="topbar-step">' + PL.comp.motif() + '<span>' + (nav.step ? 'Step ' + nav.step + ' of 6: ' : '') + esc(nav.label) + '</span></div></header>'
       : '';
     app.innerHTML = sidebar(ctx.project) + '<main class="main" id="main" tabindex="-1">' + head + '<div class="view view-' + esc(route) + '">' + body + '</div></main>';
     if (view.after) { try { view.after(ctx, app); } catch (e) { console.error(e); } }
+    if (PL.motion) { try { PL.motion.attach(route, app); } catch (e) { console.error(e); } }
     if (focusKey) {
       const el = app.querySelector('[data-path="' + CSS.escape(focusKey) + '"],[data-focus="' + CSS.escape(focusKey) + '"]');
       if (el && el.focus) el.focus({ preventScroll: true });
     }
-    root.scrollTo(0, scroll);
+    root.scrollTo(0, route === renderedRoute ? scroll : 0);
+    renderedRoute = route;
   }
 
   /* ---------------- generic actions ---------------- */

@@ -39,6 +39,7 @@
     return '<div class="card"><div class="row between"><h2>Results</h2><button class="btn small" data-act="export-results">Download results CSV</button></div>' +
       '<p class="muted small">Ratings are averaged across raters per concept, then per participant within each condition. Paired differences (B − A) are tested with the Wilcoxon signed-rank test (exact for up to 15 pairs); r = |z|/√n is the effect size. ' +
       'Rater agreement: ' + (r.agreement.pairs ? pct(r.agreement.withinOne) + ' of ' + r.agreement.pairs + ' rating pairs within ±1 point, ' + pct(r.agreement.exact) + ' identical' : 'needs at least two raters') + '.</p>' +
+      PL.fig.dumbbell(X.METRICS, d) +
       '<div class="table-wrap"><table><thead><tr><th>Metric</th><th class="num">A: baseline (mean ± sd)</th><th class="num">B: ProductLab</th><th class="num">Pairs</th><th class="num">Mean diff</th><th class="num">W</th><th class="num">p</th><th class="num">r</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
       (r.participants.length < 6 ? '<div class="warnbox">Only ' + r.participants.length + ' participant(s) have entries in both conditions. Report this as a pilot study; p-values with very few pairs cannot reach significance.</div>' : '') + '</div>';
   }

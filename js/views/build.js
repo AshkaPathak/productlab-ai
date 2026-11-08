@@ -18,7 +18,7 @@
     return '<div class="card"><div class="row between"><div><h2>Feature prioritisation' + (sel ? ' for ' + esc(sel.name) : '') + '</h2>' +
       '<p class="muted small" style="margin:0">RICE = Reach × Impact × Confidence ÷ Effort. <b>Evidence-adjusted</b> RICE scales confidence by (0.5 + 0.5 × evidence score), so features nobody can back with evidence drop down the list.</p></div>' +
       '<div class="row">' + (sel ? '<button class="btn" data-act="replan"' + (replanBusy ? ' disabled' : '') + ' title="Draft features, constraints and business model for the selected concept with the AI model">' + (replanBusy ? '<span class="spin dark"></span> Planning\u2026' : '\u2726 Re-plan for ' + esc(sel.name)) + '</button>' : '') +
-      '<button class="btn primary" data-act="add-feature">+ Feature</button></div></div></div>' +
+      '<button class="btn primary" data-act="add-feature">+ Feature</button></div></div>' + PL.fig.riceBubbles(rows) + '</div>' +
       (rows.length ? rows.map((r) => {
         const f = r.feature; const id = esc(f.id); const base = 'features.' + id;
         return '<div class="card"><div class="row"><span class="pill">#' + r.rank + '</span><span class="mono muted">' + id + '</span>' +
@@ -61,7 +61,7 @@
     const rec = P.recommendStack(k);
     const chk = (key, label) => '<label class="check"><input type="checkbox" data-act="set" data-path="constraints.' + key + '"' + (k[key] ? ' checked' : '') + '> ' + esc(label) + '</label>';
     const sel = (key, label, opts) => '<div class="field"><label>' + esc(label) + '</label><select data-act="set" data-path="constraints.' + key + '">' + opts.map((o) => '<option value="' + o[0] + '"' + (String(k[key]) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>';
-    return '<div class="grid two"><div class="card"><h2>Constraints</h2>' +
+    return '<div class="card"><h2>What it takes to build' + (p.concepts.find((c) => c.id === p.selectedConcept) ? ' ' + esc(p.concepts.find((c) => c.id === p.selectedConcept).name) : ' it') + '</h2>' + PL.fig.stackDiagram(rec) + '</div><div class="grid two"><div class="card"><h2>Constraints</h2>' +
       sel('platform', 'Platform', [['mobile', 'Mobile app'], ['web', 'Web app'], ['both', 'Mobile + web']]) +
       sel('ai', 'Intelligence needed', [['none', 'None'], ['rules', 'Transparent rules / statistics'], ['ml', 'Trained ML models'], ['llm', 'Generative AI (LLM)']]) +
       sel('budget', 'Budget', [['low', 'Low (student / pilot)'], ['medium', 'Medium'], ['high', 'High']]) +

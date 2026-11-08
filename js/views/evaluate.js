@@ -39,7 +39,8 @@
           }).join('') + '<td class="num"><b>' + fix(r.total) + '</b></td><td class="num">' + r.rank + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
       '<div class="row" style="margin-top:10px"><button class="btn primary" data-act="pick-top">Select top-ranked concept (' + esc(ranked[0].name) + ')</button></div></div>';
-    const chart = '<div class="card"><h2>Score breakdown</h2>' + C.stackedBars(ranked.map((r) => ({ label: r.name, total: r.total, highlight: r.rank === 1, segments: r.breakdown.map((b, i) => ({ value: b.contribution, label: p.criteria[i].name })) })), p.criteria.map((c) => c.name), { max: 5 }) + '</div>';
+    const chart = '<div class="grid two"><div class="card"><h2>Score breakdown</h2>' + PL.fig.fig(C.stackedBars(ranked.map((r) => ({ label: r.name, total: r.total, highlight: r.rank === 1, segments: r.breakdown.map((b, i) => ({ value: b.contribution, label: p.criteria[i].name })) })), p.criteria.map((c) => c.name), { max: 5 }), '<b>' + esc(ranked[0].name) + '</b> ranks first with ' + fix(ranked[0].total) + ' out of 5' + (ranked[1] ? ', ' + fix(ranked[0].total - ranked[1].total) + ' ahead of ' + esc(ranked[1].name) + '.' : '.'), 'bars') + '</div>' +
+      '<div class="card"><h2>Profiles of the top ideas</h2>' + PL.fig.radar(p, ranked) + '</div></div>';
     return crit + grid + chart;
   }
 
@@ -61,7 +62,7 @@
       '<div class="row"><button class="btn small" data-act="whatif-reset">Reset</button><button class="btn small" data-act="whatif-apply">Apply to project</button></div></div>' +
       '<div class="card"><h2>Ranking with these weights</h2>' + (changed ? '<div class="warnbox">With these weights <b>' + esc(now[0].name) + '</b> overtakes ' + esc(baseTop.name) + '.</div>' : '<div class="okbox"><b>' + esc(baseTop.name) + '</b> still ranks first.</div>') +
       C.stackedBars(now.map((r) => ({ label: r.name, total: r.total, highlight: r.rank === 1, segments: r.breakdown.map((b, i) => ({ value: b.contribution, label: p.criteria[i].name })) })), null, { max: 5 }) + '</div></div>' +
-      '<div class="card"><h2>One-at-a-time sensitivity</h2><p class="muted small">How far each weight would have to move (others re-scaled proportionally) before the winner changes. Large moves mean a robust decision. ' + robust + ' of ' + sens.length + ' criteria need a shift of 15 points or more.</p>' +
+      '<div class="card"><h2>One-at-a-time sensitivity</h2><p class="muted small">How far each weight would have to move (others re-scaled proportionally) before the winner changes. Large moves mean a robust decision. ' + robust + ' of ' + sens.length + ' criteria need a shift of 15 points or more.</p>' + PL.fig.tornado(sens) +
       '<div class="table-wrap"><table><thead><tr><th>Criterion</th><th class="num">Current weight</th><th class="num">Winner changes at</th><th class="num">Shift needed</th><th>New winner</th></tr></thead><tbody>' +
       sens.map((s, i) => '<tr><td>' + esc(s.name) + '</td><td class="num">' + pct(base[i]) + '</td><td class="num">' + (s.flip ? pct(s.flip.at) : 'never') + '</td><td class="num">' + (s.flip ? (s.flip.delta > 0 ? '+' : '') + Math.round(s.flip.delta * 100) + ' pts' : '–') + '</td><td>' + (s.flip ? esc(s.flip.newWinnerName) : '<span class="muted">' + esc(baseTop.name) + ' stays first</span>') + '</td></tr>').join('') +
       '</tbody></table></div></div>' +

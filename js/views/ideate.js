@@ -11,11 +11,11 @@
 
   function conceptsTab(ctx) {
     const p = ctx.project;
-    return '<div class="row between" style="margin-bottom:12px"><p class="muted small" style="margin:0">Every concept carries claims; each claim cites evidence. The evidence score combines how well claims are supported with the strength of their sources.</p><button class="btn primary" data-act="add-concept">+ Add concept</button></div>' +
+    return (p.concepts.length && p.needs.length ? '<div class="card"><h2>Which idea answers which need</h2>' + PL.fig.coverage(p) + '</div>' : '') + '<div class="row between" style="margin-bottom:12px"><p class="muted small" style="margin:0">Every concept carries claims; each claim cites evidence. The evidence score combines how well claims are supported with the strength of their sources.</p><button class="btn primary" data-act="add-concept">+ Add concept</button></div>' +
       (p.concepts.length ? p.concepts.map((c) => {
         const score = PL.evidence.conceptEvidenceScore(ctx.index, c);
         const sel = p.selectedConcept === c.id;
-        return '<div class="card concept-card' + (sel ? ' selected' : '') + '"><div class="row"><span class="mono muted">' + esc(c.id) + '</span>' +
+        return '<div class="card concept-card' + (sel ? ' selected' : '') + '"><div class="row">' + PL.fig.conceptMark(c.name, score) + '<span class="mono muted">' + esc(c.id) + '</span>' +
           '<input style="flex:1;min-width:180px;font-weight:700;font-size:1.05rem" data-act="set" data-path="concepts.' + esc(c.id) + '.name" value="' + esc(c.name) + '" aria-label="Concept name">' +
           '<span class="pill grey">' + esc(ORIGIN[c.origin] || c.origin || 'Team idea') + '</span><span class="pill" title="Evidence score">Evidence ' + pct(score) + '</span>' +
           (sel ? '<span class="pill">Selected</span>' : '<button class="btn small" data-act="select" data-id="' + esc(c.id) + '">Select</button>') +
@@ -55,6 +55,7 @@
     }
     return '<div class="card"><div class="row between"><div><h2>Morphological analysis</h2><p class="muted small" style="margin:0">Pick one option per parameter. ' + params.length + ' parameters create <b>' + total + '</b> possible combinations; compatibility rules remove impossible ones.</p></div>' +
       '<div class="row"><button class="btn" data-act="uiset" data-view="ideate" data-key="explore" data-value="' + (u.explore ? '' : '1') + '">' + (u.explore ? 'Hide' : 'Explore') + ' top combinations</button></div></div>' +
+      PL.fig.morphPath(params, sel, I.optLabel) +
       (params.length ? '<div class="morph-grid" style="margin-top:14px">' + params.map((pm) => '<div><b>' + esc(pm.name) + '</b></div><div class="opts">' + pm.options.map((o) => {
         const lab = I.optLabel(o);
         const on = sel[pm.id] === lab;

@@ -9,7 +9,7 @@
   function needsTab(ctx) {
     const p = ctx.project;
     const orphans = PL.cluster.orphanFindings(p);
-    return '<div class="card"><div class="row between" style="margin-bottom:8px"><div><h2>Validated needs</h2><p class="muted small" style="margin:0">Each need should be backed by evidence. The badge shows whether the cited findings actually support the statement.</p></div><button class="btn primary" data-act="add-need">+ Add need</button></div>' +
+    return (p.needs.length ? '<div class="card"><h2>What hurts most, and how sure we are</h2>' + PL.fig.needsMap(p, ctx.index) + '</div>' : '') + '<div class="card"><div class="row between" style="margin-bottom:8px"><div><h2>Validated needs</h2><p class="muted small" style="margin:0">Each need should be backed by evidence. The badge shows whether the cited findings actually support the statement.</p></div><button class="btn primary" data-act="add-need">+ Add need</button></div>' +
       (p.needs.length ? '<div class="table-wrap"><table><thead><tr><th>ID</th><th style="width:50%">Need statement & evidence</th><th>Severity</th><th></th></tr></thead><tbody>' +
         p.needs.map((n) => '<tr><td class="mono">' + esc(n.id) + '</td><td><textarea rows="2" data-act="set" data-path="needs.' + esc(n.id) + '.statement">' + esc(n.statement) + '</textarea>' +
           C.citeEditor(ctx, 'needs.' + n.id + '.evidence', n.evidence, n.statement) + '</td>' +
@@ -28,7 +28,7 @@
     const multi = themes.filter((t) => t.members.length > 1);
     const singles = themes.filter((t) => t.members.length === 1);
     return '<div class="card"><h2>Opportunity miner</h2><p class="muted small">Groups evidence findings into themes using average-linkage clustering on TF-IDF similarity, and links each theme to the closest need. Themes without a matching need are candidate opportunities.</p>' +
-      '<div class="row"><label for="th">Grouping strictness: <b>' + fix(th) + '</b></label><input id="th" type="range" min="0.04" max="0.4" step="0.01" value="' + th + '" data-act="uiset" data-view="discover" data-key="threshold" style="width:220px"><span class="muted small">' + multi.length + ' themes, ' + singles.length + ' single findings</span></div></div>' +
+      '<div class="row"><label for="th">Grouping strictness: <b>' + fix(th) + '</b></label><input id="th" type="range" min="0.04" max="0.4" step="0.01" value="' + th + '" data-act="uiset" data-view="discover" data-key="threshold" style="width:220px"><span class="muted small">' + multi.length + ' themes, ' + singles.length + ' single findings</span></div>' + PL.fig.themeBubbles(themes, p.findings) + '</div>' +
       '<div class="grid two">' + multi.map((t) => {
         const need = t.need ? p.needs.find((n) => n.id === t.need.id) : null;
         return '<div class="card"><div class="row between"><h3>' + esc(t.label) + '</h3><span class="pill grey">' + t.members.length + ' findings</span></div>' +
@@ -43,7 +43,7 @@
   function personasTab(ctx) {
     const p = ctx.project;
     return '<div class="row between" style="margin-bottom:12px"><p class="muted small" style="margin:0">Personas built from evidence are proto-personas: assumptions to validate with real users. Pain points cite the evidence they rest on.</p><button class="btn primary" data-act="add-persona">+ Add persona</button></div>' +
-      '<div class="grid two">' + p.personas.map((ps) => '<div class="card"><div class="row between"><input class="wide" style="font-weight:700;font-size:1.05rem" data-act="set" data-path="personas.' + esc(ps.id) + '.name" value="' + esc(ps.name) + '" aria-label="Persona name"><button class="icon-btn" data-act="del" data-path="personas.' + esc(ps.id) + '" data-confirm="Delete persona?" aria-label="Delete persona">✕</button></div>' +
+      '<div class="grid two">' + p.personas.map((ps) => '<div class="card persona-card"><div class="row between">' + C.avatar(ps.name) + '<input class="wide" style="font-weight:700;font-size:1.05rem" data-act="set" data-path="personas.' + esc(ps.id) + '.name" value="' + esc(ps.name) + '" aria-label="Persona name"><button class="icon-btn" data-act="del" data-path="personas.' + esc(ps.id) + '" data-confirm="Delete persona?" aria-label="Delete persona">✕</button></div>' +
         '<input class="wide muted" style="margin-top:6px" data-act="set" data-path="personas.' + esc(ps.id) + '.role" value="' + esc(ps.role || '') + '" aria-label="Role">' +
         (ps.note ? '<div class="muted small" style="margin-top:4px">' + esc(ps.note) + '</div>' : '') +
         '<div class="field" style="margin-top:10px"><label>Goals (comma separated)</label><input class="wide" data-act="set" data-type="list" data-path="personas.' + esc(ps.id) + '.goals" value="' + esc((ps.goals || []).join(', ')) + '"></div>' +

@@ -56,7 +56,8 @@
 
   /* ---------------- charts (plain SVG) ---------------- */
 
-  const PALETTE = ['#22112f', '#19c8f2', '#f6c49b', '#8d7fa3', '#0a6a86', '#d9cfe2', '#e8935a', '#4e3e5e'];
+  // Validated categorical order (see figures.js); colour follows position in the legend.
+  const PALETTE = ['#6a3d9a', '#1a9ec4', '#e07b39', '#c0497a', '#a8901a', '#16907a', '#8e6fc4'];
 
   /** Horizontal stacked bars. rows: [{label, segments:[{value,label}], total}] */
   function stackedBars(rows, legend, options) {
@@ -108,7 +109,7 @@
     const labelW = 220; const W = 760; const rowH = 24; const top = 30;
     const pw = (W - labelW - 10) / weeks;
     const H = top + tasks.length * rowH + 10;
-    const col = { Must: '#22112f', Should: '#19c8f2', Could: '#f6c49b' };
+    const col = { Must: '#22112f', Should: '#1a9ec4', Could: '#e07b39' };
     let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Roadmap">';
     const sprint = sched.settings.sprintWeeks;
     for (let wk = 0; wk <= weeks; wk += sprint) {
@@ -118,7 +119,7 @@
     }
     tasks.forEach((t, i) => {
       const y = top + i * rowH;
-      svg += '<text x="' + (labelW - 8) + '" y="' + (y + 15) + '" text-anchor="end" class="lb">' + esc(t.name) + '</text>';
+      svg += '<text x="' + (labelW - 8) + '" y="' + (y + 15) + '" text-anchor="end" class="lb">' + esc(t.name.length > 30 ? t.name.slice(0, 29) + '\u2026' : t.name) + '</text>';
       svg += '<rect x="' + (labelW + t.start * pw) + '" y="' + (y + 4) + '" width="' + Math.max(3, (t.end - t.start) * pw) + '" height="' + (rowH - 8) + '" rx="4" fill="' + (col[t.moscow] || '#868e96') + '"><title>' + esc(t.name + ': weeks ' + fix(t.start, 1) + '–' + fix(t.end, 1) + ' (' + fix(t.effort, 1) + ' person-weeks incl. buffer)') + '</title></rect>';
     });
     return svg + '</svg>';
@@ -287,9 +288,9 @@
   /** Abstract halftone portrait generated from a name (no photos, no real faces). */
   function avatar(name) {
     const h = hash(String(name || '?'));
-    const hx = 28 + (h % 9); const sw = 21 + ((h >> 4) % 7); const accent = ((h >> 8) % 3) === 0;
-    const extra = ((h >> 11) % 3) === 0 ? '<rect x="' + (hx - 11) + '" y="23" width="22" height="4.5" rx="2.25" fill="' + INK.ink + '"/>'
-      : ((h >> 11) % 3) === 1 ? '<path d="M' + (hx - 14) + ' 21 Q' + hx + ' 3 ' + (hx + 14) + ' 21 Z" fill="' + INK.ink + '"/>' : '';
+    const hx = 28 + (h % 9); const sw = 21 + ((h >>> 4) % 7); const accent = ((h >>> 8) % 3) === 0;
+    const extra = ((h >>> 11) % 3) === 0 ? '<rect x="' + (hx - 11) + '" y="23" width="22" height="4.5" rx="2.25" fill="' + INK.ink + '"/>'
+      : ((h >>> 11) % 3) === 1 ? '<path d="M' + (hx - 14) + ' 21 Q' + hx + ' 3 ' + (hx + 14) + ' 21 Z" fill="' + INK.ink + '"/>' : '';
     return '<svg class="avatar" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="' + (accent ? INK.cyanSoft : INK.apricotSoft) + '"/>' +
       '<clipPath id="avc' + h + '"><rect width="64" height="64" rx="18"/></clipPath><g clip-path="url(#avc' + h + ')">' +
       halftone(32, 66, sw + 2, { cell: 3.4, base: accent ? INK.cyan : INK.apricot, light: [0.3, 0.1] }) +
