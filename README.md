@@ -50,6 +50,24 @@ Everything the model writes must cite evidence IDs. The citation guard then chec
 
 **Setup:** add a free Google Gemini API key in **Settings**. Without a key, autopilot still searches papers and groups the evidence into themes; the other steps need a model.
 
+## Story view
+
+**Story** (in the sidebar, and the first button after an autopilot run) tells the whole project as one scrolling page. Each step gets a full-screen chapter: a headline with the key number, one sentence, and a graphic that builds as you scroll to it. The graphics are:
+
+| Chapter | Graphic | What it shows |
+|---|---|---|
+| Evidence | Source map | Each source as a disc, by year and strength; disc size = findings taken from it |
+| Themes | Theme bubbles | Evidence clusters; cyan = no need covers the theme yet |
+| People | Cast | Proto-personas with a quoted pain point |
+| Needs | Needs map | Severity against strength of evidence; top-right needs are the safest place to start |
+| Ideas | Concept marks, coverage grid | The ring around each mark is its evidence score; the grid shows which idea answers which need |
+| Decision | Stacked scores, profile radar | Weighted contributions per criterion; how the top ideas differ |
+| Robustness | Weight-shift bars | How far each weight must move before another idea wins |
+| Build | Stack slabs, value against effort, roadmap | Requirements layer by layer; quick wins; sprints to a first release |
+| Trust | Claim dots | Every claim, coloured by what the citation guard found |
+
+The same graphics appear on the matching workflow screens, each with a one-line caption that says what it shows. Hover any mark for its exact value. Reduced-motion settings turn the animation off.
+
 ## What it does
 
 | Step | Module | Creative-intelligence technique | What you get |
@@ -140,7 +158,7 @@ js/engine/            framework-free engine, shared by app, CLI and tests
   autopilot.js        problem statement -> complete project pipeline
   experiment.js       blind rating sheets and statistics
 js/data/              sample case studies (verified evidence)
-js/app/               store, router, shared UI components and charts
+js/app/               store, router, shared UI components, figures and scroll motion
 js/views/             one file per workflow step
 cli/                  command-line tool and static server
 tests/                unit tests
