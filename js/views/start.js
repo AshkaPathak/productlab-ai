@@ -90,7 +90,7 @@
       // 1. what this is, in one breath
       '<header class="hero home-hero">' + C.heroArt() +
       '<p class="kicker">ProductLab AI</p>' +
-      '<h1 class="hook"><span class="sr-only">Got a messy problem? Leave with a plan you can build.</span><span aria-hidden="true">Got a problem that’s <span class="cycle"><span>messy?</span><span>half-formed?</span><span>everywhere?</span><span>stubborn?</span></span><br>Leave with a plan you can build.</span></h1>' +
+      '<h1 class="hook">Got a problem that’s <em>everywhere?</em><br>Leave with a plan you can build.</h1>' +
       '<p class="home-sub">Describe it the way you’d tell a friend. In a couple of minutes, ProductLab reads the research, finds who it hurts, sketches ideas, helps you pick a winner and maps out how to build it. No expertise needed, and every fact links to its source.</p>' +
       '<div class="row"><button class="btn accent big" data-act="to-ask">Describe your problem</button><button class="btn ghost big" data-act="try-example">See a finished example</button></div></header>' +
 
