@@ -6,7 +6,7 @@
   const S = PL.store;
 
   const NAV = [
-    { id: 'start', label: 'Start from a problem', icon: '✦', group: 'Workspace', hint: 'Autopilot: problem statement to users, concepts, decision matrix and requirements' },
+    { id: 'start', label: 'Home', icon: '✦', group: 'Workspace', hint: 'What ProductLab does, and where you describe your problem' },
     { id: 'projects', label: 'Projects', icon: '▦', group: 'Workspace' },
     { id: 'overview', label: 'Overview', icon: '◎', group: 'Workspace', needsProject: true },
     { id: 'story', label: 'Story', icon: '◐', group: 'Workspace', needsProject: true, hint: 'Scroll through the whole project, one graphic at a time' },
@@ -21,7 +21,7 @@
   ];
 
   const ICONS = {
-    start: '<path d="M12 4v16M4 12h16"/>',
+    start: '<path d="M4 11.5L12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/><path d="M10.5 19v-4.5h3V19"/>',
     projects: '<rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>',
     overview: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>',
     story: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/>',
@@ -203,7 +203,7 @@
       if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('g.node')) { e.preventDefault(); dispatch({ target: e.target, preventDefault() {} }, 'click'); }
     });
     root.addEventListener('hashchange', onHash);
-    if (!location.hash) location.hash = S.current() ? '#/overview' : '#/start';
+    if (!location.hash) location.hash = '#/start';
     onHash();
   }
 
