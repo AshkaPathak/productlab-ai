@@ -6,6 +6,7 @@
   const S = PL.store;
 
   const NAV = [
+    { id: 'start', label: 'Start from a problem', icon: '✦', group: 'Workspace', hint: 'Autopilot: problem statement to users, concepts, decision matrix and requirements' },
     { id: 'projects', label: 'Projects', icon: '▦', group: 'Workspace' },
     { id: 'overview', label: 'Overview', icon: '◎', group: 'Workspace', needsProject: true },
     { id: 'evidence', label: 'Evidence', icon: '≡', group: 'Workflow', step: 1, needsProject: true, hint: 'Research synthesizer & evidence graph' },
@@ -182,7 +183,7 @@
       if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('g.node')) { e.preventDefault(); dispatch({ target: e.target, preventDefault() {} }, 'click'); }
     });
     root.addEventListener('hashchange', onHash);
-    if (!location.hash && S.current()) location.hash = '#/overview';
+    if (!location.hash) location.hash = S.current() ? '#/overview' : '#/start';
     onHash();
   }
 

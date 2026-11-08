@@ -24,7 +24,7 @@
       }).join('');
       return '<section class="hero"><h1>ProductLab AI</h1><p>Turn real evidence into a product strategy your team can defend. ' +
         'Collect findings with sources, mine user needs, generate concepts with Random Association and Morphological Analysis, choose with a weighted decision matrix and sensitivity analysis, then plan features and an MVP roadmap — with every claim checked against the evidence it cites.</p>' +
-        '<div class="row"><button class="btn primary" data-act="new">New project</button><label class="btn ghost" for="import-project">Import project (.json)</label>' +
+        '<div class="row"><button class="btn primary" data-act="go" data-to="start">\u2726 Start from a problem statement</button><button class="btn ghost" data-act="new">Blank project</button><label class="btn ghost" for="import-project">Import project (.json)</label>' +
         '<input id="import-project" type="file" accept=".json,application/json" hidden data-act="import"><button class="btn ghost" data-act="samples">Restore sample case studies</button></div></section>' +
         (list || C.empty('No projects yet. Create one or restore the sample case studies.')) +
         '<p class="muted small">Projects are stored only in this browser. Export a project to share it with your team or to back it up; teammates can import the file.</p>';
@@ -147,7 +147,9 @@
         '<div class="field"><label for="ai-key">API key</label><input id="ai-key" class="wide mono" type="password" autocomplete="off" data-act="aikey" value="' + esc(ctx.state.apiKey) + '" placeholder="' + (ai.provider === 'gemini' ? 'Get a free key at aistudio.google.com' : 'sk-…') + '"></div>' +
         '<label class="check"><input type="checkbox" data-act="remember"' + (ai.remember ? ' checked' : '') + '> Remember the key on this device (otherwise it is forgotten when the tab closes)</label>' +
         '<div class="row" style="margin-top:12px"><button class="btn primary" data-act="test">Test connection</button><span class="muted small" id="ai-status"></span></div>' +
-        '<p class="muted small" style="margin-top:10px">The key is sent only to the provider above, directly from your browser.</p></div>' +
+        '<p class="muted small" style="margin-top:10px">The key is sent only to the provider above, directly from your browser.</p>' +
+        '<h2 style="margin-top:22px">Paper search (OpenAlex)</h2><p class="muted small">Autopilot searches the free OpenAlex index of research papers. Without a key it allows about 100 searches a day; a free key from openalex.org raises that.</p>' +
+        '<div class="field"><label for="oa-key">OpenAlex API key (optional)</label><input id="oa-key" class="wide mono" type="password" autocomplete="off" data-act="oakey" value="' + esc(ctx.state.settings.openAlexKey || '') + '"></div></div>' +
         '<div class="card"><h2>Citation guard</h2><p class="muted small">Each claim is compared with the evidence it cites using TF-IDF cosine similarity. Above the <b>strong</b> threshold a claim counts as supported; between the thresholds it is partially supported; below, the citation is flagged as not supporting the claim.</p>' +
         '<div class="field"><label>Strong threshold: <b>' + fix(s.guard.strong) + '</b></label><input type="range" min="0.05" max="0.5" step="0.01" value="' + s.guard.strong + '" data-act="guard" data-key="strong"></div>' +
         '<div class="field"><label>Weak threshold: <b>' + fix(s.guard.weak) + '</b></label><input type="range" min="0.01" max="0.3" step="0.01" value="' + s.guard.weak + '" data-act="guard" data-key="weak"></div>' +
@@ -164,6 +166,7 @@
         S.save(); ctx.render();
       },
       aiset(el, e, ctx) { ctx.state.settings.ai[el.dataset.key] = el.value.trim(); S.save(); toast('Saved', 'ok'); },
+      oakey(el, e, ctx) { ctx.state.settings.openAlexKey = el.value.trim(); S.save(); toast('Saved', 'ok'); },
       aikey(el, e, ctx) { S.setApiKey(el.value.trim(), ctx.state.settings.ai.remember); toast('Key stored for ' + (ctx.state.settings.ai.remember ? 'this device' : 'this session'), 'ok'); },
       remember(el, e, ctx) { ctx.state.settings.ai.remember = el.checked; S.setApiKey(ctx.state.apiKey, el.checked); S.save(); },
       async test(el, e, ctx) {

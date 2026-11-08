@@ -219,6 +219,15 @@ table.md th { text-transform: none; letter-spacing: 0; font-size: .85rem; color:
 
 .empty { text-align: center; padding: 28px; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); background: #fff; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.spin.dark { border-color: var(--accent); border-right-color: transparent; }
+.pipeline { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 10px; }
+.pipe { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.pipe-icon { width: 22px; text-align: center; font-weight: 700; color: var(--muted); }
+.pipe.done .pipe-icon { color: var(--ok); }
+.pipe.warn .pipe-icon { color: var(--warn); }
+.pipe.failed .pipe-icon { color: var(--bad); }
+.pipe.running { border-color: #c9c2f2; background: #faf8ff; }
+.pipe.pending, .pipe.skipped { opacity: .6; }
 @keyframes spin { to { transform: rotate(360deg); } }
 details summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 pre.code { background: #0f0e24; color: #e7e4ff; padding: 12px; border-radius: 10px; overflow: auto; font-size: .8rem; white-space: pre-wrap; }
