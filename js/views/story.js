@@ -29,8 +29,8 @@
     const problem = (p.autopilot && p.autopilot.problem) || p.challenge || p.name;
 
     // 0. Opening
-    out.push('<section class="chapter opening reveal" id="ch-open" data-title="The problem"><svg class="orb" viewBox="0 0 600 600" aria-hidden="true"><circle cx="300" cy="300" r="270" fill="' + C.INK.apricot + '"/>' +
-      C.halftone(300, 300, 270, { cell: 15, tone: C.INK.ink, light: [0.28, 0.22] }) + '<circle cx="170" cy="160" r="62" fill="' + C.INK.cyan + '"/></svg>' +
+    out.push('<section class="chapter opening reveal" id="ch-open" data-title="The problem"><svg class="orbs" viewBox="0 0 600 600" aria-hidden="true">' +
+      '<g class="o1">' + C.orb(330, 330, 230, 'apricot') + '</g><g class="o2">' + C.orb(150, 430, 110, 'lilac') + '</g><g class="o3">' + C.orb(170, 170, 70, 'cyan') + '</g></svg>' +
       '<div class="opening-text"><p class="kicker">' + esc(p.domain || 'The problem') + '</p><h1 class="ask' + (problem.length > 90 && problem.length <= 150 ? ' long' : '') + '">' + esc(problem.length > 150 ? p.name : problem) + '</h1>' +
       (problem.length > 150 ? '<p class="lede problem">' + esc(problem) + '</p>' : '') +
       '<p class="lede">Scroll to see how ProductLab got from this problem to a plan you can build, and the evidence behind every step.</p><span class="scroll-cue" aria-hidden="true"></span></div></section>');

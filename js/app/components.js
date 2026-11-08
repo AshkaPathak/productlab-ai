@@ -34,12 +34,23 @@
       const c = res.cited.find((x) => x.id === id) || { exists: false, score: 0 };
       const cls = !c.exists ? 'bad' : c.score >= ctx.index.opts.strong ? 'ok' : c.score >= ctx.index.opts.weak ? 'warn' : 'bad';
       return '<span class="chip ' + cls + '" title="' + esc(findingTitle(ctx, id) + (c.exists ? '\nSupport score ' + fix(c.score) : '')) + '">' + esc(id) +
-        '<button class="x" data-act="cite-remove" data-path="' + esc(path) + '" data-id="' + esc(id) + '" aria-label="Remove ' + esc(id) + '">×</button></span>';
+        '<button class="x" data-act="cite-remove" data-path="' + esc(path) + '" data-id="' + esc(id) + '" aria-label="Remove ' + esc(id) + '">' + icon('x') + '</button></span>';
     }).join('');
     const sugg = res.suggestions.map((s) => '<button class="chip add" data-act="cite-add" data-path="' + esc(path) + '" data-id="' + esc(s.id) + '" title="' + esc(findingTitle(ctx, s.id) + '\nMatch ' + fix(s.score)) + '">+ ' + esc(s.id) + '</button>').join('');
     return '<div class="cite">' + badge(res.status) + chips +
       '<input class="cite-input" data-act="cite-input" data-path="' + esc(path) + '" placeholder="E#" aria-label="Add evidence id" size="4">' +
       (sugg ? '<span class="sugg" title="Suggested evidence">' + sugg + '</span>' : '') + '</div>';
+  }
+
+  /* One line-icon set: 1.6px strokes, round caps, 16px grid. */
+  const ICON = {
+    x: '<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>',
+    pencil: '<path d="M10.6 3.2l2.2 2.2-7.3 7.3-2.8.6.6-2.8z"/><path d="M9.3 4.5l2.2 2.2"/>',
+    note: '<path d="M4 2.8h5.5L12 5.3v7.9H4z"/><path d="M9.3 2.8v2.6H12M6 8.2h4M6 10.6h3"/>',
+    redo: '<path d="M12.6 7.5A4.8 4.8 0 1 1 11 4"/><path d="M11.4 1.8V4.4H8.8"/>'
+  };
+  function icon(name, label) {
+    return '<svg class="ic" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"' + (label ? ' role="img" aria-label="' + esc(label) + '"' : ' aria-hidden="true"') + '>' + (ICON[name] || '') + '</svg>';
   }
 
   function tabs(view, current, list) {
@@ -57,7 +68,7 @@
   /* ---------------- charts (plain SVG) ---------------- */
 
   // Validated categorical order (see figures.js); colour follows position in the legend.
-  const PALETTE = ['#6a3d9a', '#1a9ec4', '#e07b39', '#c0497a', '#a8901a', '#16907a', '#8e6fc4'];
+  const PALETTE = ['#7b5ea7', '#2f9fc4', '#e3906a', '#b04a68', '#b8a04e', '#1fa294', '#9b86d0'];
 
   /** Horizontal stacked bars. rows: [{label, segments:[{value,label}], total}] */
   function stackedBars(rows, legend, options) {
@@ -68,14 +79,14 @@
     const h = top + rows.length * (barH + gap);
     let svg = '<svg class="chart" viewBox="0 0 ' + o.width + ' ' + h + '" role="img" aria-label="Bar chart">';
     const step = legend ? Math.min(110, (o.width - labelW) / legend.length) : 0;
-    if (legend) legend.forEach((l, i) => { svg += '<rect x="' + (labelW + i * step) + '" y="4" width="10" height="10" rx="2" fill="' + PALETTE[i % PALETTE.length] + '"/><text x="' + (labelW + i * step + 14) + '" y="13" class="lg">' + esc(l) + '</text>'; });
+    if (legend) legend.forEach((l, i) => { svg += '<rect x="' + (labelW + i * step) + '" y="4" width="10" height="10" rx="5" fill="' + PALETTE[i % PALETTE.length] + '"/><text x="' + (labelW + i * step + 14) + '" y="13" class="lg">' + esc(l) + '</text>'; });
     rows.forEach((r, ri) => {
       const y = top + ri * (barH + gap);
       svg += '<text x="' + (labelW - 8) + '" y="' + (y + barH * 0.68) + '" text-anchor="end" class="lb">' + esc(r.label) + '</text>';
       let x = labelW;
       (r.segments || [{ value: r.total }]).forEach((s, si) => {
         const sw = (s.value / max) * w;
-        svg += '<rect x="' + x + '" y="' + y + '" width="' + Math.max(0, sw) + '" height="' + barH + '" fill="' + (s.color || PALETTE[si % PALETTE.length]) + '"' + (r.highlight ? '' : ' opacity="0.82"') + '><title>' + esc((s.label ? s.label + ': ' : '') + fix(s.value)) + '</title></rect>';
+        svg += '<rect x="' + x + '" y="' + y + '" width="' + Math.max(0, sw) + '" height="' + barH + '" rx="4" fill="' + (s.color || 'url(#cg-' + (si % PALETTE.length) + ')') + '" stroke="#fff" stroke-width="2"' + (r.highlight ? '' : ' opacity="0.62"') + '><title>' + esc((s.label ? s.label + ': ' : '') + fix(s.value)) + '</title></rect>';
         x += sw;
       });
       svg += '<text x="' + (x + 6) + '" y="' + (y + barH * 0.68) + '" class="val">' + esc(r.display != null ? r.display : fix(r.total)) + '</text>';
@@ -109,7 +120,7 @@
     const labelW = 220; const W = 760; const rowH = 24; const top = 30;
     const pw = (W - labelW - 10) / weeks;
     const H = top + tasks.length * rowH + 10;
-    const col = { Must: '#22112f', Should: '#1a9ec4', Could: '#e07b39' };
+    const col = { Must: 'url(#cg-0)', Should: 'url(#cg-1)', Could: 'url(#cg-2)' };
     let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Roadmap">';
     const sprint = sched.settings.sprintWeeks;
     for (let wk = 0; wk <= weeks; wk += sprint) {
@@ -120,7 +131,7 @@
     tasks.forEach((t, i) => {
       const y = top + i * rowH;
       svg += '<text x="' + (labelW - 8) + '" y="' + (y + 15) + '" text-anchor="end" class="lb">' + esc(t.name.length > 30 ? t.name.slice(0, 29) + '\u2026' : t.name) + '</text>';
-      svg += '<rect x="' + (labelW + t.start * pw) + '" y="' + (y + 4) + '" width="' + Math.max(3, (t.end - t.start) * pw) + '" height="' + (rowH - 8) + '" rx="4" fill="' + (col[t.moscow] || '#868e96') + '"><title>' + esc(t.name + ': weeks ' + fix(t.start, 1) + '–' + fix(t.end, 1) + ' (' + fix(t.effort, 1) + ' person-weeks incl. buffer)') + '</title></rect>';
+      svg += '<rect x="' + (labelW + t.start * pw) + '" y="' + (y + 4) + '" width="' + Math.max(3, (t.end - t.start) * pw) + '" height="' + (rowH - 8) + '" rx="8" fill="' + (col[t.moscow] || '#cfc6dc') + '"><title>' + esc(t.name + ': weeks ' + fix(t.start, 1) + '–' + fix(t.end, 1) + ' (' + fix(t.effort, 1) + ' person-weeks incl. buffer)') + '</title></rect>';
     });
     return svg + '</svg>';
   }
@@ -187,8 +198,8 @@
     for (let l = 1; l <= 5; l++) {
       for (let i = 1; i <= 5; i++) {
         const sev = l * i;
-        const fill = sev >= 15 ? '#b3263e' : sev >= 8 ? '#e8935a' : '#24804f';
-        svg += '<rect x="' + (m + (i - 1) * cell) + '" y="' + (10 + (5 - l) * cell) + '" width="' + (cell - 2) + '" height="' + (cell - 2) + '" fill="' + fill + '" opacity="0.22" rx="4"/>';
+        const fill = sev >= 15 ? '#cf4b63' : sev >= 8 ? '#e0a144' : '#3a9a6c';
+        svg += '<rect x="' + (m + (i - 1) * cell) + '" y="' + (10 + (5 - l) * cell) + '" width="' + (cell - 2) + '" height="' + (cell - 2) + '" fill="' + fill + '" opacity="0.2" rx="10"/>';
       }
     }
     const byCell = {};
@@ -202,53 +213,95 @@
     return svg + '</svg>';
   }
 
-  /* ---------------- halftone graphics ---------------- */
+  /* ---------------- glass graphics ----------------
+   * Everything is drawn from one set of shared gradients (injected once into
+   * the page): glossy orbs for marks and portraits, and clear glass spheres
+   * that fill with liquid to show progress. One accent (cyan) means
+   * "current / act here"; the rest of the palette stays soft.
+   */
 
-  const INK = { ink: '#22112f', ink2: '#4e3e5e', cyan: '#19c8f2', cyanSoft: '#dcf6fd', apricot: '#f6c49b', apricotSoft: '#fcebdc', paper: '#f2f0f5' };
+  const INK = { ink: '#2f2142', ink2: '#4f4262', cyan: '#3fcdf2', cyanSoft: '#e3f7fd', apricot: '#f2a982', apricotSoft: '#fdeee4', paper: '#f5f2f7', white: '#ffffff', line: '#e4dfeb' };
+
+  /* [highlight, body, shade] per tone */
+  const TONES = {
+    ink: ['#6b5a85', '#2f2142', '#160c22'], plum: ['#b6a2dc', '#7b5ea7', '#4a3470'], lilac: ['#f1ecfd', '#bfaee6', '#8b76c0'],
+    mist: ['#ffffff', '#f0ecf5', '#cfc6dc'], cyan: ['#d2f5ff', '#3fcdf2', '#0d93c4'], sea: ['#b3e6f6', '#2f9fc4', '#19678a'],
+    apricot: ['#ffeadb', '#f2a982', '#d27650'], rose: ['#f8ccd7', '#c45a78', '#8a2f4a'], gold: ['#f6e8bd', '#c9a95a', '#8c7130'],
+    teal: ['#bff0e7', '#2aa592', '#146b5f'], ok: ['#c8eed9', '#3a9a6c', '#1f6b47'], warn: ['#fde6c1', '#e0a144', '#a2681a'],
+    bad: ['#f8ccd4', '#cf4b63', '#8e2340'], bad2: ['#e9a9b6', '#8e2340', '#5a1027']
+  };
+  const LIQUID = { cyan: ['#8fe5fb', '#0fa2d4'], apricot: ['#f9cdb0', '#df8058'], plum: ['#b39fdc', '#5b4285'], mist: ['#f3f0f7', '#d9d1e5'] };
+
+  function defs() {
+    let g = '';
+    Object.keys(TONES).forEach((k) => {
+      const t = TONES[k];
+      g += '<radialGradient id="g-' + k + '" cx="34%" cy="28%" r="78%"><stop offset="0" stop-color="' + t[0] + '"/><stop offset=".55" stop-color="' + t[1] + '"/><stop offset="1" stop-color="' + t[2] + '"/></radialGradient>';
+    });
+    Object.keys(LIQUID).forEach((k) => {
+      g += '<linearGradient id="liq-' + k + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + LIQUID[k][0] + '"/><stop offset="1" stop-color="' + LIQUID[k][1] + '"/></linearGradient>';
+    });
+    const mix = (hex, k) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - k) + 255 * k).toString(16).padStart(2, '0')).join('');
+    PALETTE.forEach((c, i) => { g += '<linearGradient id="cg-' + i + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + mix(c, 0.38) + '"/><stop offset=".55" stop-color="' + mix(c, 0.12) + '"/><stop offset="1" stop-color="' + c + '"/></linearGradient>'; });
+    g += '<radialGradient id="g-shine" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
+      '<radialGradient id="g-clear" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#f4f0fa" stop-opacity=".55"/><stop offset="1" stop-color="#d9cfe8" stop-opacity=".8"/></radialGradient>' +
+      '<radialGradient id="g-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2f2142" stop-opacity=".22"/><stop offset="1" stop-color="#2f2142" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="g-rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".7"/></linearGradient>';
+    return '<svg id="pl-defs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs>' + g + '</defs></svg>';
+  }
+  if (root.document && root.document.body && !root.document.getElementById('pl-defs')) root.document.body.insertAdjacentHTML('afterbegin', defs());
+
   let uid = 0;
 
-  /**
-   * A halftone sphere: a dot screen whose dots grow toward the shadow side.
-   * density 0..1 scales the dots; tone is the dot colour; base fills the disc.
-   */
-  function halftone(cx, cy, r, o) {
-    const opt = Object.assign({ density: 1, tone: INK.ink, base: 'none', cell: 7, light: [0.32, 0.28] }, o || {});
-    const id = 'ht' + (++uid);
-    const maxR = opt.cell * 0.52 * Math.max(0.15, Math.min(1, opt.density));
-    let dots = '';
-    const lx = cx - r + 2 * r * opt.light[0]; const ly = cy - r + 2 * r * opt.light[1];
-    for (let y = cy - r; y <= cy + r; y += opt.cell) {
-      const row = Math.round((y - (cy - r)) / opt.cell);
-      for (let x = cx - r + (row % 2 ? opt.cell / 2 : 0); x <= cx + r; x += opt.cell) {
-        const d = Math.hypot(x - cx, y - cy);
-        if (d > r - 1.5) continue;
-        const shade = Math.min(1, Math.hypot(x - lx, y - ly) / (1.55 * r));
-        const rr = maxR * (0.18 + 0.82 * shade);
-        if (rr < 0.35) continue;
-        dots += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + rr.toFixed(2) + '"/>';
-      }
-    }
-    return '<g class="ht" data-id="' + id + '"><circle class="disc" cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + opt.base + '"/><g class="dots" fill="' + opt.tone + '">' + dots + '</g></g>';
+  /** A glossy orb: tinted body, soft specular highlight, bright rim. */
+  function orb(cx, cy, r, tone, o) {
+    const opt = Object.assign({ shadow: false, rim: true }, o || {});
+    const t = TONES[tone] ? tone : 'mist';
+    return '<g class="orb">' +
+      (opt.shadow ? '<ellipse cx="' + cx + '" cy="' + (cy + r * 0.92).toFixed(1) + '" rx="' + (r * 0.8).toFixed(1) + '" ry="' + (r * 0.16).toFixed(1) + '" fill="url(#g-glow)"/>' : '') +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#g-' + t + ')"/>' +
+      '<ellipse cx="' + (cx - r * 0.26).toFixed(1) + '" cy="' + (cy - r * 0.42).toFixed(1) + '" rx="' + (r * 0.52).toFixed(1) + '" ry="' + (r * 0.3).toFixed(1) + '" fill="url(#g-shine)" opacity=".85"/>' +
+      (opt.rim ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 0.6).toFixed(1) + '" fill="none" stroke="url(#g-rim)" stroke-width="1.2"/>' : '') + '</g>';
+  }
+
+  /** A clear glass sphere holding liquid up to `level` (0..1); `wave` animates the surface. */
+  function sphere(cx, cy, r, level, liquid, o) {
+    const opt = Object.assign({ wave: false, dashed: false, shadow: true }, o || {});
+    const id = 'sp' + (++uid);
+    const lv = Math.max(0, Math.min(1, level || 0));
+    const top = cy + r - 2 * r * lv;
+    const amp = lv > 0 && lv < 1 ? Math.max(2, r * 0.06) : 0;
+    // a wave train eight wavelengths long (wavelength = r), so sliding it left by
+    // one wavelength (12.5% of its width) loops seamlessly
+    const L = r; let d = 'M' + (cx - 2 * r).toFixed(1) + ' ' + top.toFixed(1);
+    for (let i = 0; i < 8; i++) d += ' q' + (L / 4).toFixed(2) + ' ' + (-amp).toFixed(2) + ' ' + (L / 2).toFixed(2) + ' 0 t' + (L / 2).toFixed(2) + ' 0';
+    d += ' V' + (cy + r + 2).toFixed(1) + ' H' + (cx - 2 * r).toFixed(1) + ' Z';
+    return '<g class="sphere">' +
+      (opt.shadow ? '<ellipse cx="' + cx + '" cy="' + (cy + r + 6) + '" rx="' + (r * 0.72).toFixed(1) + '" ry="' + (r * 0.12).toFixed(1) + '" fill="url(#g-glow)"/>' : '') +
+      '<clipPath id="' + id + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 1.5) + '"/></clipPath>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#g-clear)"/>' +
+      (lv > 0 ? '<g clip-path="url(#' + id + ')"><path class="liquid' + (opt.wave ? ' wave' : '') + '" d="' + d + '" fill="url(#liq-' + (LIQUID[liquid] ? liquid : 'apricot') + ')"/></g>' : '') +
+      '<ellipse cx="' + (cx - r * 0.3).toFixed(1) + '" cy="' + (cy - r * 0.45).toFixed(1) + '" rx="' + (r * 0.46).toFixed(1) + '" ry="' + (r * 0.24).toFixed(1) + '" fill="url(#g-shine)" opacity=".9"/>' +
+      '<circle class="rim' + (opt.dashed ? ' pending' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (r - 0.7) + '" fill="none"/></g>';
   }
 
   function logo() {
-    return '<svg class="logo" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="' + INK.apricot + '"/>' + halftone(17, 17, 15, { cell: 3.6, density: 1, tone: INK.ink }) + '<circle cx="12" cy="12" r="5" fill="' + INK.cyan + '"/></svg>';
+    return '<svg class="logo" viewBox="0 0 34 34" aria-hidden="true">' + orb(17, 18, 14, 'apricot') + orb(11.5, 11, 5.5, 'cyan', { rim: false }) + '</svg>';
   }
 
-  /** Small mark beside page titles: a halftone disc with the accent "you are here" dot. */
+  /** Small mark beside page titles. */
   function motif() {
-    return '<svg viewBox="0 0 40 40" aria-hidden="true">' + halftone(20, 20, 18, { cell: 4.2, base: INK.apricot }) + '<circle cx="13" cy="13" r="5.5" fill="' + INK.cyan + '"/></svg>';
+    return '<svg viewBox="0 0 40 40" aria-hidden="true">' + orb(22, 22, 14, 'lilac') + orb(13, 13, 7, 'cyan') + '</svg>';
   }
 
-  /** Large halftone artwork for dark heroes (dots in paper colour). */
+  /** Cluster of glass orbs for dark heroes. */
   function heroArt() {
-    return '<svg class="hero-art" viewBox="0 0 380 300" aria-hidden="true">' +
-      '<circle cx="230" cy="160" r="128" fill="' + INK.apricot + '" opacity=".95"/>' + halftone(230, 160, 128, { cell: 9, tone: INK.ink, light: [0.25, 0.2] }) +
-      '<circle cx="128" cy="92" r="38" fill="' + INK.cyan + '"/></svg>';
+    return '<svg class="hero-art" viewBox="0 0 380 300" aria-hidden="true">' + orb(238, 168, 112, 'apricot') + orb(118, 206, 58, 'lilac') + orb(140, 88, 34, 'cyan') + '</svg>';
   }
 
   /**
-   * The signature graphic: a row of halftone spheres, one per stage.
+   * The signature graphic: a row of glass spheres, one per stage, each filled
+   * with liquid to show how far that stage has got.
    * stages: [{label, state: pending|running|done|warn|failed|skipped, fill (0..1), big, sub, href, current}]
    */
   function press(stages, options) {
@@ -256,23 +309,19 @@
     const r = o.r; const n = stages.length;
     const W = 2 * r + (n - 1) * o.gap + 24; const cy = r + 12; const H = cy + r + 60;
     let svg = '<svg class="press' + (o.enter ? ' enter' : '') + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.label) + '">';
-    // connecting thread
-    svg += '<line x1="' + (12 + r) + '" y1="' + cy + '" x2="' + (12 + r + (n - 1) * o.gap) + '" y2="' + cy + '" stroke="' + INK.ink + '" stroke-width="1.5"/>';
+    svg += '<line class="thread" x1="' + (12 + r) + '" y1="' + cy + '" x2="' + (12 + r + (n - 1) * o.gap) + '" y2="' + cy + '"/>';
     stages.forEach((s, i) => {
       const cx = 12 + r + i * o.gap;
       const st = s.state || 'pending';
       const pending = st === 'pending' || st === 'skipped';
       const accent = st === 'running' || s.current;
-      const density = pending ? 0.18 : st === 'running' ? 0.55 : Math.max(0.25, Math.min(1, s.fill == null ? 1 : s.fill));
-      const base = accent ? INK.cyan : pending ? INK.paper : INK.apricot;
-      const body = '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 6) + '" fill="' + INK.paper + '"/>' +
-        halftone(cx, cy, r, { density, base, tone: INK.ink }) +
-        '<circle class="ring' + (pending ? ' pending' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>' +
-        (st === 'failed' ? '<path class="failmark" d="M' + (cx - 16) + ' ' + (cy - 16) + 'l32 32M' + (cx + 16) + ' ' + (cy - 16) + 'l-32 32"/>' : '') +
-        (s.big != null && st !== 'failed' && !pending ? '<text class="big" x="' + cx + '" y="' + (cy + 13) + '">' + esc(s.big) + '</text>' : '') +
+      const level = pending ? 0 : st === 'running' ? 0.5 : st === 'failed' ? 0.12 : Math.max(0.28, Math.min(0.9, (s.fill == null ? 1 : s.fill) * 0.9));
+      const body = sphere(cx, cy, r, level, accent ? 'cyan' : st === 'failed' ? 'mist' : 'apricot', { wave: st === 'running', dashed: pending, shadow: r > 30 }) +
+        (st === 'failed' ? '<path class="failmark" d="M' + (cx - 14) + ' ' + (cy - 14) + 'l28 28M' + (cx + 14) + ' ' + (cy - 14) + 'l-28 28"/>' : '') +
+        (s.big != null && st !== 'failed' && !pending ? '<text class="big" x="' + cx + '" y="' + (cy + r * 0.2) + '">' + esc(s.big) + '</text>' : '') +
         '<text class="lbl" x="' + cx + '" y="' + (cy + r + 28) + '">' + esc(s.label) + '</text>' +
         (s.sub ? '<text class="sub" x="' + cx + '" y="' + (cy + r + 47) + '">' + esc(s.sub) + '</text>' : '');
-      const cls = 'stage' + (st === 'running' ? ' running' : '') + (s.justDone ? ' just-done' : '');
+      const cls = 'stage' + (st === 'running' ? ' running' : '') + (s.justDone ? ' just-done' : '') + (accent ? ' current' : '');
       svg += s.href ? '<a class="' + cls + '" style="--i:' + i + '" href="' + esc(s.href) + '" aria-label="' + esc(s.label + (s.sub ? ': ' + s.sub : '')) + '">' + body + '</a>'
         : '<g class="' + cls + '" style="--i:' + i + '">' + body + '</g>';
     });
@@ -285,16 +334,17 @@
     return h >>> 0;
   }
 
-  /** Abstract halftone portrait generated from a name (no photos, no real faces). */
+  const AVATAR_TONES = ['plum', 'sea', 'apricot', 'rose', 'teal', 'gold'];
+  function initials(name) {
+    const words = String(name || '?').replace(/^(the|a|an)\s+/i, '').split(/[\s\-/]+/).filter((w) => /[A-Za-z0-9]/.test(w));
+    return ((words[0] || '?')[0] + (words[1] ? words[1][0] : '')).toUpperCase();
+  }
+
+  /** Monogram portrait: a glossy orb in a tone chosen from the name, with serif initials. */
   function avatar(name) {
-    const h = hash(String(name || '?'));
-    const hx = 28 + (h % 9); const sw = 21 + ((h >>> 4) % 7); const accent = ((h >>> 8) % 3) === 0;
-    const extra = ((h >>> 11) % 3) === 0 ? '<rect x="' + (hx - 11) + '" y="23" width="22" height="4.5" rx="2.25" fill="' + INK.ink + '"/>'
-      : ((h >>> 11) % 3) === 1 ? '<path d="M' + (hx - 14) + ' 21 Q' + hx + ' 3 ' + (hx + 14) + ' 21 Z" fill="' + INK.ink + '"/>' : '';
-    return '<svg class="avatar" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="' + (accent ? INK.cyanSoft : INK.apricotSoft) + '"/>' +
-      '<clipPath id="avc' + h + '"><rect width="64" height="64" rx="18"/></clipPath><g clip-path="url(#avc' + h + ')">' +
-      halftone(32, 66, sw + 2, { cell: 3.4, base: accent ? INK.cyan : INK.apricot, light: [0.3, 0.1] }) +
-      halftone(hx, 27, 12.5, { cell: 3, base: INK.paper }) + extra + '</g></svg>';
+    const tone = AVATAR_TONES[hash(String(name || '?')) % AVATAR_TONES.length];
+    return '<svg class="avatar" viewBox="0 0 64 64" role="img" aria-label="' + esc(name || '') + '">' + orb(32, 32, 30, tone) +
+      '<text x="32" y="41" text-anchor="middle" class="mono-initials">' + esc(initials(name)) + '</text></svg>';
   }
 
   /** Stack of plates: [{label, value}] */
@@ -308,7 +358,7 @@
     const a = audit || PL.evidence.audit(p);
     return [
       { id: 'evidence', label: 'Evidence', done: Math.min(1, p.findings.length / 10), big: p.findings.length, sub: p.references.length + ' sources', detail: p.findings.length + ' findings from ' + p.references.length + ' sources' },
-      { id: 'discover', label: 'People & needs', done: Math.min(1, p.needs.length / 4), big: p.needs.length, sub: p.personas.length + ' personas', detail: p.needs.length + ' needs and ' + p.personas.length + ' personas' },
+      { id: 'discover', label: 'People & needs', done: Math.min(1, p.needs.length / 4), big: p.needs.length, sub: p.personas.length + (p.personas.length === 1 ? ' persona' : ' personas'), detail: p.needs.length + ' needs and ' + p.personas.length + ' personas' },
       { id: 'ideate', label: 'Ideas', done: Math.min(1, p.concepts.length / 3), big: p.concepts.length, sub: 'concepts', detail: p.concepts.length + ' concepts' },
       { id: 'evaluate', label: 'Decision', done: rated ? 1 : p.concepts.length ? 0.4 : 0, big: rated ? '✓' : '–', sub: rated ? 'all rated' : 'rate concepts', detail: rated ? 'Every concept is rated' : 'Rate every concept' },
       { id: 'build', label: 'Build plan', done: Math.min(1, p.features.length / 5), big: p.features.length, sub: 'features', detail: p.features.length + ' features planned' },
@@ -316,11 +366,10 @@
     ];
   }
 
-  /** Sidebar rail node showing how complete a step is. */
+  /** Sidebar rail node: a tiny glass bead filled to how complete the step is. */
   function railNode(done) {
-    const r = 2.5 + 6 * Math.max(0, Math.min(1, done || 0));
-    return '<svg class="node" viewBox="0 0 28 28" aria-hidden="true"><circle class="bg" cx="14" cy="14" r="12"/>' + (done ? '<circle class="fill" cx="14" cy="14" r="' + r.toFixed(1) + '"/>' : '') + '</svg>';
+    return '<svg class="node" viewBox="0 0 28 28" aria-hidden="true">' + sphere(14, 14, 11, done ? Math.max(0.25, Math.min(0.92, done * 0.92)) : 0, 'apricot', { shadow: false, dashed: !done }) + '</svg>';
   }
 
-  PL.comp = { INK, halftone, logo, motif, heroArt, press, avatar, plates, stepProgress, railNode, badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
+  PL.comp = { icon, INK, TONES, orb, sphere, defs, initials, logo, motif, heroArt, press, avatar, plates, stepProgress, railNode, badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

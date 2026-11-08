@@ -34,7 +34,7 @@
     if (project) {
       const ranked = project.concepts.length && Object.keys(project.ratings).length ? PL.decision.wdm(project.concepts, project.criteria, project.ratings) : [];
       counts.research = { big: project.findings.length, sub: project.references.length + ' sources' };
-      counts.users = { big: project.needs.length, sub: project.needs.length === 1 ? 'need' : 'needs' + (project.personas.length ? ', ' + project.personas.length + ' personas' : '') };
+      counts.users = { big: project.needs.length, sub: project.needs.length === 1 ? 'need' : 'needs' + (project.personas.length ? ', ' + project.personas.length + (project.personas.length === 1 ? ' persona' : ' personas') : '') };
       counts.ideas = { big: project.concepts.length, sub: 'concepts' };
       counts.evaluate = ranked.length ? { big: ranked[0].total.toFixed(1), sub: ranked[0].name } : null;
       counts.build = { big: project.features.length, sub: 'features' };
@@ -76,8 +76,7 @@
   }
 
   function mini(kind) {
-    const base = kind === 'cyan' ? C.INK.cyan : kind === 'apricot' ? C.INK.apricot : C.INK.paper;
-    return '<svg viewBox="0 0 22 22" aria-hidden="true">' + C.halftone(11, 11, 10, { cell: 3, base }) + '</svg>';
+    return '<svg viewBox="0 0 22 22" aria-hidden="true">' + C.orb(11, 11, 10, kind === 'ink' ? 'plum' : kind) + '</svg>';
   }
 
   function working() {
