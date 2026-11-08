@@ -11,12 +11,14 @@
 
   /* Categorical order, validated for colour-blind separation (adjacent pairs
      deltaE >= 10 under protan/deutan/tritan) on the light card surface. */
-  const CAT = ['#7b5ea7', '#2f9fc4', '#e3906a', '#b04a68', '#b8a04e', '#1fa294', '#9b86d0'];
-  const STATUS_COL = { supported: '#3a9a6c', partial: '#e0a144', unsupported: '#cf4b63', invalid: '#8e2340', uncited: '#b4a9c4' };
+  const CAT = ['#5866ec', '#d8961c', '#1f9e8f', '#e0604e', '#9a5fc0', '#7f8a2e'];
+  const STATUS_COL = { supported: '#3a9a6c', partial: '#e0a144', unsupported: '#cf4b63', invalid: '#8e2340', uncited: '#a9a59a' };
   const STATUS_TONE = { supported: 'ok', partial: 'warn', unsupported: 'bad', invalid: 'bad2' };
-  const MOSCOW_COL = { Must: '#7b5ea7', Should: '#2f9fc4', Could: '#e3906a', "Won't": '#cfc6dc' };
-  const MOSCOW_TONE = { Must: 'plum', Should: 'sea', Could: 'apricot', "Won't": 'mist' };
-  const HAIR = '#e4dfeb'; const HAIR2 = '#d3cbe0'; const ACCENT_INK = '#0b7fa3';
+  // Flat colours are CSS variables so a project theme can re-tint them (legends use them as backgrounds).
+  const V = (name) => 'var(--' + name + ')';
+  const MOSCOW_COL = { Must: V('deep-2'), Should: V('sea'), Could: V('build'), "Won't": V('line-2') };
+  const MOSCOW_TONE = { Must: 'deep', Should: 'sea', Could: 'build', "Won't": 'mist' };
+  const HAIR = '#e2dfd5'; const HAIR2 = '#cfcbbf';
 
   const trunc = (s, n) => { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -83,7 +85,7 @@
       cx = Math.min(cx, W - rad - 3);
       placed.push({ x: cx, y: cy, r: rad });
       const tip = r.id + ': ' + (r.title || '') + (r.year ? ' (' + r.year + ')' : '') + '\n' + n + ' finding' + (n === 1 ? '' : 's') + ', strength ' + s + '/3';
-      svg += '<g class="mark"><title>' + esc(tip) + '</title>' + (n ? disc(cx, cy, rad, s === 3 ? 'plum' : s === 2 ? 'lilac' : 'mist')
+      svg += '<g class="mark"><title>' + esc(tip) + '</title>' + (n ? disc(cx, cy, rad, s === 3 ? 'deep' : s === 2 ? 'soft' : 'mist')
         : '<circle cx="' + cx + '" cy="' + cy + '" r="' + rad + '" fill="#fff" fill-opacity=".6" stroke="' + HAIR2 + '" stroke-dasharray="2 3"/>') +
         (rad >= 16 ? '<text x="' + cx + '" y="' + (cy + 4) + '" text-anchor="middle" class="val ' + (s === 3 ? 'on-dark' : 'halo') + '">' + n + '</text>' : '') + '</g>';
     });
@@ -111,7 +113,7 @@
         const cx = left + (i % perRow) * cell + 9; const cy = y + Math.floor(i / perRow) * cell + 11;
         const n = used.get(f.id) || 0;
         svg += '<g class="mark"><title>' + esc(f.id + ': ' + trunc(f.text, 140) + '\n' + (n ? 'Cited by ' + n + ' claim' + (n > 1 ? 's' : '') : 'Not cited yet')) + '</title>' +
-          (n ? disc(cx, cy, 8.5, n >= 3 ? 'cyan' : 'plum') : '<circle cx="' + cx + '" cy="' + cy + '" r="7.5" fill="#fff" stroke="' + HAIR2 + '" stroke-width="1.5"/>') + '</g>';
+          (n ? disc(cx, cy, 8.5, n >= 3 ? 'think' : 'deep') : '<circle cx="' + cx + '" cy="' + cy + '" r="7.5" fill="#fff" stroke="' + HAIR2 + '" stroke-width="1.5"/>') + '</g>';
       });
       y += Math.max(rowH, lines * cell + 8);
     });
@@ -119,7 +121,7 @@
     const usedN = p.findings.filter((f) => used.has(f.id)).length;
     return fig('<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Evidence in use">' + svg + '</svg>',
       '<b>' + usedN + ' of ' + p.findings.length + ' findings</b> are cited by at least one claim. Each dot is one finding; hover for its text.' +
-      legend([{ color: INK.cyan, label: 'Cited 3+ times' }, { color: '#7b5ea7', label: 'Cited' }, { color: HAIR2, label: 'Not cited yet', ring: true }]));
+      legend([{ color: V('think'), label: 'Cited 3+ times' }, { color: V('deep-2'), label: 'Cited' }, { color: HAIR2, label: 'Not cited yet', ring: true }]));
   }
 
   /* ------------------------------------------------------------------ */
@@ -137,7 +139,7 @@
       return { n, x: clamp(ev, 0, 1), y: clamp(Number(n.severity) || 3, 1, 5), k: (n.evidence || []).length };
     });
     let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Needs by severity and evidence">';
-    svg += '<rect x="' + sx(0.5) + '" y="' + m.t + '" width="' + (pw / 2) + '" height="' + (sy(3.5) - m.t) + '" fill="' + INK.cyanSoft + '" rx="10"/>';
+    svg += '<rect x="' + sx(0.5) + '" y="' + m.t + '" width="' + (pw / 2) + '" height="' + (sy(3.5) - m.t) + '" style="fill:var(--think-soft)" rx="10"/>';
     svg += '<text x="' + (sx(1) - 10) + '" y="' + (m.t + 18) + '" text-anchor="end" class="ax">Severe and well evidenced</text>';
     svg += '<text x="' + (sx(0) + 10) + '" y="' + (m.t + 18) + '" class="ax">Severe, needs more evidence</text>';
     [1, 2, 3, 4, 5].forEach((s) => { svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + sy(s) + '" y2="' + sy(s) + '" class="grid"/><text x="' + (m.l - 12) + '" y="' + (sy(s) + 4) + '" text-anchor="end" class="ax small">' + s + '</text>'; });
@@ -154,7 +156,7 @@
       placed.push({ x: cx, y: cy, r });
       const hot = pt.x >= 0.5 && pt.y >= 4;
       svg += '<g class="mark"><title>' + esc(pt.n.id + ' (severity ' + pt.y + ', evidence ' + pct(pt.x) + ', ' + pt.k + ' findings)\n' + pt.n.statement) + '</title>' +
-        disc(cx, cy, r, hot ? 'cyan' : 'lilac') +
+        disc(cx, cy, r, hot ? 'think' : 'soft') +
         '<text x="' + cx + '" y="' + (cy + 4) + '" text-anchor="middle" class="val halo">' + esc(pt.n.id) + '</text></g>';
     });
     svg += '</svg>';
@@ -199,14 +201,14 @@
       const open = !it.t.need;
       const words = (it.t.terms || String(it.t.label).split(' · ')).map((w) => unstem(w, it.t.members.map((id) => (texts.get(id) || ''))));
       svg += '<g class="mark"><title>' + esc(words.join(', ') + '\n' + it.t.members.length + ' findings: ' + it.t.members.join(', ') + '\n' + (open ? 'No need covers this theme yet' : 'Matches need ' + it.t.need.id)) + '</title>' +
-        C.orb(it.x, it.y, it.r, open ? 'cyan' : 'apricot', { shadow: true }) +
+        C.orb(it.x, it.y, it.r, open ? 'think' : 'build', { shadow: true }) +
         '<text x="' + it.x + '" y="' + (it.y - (it.r > 40 ? 6 : 0) + 4) + '" text-anchor="middle" class="val halo">' + esc(trunc(words[0], it.r > 40 ? 16 : 10)) + '</text>' +
         (it.r > 40 && words[1] ? '<text x="' + it.x + '" y="' + (it.y + 16) + '" text-anchor="middle" class="lb halo">' + esc(trunc(words[1], 16)) + '</text>' : '') + '</g>';
     });
     svg += '</svg>';
     const open = multi.filter((t) => !t.need).length;
     return fig(svg, '<b>' + multi.length + ' themes</b> in the evidence' + (open ? ', <b>' + open + '</b> with no need covering ' + (open > 1 ? 'them' : 'it') + ' yet. Those are open opportunities.' : ', each already covered by a need.') + ' Size shows how many findings agree.' +
-      legend([{ color: INK.cyan, label: 'Open opportunity' }, { color: INK.apricot, label: 'Covered by a need' }]), 'center');
+      legend([{ color: V('think'), label: 'Open opportunity' }, { color: V('build'), label: 'Covered by a need' }]), 'center');
   }
 
   /* ------------------------------------------------------------------ */
@@ -234,7 +236,7 @@
         const x = left + j * cell + cell / 2; const on = (c.needs || []).includes(n.id);
         if (on) k++;
         const r = on ? 5 + 2.2 * (Number(n.severity) || 3) : 3;
-        svg += '<g><title>' + esc(c.name + (on ? ' addresses ' : ' does not address ') + n.id) + '</title>' + (on ? disc(x, y, r, sel ? 'cyan' : 'plum') : '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + HAIR + '"/>') + '</g>';
+        svg += '<g><title>' + esc(c.name + (on ? ' addresses ' : ' does not address ') + n.id) + '</title>' + (on ? disc(x, y, r, sel ? 'think' : 'deep') : '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + HAIR + '"/>') + '</g>';
       });
       svg += '<text x="' + (W - 10) + '" y="' + (y + 4) + '" text-anchor="end" class="val">' + k + '/' + p.needs.length + '</text>';
     });
@@ -249,12 +251,12 @@
     let h = 2166136261; const s = String(name || '?');
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     h >>>= 0;
-    const pairs = [['apricot', 'cyan'], ['plum', 'apricot'], ['sea', 'lilac'], ['rose', 'apricot'], ['teal', 'lilac'], ['lilac', 'cyan']];
+    const pairs = [['build', 'think'], ['deep', 'build'], ['sea', 'soft'], ['spark', 'build'], ['teal', 'soft'], ['soft', 'think']];
     const pr = pairs[h % pairs.length]; const flip = (h >>> 7) & 1;
     const R = 28; const circ = 2 * Math.PI * R; const sc = clamp(Number(score) || 0, 0, 1);
     return '<svg class="cmark" viewBox="0 0 64 64" role="img" aria-label="Evidence ' + pct(sc) + '"><title>Evidence score ' + pct(sc) + '</title>' +
       '<circle cx="32" cy="32" r="' + R + '" fill="none" stroke="' + HAIR + '" stroke-width="3"/>' +
-      '<circle cx="32" cy="32" r="' + R + '" fill="none" stroke="' + ACCENT_INK + '" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (circ * sc).toFixed(1) + ' ' + circ.toFixed(1) + '" transform="rotate(-90 32 32)"/>' +
+      '<circle cx="32" cy="32" r="' + R + '" fill="none" style="stroke:var(--think-ink)" stroke-width="3" stroke-linecap="round" stroke-dasharray="' + (circ * sc).toFixed(1) + ' ' + circ.toFixed(1) + '" transform="rotate(-90 32 32)"/>' +
       C.orb(flip ? 28 : 36, 34, 17, pr[0]) + C.orb(flip ? 39 : 24, 24, 9.5, pr[1]) + '</svg>';
   }
 
@@ -278,7 +280,7 @@
       });
     });
     let path = '';
-    if (centres.length > 1) path = '<path d="M' + centres.map((c) => c[0].toFixed(1) + ' ' + c[1].toFixed(1)).join(' L') + '" fill="none" stroke="' + INK.cyan + '" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>';
+    if (centres.length > 1) path = '<path d="M' + centres.map((c) => c[0].toFixed(1) + ' ' + c[1].toFixed(1)).join(' L') + '" fill="none" style="stroke:var(--think)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>';
     const n = Object.keys(sel).length;
     return fig('<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Morphological box" style="max-width:' + W + 'px">' + path + boxes + '</svg>',
       n ? '<b>' + n + ' of ' + params.length + '</b> parameters chosen. The cyan line is your combination through the box of ' + params.reduce((n, pm) => n * pm.options.length, 1) + ' possibilities.' : 'Pick one option per parameter below. The cyan line will trace your combination through the box.');
@@ -342,7 +344,7 @@
       }
       const d = Math.round(s.flip.delta * 100); const fragile = Math.abs(d) < 15;
       const x0 = Math.min(mid, sx(d)); const w = Math.max(3, Math.abs(sx(d) - mid));
-      svg += '<rect x="' + x0 + '" y="' + (y + 6) + '" width="' + w + '" height="20" rx="10" fill="' + (fragile ? '#b04a68' : '#7b5ea7') + '"><title>' + esc(s.name + ': ' + (d > 0 ? '+' : '') + d + ' points makes ' + s.flip.newWinnerName + ' the winner') + '</title></rect>' +
+      svg += '<rect x="' + x0 + '" y="' + (y + 6) + '" width="' + w + '" height="20" rx="10" style="fill:var(--' + (fragile ? 'spark' : 'deep-2') + ')"><title>' + esc(s.name + ': ' + (d > 0 ? '+' : '') + d + ' points makes ' + s.flip.newWinnerName + ' the winner') + '</title></rect>' +
         '<text x="' + (W - right + 10) + '" y="' + (y + 20) + '" class="lg">' + esc(trunc(s.flip.newWinnerName, 18)) + '</text>';
     });
     svg += '<line x1="' + mid + '" x2="' + mid + '" y1="' + (top - 8) + '" y2="' + (H - 26) + '" stroke="' + INK.ink2 + '" stroke-width="1.2"/></svg>';
@@ -363,7 +365,7 @@
     const maxR = Math.max(1, ...rows.map((r) => r.adjusted)) * 1.12;
     const sx = (v) => m.l + v / maxE * (W - m.l - m.r); const sy = (v) => H - m.b - v / maxR * (H - m.t - m.b);
     let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Value against effort">';
-    svg += '<rect x="' + m.l + '" y="' + m.t + '" width="' + ((W - m.l - m.r) / 2) + '" height="' + ((H - m.t - m.b) / 2) + '" fill="' + INK.cyanSoft + '" fill-opacity=".8" rx="16"/>';
+    svg += '<rect x="' + m.l + '" y="' + m.t + '" width="' + ((W - m.l - m.r) / 2) + '" height="' + ((H - m.t - m.b) / 2) + '" style="fill:var(--think-soft)" fill-opacity=".8" rx="16"/>';
     svg += '<text x="' + (m.l + 12) + '" y="' + (m.t + 20) + '" class="ax">Quick wins</text>';
     svg += '<line x1="' + m.l + '" y1="' + (H - m.b) + '" x2="' + (W - m.r) + '" y2="' + (H - m.b) + '" stroke="' + HAIR2 + '"/><line x1="' + m.l + '" y1="' + m.t + '" x2="' + m.l + '" y2="' + (H - m.b) + '" stroke="' + HAIR2 + '"/>';
     svg += '<text x="' + ((W + m.l) / 2) + '" y="' + (H - 10) + '" text-anchor="middle" class="ax">Effort (person-weeks)</text>';
@@ -374,7 +376,7 @@
     rows.slice().sort((a, b) => (Number(b.feature.reach) || 0) - (Number(a.feature.reach) || 0)).forEach((r) => {
       const f = r.feature; const x = sx(Number(f.effort) || 0); const y = sy(r.adjusted); const rad = 6 + 10 * Math.sqrt((Number(f.reach) || 0) / 100);
       const col = MOSCOW_COL[f.moscow] || MOSCOW_COL.Could;
-      svg += '<g class="mark"><title>' + esc('#' + r.rank + ' ' + f.name + '\nRICE ' + fix(r.adjusted, 1) + ', effort ' + f.effort + ' person-weeks, reach ' + f.reach + '%, ' + f.moscow) + '</title>' + disc(+x.toFixed(1), +y.toFixed(1), +rad.toFixed(1), MOSCOW_TONE[f.moscow] || 'apricot') + '</g>';
+      svg += '<g class="mark"><title>' + esc('#' + r.rank + ' ' + f.name + '\nRICE ' + fix(r.adjusted, 1) + ', effort ' + f.effort + ' person-weeks, reach ' + f.reach + '%, ' + f.moscow) + '</title>' + disc(+x.toFixed(1), +y.toFixed(1), +rad.toFixed(1), MOSCOW_TONE[f.moscow] || 'build') + '</g>';
       if (labelled.has(f.id)) {
         let ly = y + 4; const lx = x + rad + 6;
         while (used.some((u) => Math.abs(u.y - ly) < 14 && Math.abs(u.x - lx) < 150)) ly += 14;
@@ -395,17 +397,17 @@
     const W = 820; const slabH = 34; const depth = 14; const gap = 10; const skew = 26; const x0 = 24; const sw = W - 2 * x0 - skew;
     const H = rec.length * (slabH + depth + gap) + depth + 6;
     let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Recommended technology stack">';
-    const tints = [['cyan', '#8fe5fb', '#3fcdf2'], ['lilac', '#efe9fb', '#cdbff0'], ['apricot', '#fdeee4', '#f6c8ad']];
+    const tints = [['think', 'var(--tn-think-0)', 'var(--tn-think-1)'], ['soft', 'var(--tn-soft-0)', 'var(--tn-soft-1)'], ['build', 'var(--tn-build-0)', 'var(--tn-build-1)']];
     rec.forEach((r, i) => {
       const y = depth + i * (slabH + depth + gap);
       const t = i === 0 ? tints[0] : tints[1 + (i % 2)];
       const top = 'M' + (x0 + skew) + ' ' + (y - depth) + ' L' + (x0 + skew + sw) + ' ' + (y - depth) + ' L' + (x0 + sw) + ' ' + y + ' L' + x0 + ' ' + y + ' Z';
       const short = String(r.choice).split(/\s[(:]|;\s/)[0];
       svg += '<g class="mark slab" style="--i:' + i + '"><title>' + esc(r.layer + ': ' + r.choice) + '</title>' +
-        '<path d="' + top + '" fill="' + t[1] + '" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>' +
+        '<path d="' + top + '" style="fill:' + t[1] + '" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>' +
         '<rect x="' + x0 + '" y="' + y + '" width="' + sw + '" height="' + slabH + '" fill="#fff" fill-opacity=".86" stroke="' + HAIR + '"/>' +
-        '<rect x="' + x0 + '" y="' + y + '" width="6" height="' + slabH + '" fill="' + t[2] + '"/>' +
-        '<path d="M' + (x0 + sw) + ' ' + y + ' L' + (x0 + sw + skew) + ' ' + (y - depth) + ' L' + (x0 + sw + skew) + ' ' + (y - depth + slabH) + ' L' + (x0 + sw) + ' ' + (y + slabH) + ' Z" fill="' + t[2] + '" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>' +
+        '<rect x="' + x0 + '" y="' + y + '" width="6" height="' + slabH + '" style="fill:' + t[2] + '"/>' +
+        '<path d="M' + (x0 + sw) + ' ' + y + ' L' + (x0 + sw + skew) + ' ' + (y - depth) + ' L' + (x0 + sw + skew) + ' ' + (y - depth + slabH) + ' L' + (x0 + sw) + ' ' + (y + slabH) + ' Z" style="fill:' + t[2] + '" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>' +
         '<text x="' + (x0 + 20) + '" y="' + (y + 22) + '" class="val">' + esc(r.layer) + '</text>' +
         '<text x="' + (x0 + 200) + '" y="' + (y + 22) + '" class="lb">' + esc(trunc(short, 70)) + '</text></g>';
     });
@@ -444,7 +446,7 @@
       const v = byGroup[g].total ? byGroup[g].traced / byGroup[g].total : 0; const y = i * rowH + 4;
       svg += '<text x="' + (left - 10) + '" y="' + (y + 15) + '" text-anchor="end" class="lb">' + esc(g) + '</text>' +
         '<rect x="' + left + '" y="' + (y + 4) + '" width="' + bw + '" height="14" rx="7" fill="' + HAIR + '"/>' +
-        '<rect x="' + left + '" y="' + (y + 4) + '" width="' + Math.max(3, bw * v) + '" height="14" rx="7" fill="' + (v >= 0.8 ? '#7b5ea7' : '#b04a68') + '"><title>' + esc(g + ': ' + byGroup[g].traced + ' of ' + byGroup[g].total + ' claims traced') + '</title></rect>' +
+        '<rect x="' + left + '" y="' + (y + 4) + '" width="' + Math.max(3, bw * v) + '" height="14" rx="7" style="fill:var(--' + (v >= 0.8 ? 'deep-2' : 'spark') + ')"><title>' + esc(g + ': ' + byGroup[g].traced + ' of ' + byGroup[g].total + ' claims traced') + '</title></rect>' +
         '<text x="' + (left + bw + 8) + '" y="' + (y + 15) + '" class="val">' + pct(v) + '</text>';
     });
     return svg + '</svg>';
@@ -464,14 +466,14 @@
     rows.forEach((m, i) => {
       const y = top + i * rowH + 10; const a = d.A[m.id].mean; const b = d.B[m.id].mean;
       svg += '<text x="' + (left - 12) + '" y="' + (y + 4) + '" text-anchor="end" class="lb">' + esc(m.name) + '</text>' +
-        '<line x1="' + sx(a) + '" x2="' + sx(b) + '" y1="' + y + '" y2="' + y + '" stroke="' + (b >= a ? '#7b5ea7' : '#b04a68') + '" stroke-width="3" stroke-linecap="round"/>' +
-        '<circle cx="' + sx(a) + '" cy="' + y + '" r="8" fill="#fff" stroke="' + '#76698a' + '" stroke-width="2.5"><title>' + esc('A baseline: ' + fix(a)) + '</title></circle>' +
+        '<line x1="' + sx(a) + '" x2="' + sx(b) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--' + (b >= a ? 'deep-2' : 'spark') + ')" stroke-width="3" stroke-linecap="round"/>' +
+        '<circle cx="' + sx(a) + '" cy="' + y + '" r="8" fill="#fff" stroke="#6f7391" stroke-width="2.5"><title>' + esc('A baseline: ' + fix(a)) + '</title></circle>' +
         '<g><title>' + esc('B ProductLab: ' + fix(b)) + '</title>' + disc(sx(b), y, 9.5, 'sea') + '</g>';
     });
     svg += '</svg>';
     const up = rows.filter((m) => d.B[m.id].mean > d.A[m.id].mean).length;
     return fig(svg, '<b>ProductLab concepts scored higher on ' + up + ' of ' + rows.length + '</b> rated metrics (means on a 1 to 5 scale). See the table for the test statistics.' +
-      legend([{ color: '#76698a', label: 'A: baseline', ring: true }, { color: '#2f9fc4', label: 'B: ProductLab' }]));
+      legend([{ color: '#6f7391', label: 'A: baseline', ring: true }, { color: V('sea'), label: 'B: ProductLab' }]));
   }
 
   PL.fig = { CAT, STATUS_COL, fig, legend, sourceMap, evidenceUse, needsMap, themeBubbles, coverage, conceptMark, morphPath, radar, tornado, riceBubbles, stackDiagram, claimWaffle, sectionBars, dumbbell };

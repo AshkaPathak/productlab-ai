@@ -14,7 +14,7 @@
       const list = ctx.state.projects.map((p) => {
         const cur = p.id === ctx.state.currentId;
         let st = [];
-        try { st = C.stepProgress(p).map((x) => ({ label: '', state: x.done > 0 ? 'done' : 'pending', fill: x.done })); } catch (e) { st = []; }
+        try { st = C.stepProgress(p).map((x) => ({ label: '', kind: x.kind, state: x.done > 0 ? 'done' : 'pending', fill: x.done })); } catch (e) { st = []; }
         return '<article class="project-row' + (cur ? ' current' : '') + '"><div><div class="muted small">' + esc(p.domain || 'Project') + ', updated ' + esc(String(p.updatedAt || '').slice(0, 10)) + '</div><h2>' + esc(p.name) + '</h2>' +
           '<p class="muted">' + esc((p.challenge || '').slice(0, 220)) + (p.challenge && p.challenge.length > 220 ? '\u2026' : '') + '</p>' +
           '<div class="row"><button class="btn primary" data-act="open" data-id="' + esc(p.id) + '">Open</button>' +
@@ -91,7 +91,7 @@
       const steps = C.stepProgress(p, audit);
       const next = nextAction(steps);
       const top = ranked[0];
-      const stagesP = C.stepProgress(p, audit).map((x) => ({ label: x.label, state: x.done > 0 ? 'done' : 'pending', fill: x.done, big: x.big, sub: x.sub, href: '#/' + x.id, current: next && next.id === x.id }));
+      const stagesP = C.stepProgress(p, audit).map((x) => ({ label: x.label, kind: x.kind, state: x.done > 0 ? 'done' : 'pending', fill: x.done, big: x.big, sub: x.sub, href: '#/' + x.id, current: next && next.id === x.id }));
       return (p.caveats ? '<div class="warnbox">' + esc(p.caveats) + '</div>' : '') +
         (next ? '<div class="next"><span>Next</span><b>' + esc(next.label) + '</b><span class="muted small">' + esc(next.detail) + '</span><a class="btn primary" href="#/' + next.id + '">Continue</a></div>'
           : '<div class="next"><b>Every step has content.</b><span class="muted small">Check the audit, then export the report.</span><a class="btn primary" href="#/report">Open the audit</a></div>') +
@@ -101,6 +101,10 @@
         '<div class="grid two"><div class="card"><h2>Project brief</h2>' +
         '<div class="field"><label>Name</label><input class="wide" data-act="set" data-path="name" value="' + esc(p.name) + '"></div>' +
         '<div class="field"><label>Domain</label><input class="wide" data-act="set" data-path="domain" value="' + esc(p.domain) + '"></div>' +
+        '<div class="field"><label for="story-theme">Story theme</label><select id="story-theme" class="wide" data-act="set" data-path="theme">' +
+          '<option value="auto"' + (!p.theme || p.theme === 'auto' ? ' selected' : '') + '>Match the project automatically (now: ' + esc(PL.theme.THEMES[PL.theme.pick(Object.assign({}, p, { theme: 'auto' }))].label) + ')</option>' +
+          PL.theme.LIST.map((t) => '<option value="' + t.id + '"' + (p.theme === t.id ? ' selected' : '') + '>' + esc(t.label) + '</option>').join('') + '</select>' +
+          '<span class="help">Colours for this project\u2019s Story page. The rest of the app keeps the ProductLab colours.</span></div>' +
         '<div class="field"><label>Challenge</label><textarea rows="3" data-act="set" data-path="challenge">' + esc(p.challenge) + '</textarea></div>' +
         '<div class="field"><label>How might we …</label><textarea rows="3" data-act="set" data-path="hmw">' + esc(p.hmw) + '</textarea></div>' +
         '<div class="field"><label>Team (comma separated)</label><input class="wide" data-act="set" data-type="list" data-path="team" value="' + esc((p.team || []).join(', ')) + '"></div></div>' +

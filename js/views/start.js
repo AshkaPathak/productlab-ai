@@ -44,7 +44,7 @@
       const st = run.steps[s.id] || { status: 'pending' };
       const c = withCounts && counts[s.id];
       return {
-        label: LABEL[s.id], state: st.status === 'warn' ? 'done' : st.status, fill: st.status === 'warn' ? 0.6 : 1,
+        label: LABEL[s.id], kind: s.id === 'build' ? 'build' : 'think', state: st.status === 'warn' ? 'done' : st.status, fill: st.status === 'warn' ? 0.6 : 1,
         big: c && st.status !== 'skipped' ? c.big : null, sub: st.status === 'skipped' ? 'needs an AI key' : c ? c.sub : OUTPUT[s.id],
         justDone: st.doneAt && Date.now() - st.doneAt < 1200
       };
@@ -85,7 +85,7 @@
     const ai = A.hasModel(aiSettings(ctx.state));
     const canWeb = ai && s.provider === 'gemini';
     const u = ctx.ui('start');
-    const preview = A.STEPS.map((x) => ({ label: LABEL[x.id], state: 'pending', sub: OUTPUT[x.id] }));
+    const preview = A.STEPS.map((x) => ({ label: LABEL[x.id], kind: x.id === 'build' ? 'build' : 'think', state: 'pending', sub: OUTPUT[x.id] }));
     return '<section class="home">' +
       // 1. what this is, in one breath
       '<header class="hero home-hero">' + C.heroArt() +
@@ -127,7 +127,7 @@
   }
 
   function mini(kind) {
-    return '<svg viewBox="0 0 22 22" aria-hidden="true">' + C.orb(11, 11, 10, kind === 'ink' ? 'plum' : kind) + '</svg>';
+    return '<svg viewBox="0 0 22 22" aria-hidden="true">' + C.orb(11, 11, 10, kind === 'ink' ? 'deep' : kind) + '</svg>';
   }
 
   function working() {

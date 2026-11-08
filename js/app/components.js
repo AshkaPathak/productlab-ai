@@ -68,7 +68,7 @@
   /* ---------------- charts (plain SVG) ---------------- */
 
   // Validated categorical order (see figures.js); colour follows position in the legend.
-  const PALETTE = ['#7b5ea7', '#2f9fc4', '#e3906a', '#b04a68', '#b8a04e', '#1fa294', '#9b86d0'];
+  const PALETTE = ['#5866ec', '#d8961c', '#1f9e8f', '#e0604e', '#9a5fc0', '#7f8a2e'];
 
   /** Horizontal stacked bars. rows: [{label, segments:[{value,label}], total}] */
   function stackedBars(rows, legend, options) {
@@ -220,35 +220,49 @@
    * "current / act here"; the rest of the palette stays soft.
    */
 
-  const INK = { ink: '#2f2142', ink2: '#4f4262', cyan: '#3fcdf2', cyanSoft: '#e3f7fd', apricot: '#f2a982', apricotSoft: '#fdeee4', paper: '#f5f2f7', white: '#ffffff', line: '#e4dfeb' };
+  /* Brand colours. Thinking (research, people, ideas, decisions) is blueprint
+     blue; building is amber; a coral spark marks creative moments. Story pages
+     re-tint the same slots to match each project (see theme.js). */
+  const INK = { ink: '#161a3a', ink2: '#3e4366', think: '#4f5ff0', thinkInk: '#2f3fd6', thinkSoft: '#e9ebff', build: '#ffb21e', buildSoft: '#fff2d2', spark: '#ff6a55', paper: '#f5f3ec', white: '#ffffff', line: '#e2dfd5' };
 
-  /* [highlight, body, shade] per tone */
+  /* [highlight, body, shade] per tone slot. Gradients read these through CSS
+     variables (--tn-<slot>-0..2), so a theme can override any slot. */
   const TONES = {
-    ink: ['#6b5a85', '#2f2142', '#160c22'], plum: ['#b6a2dc', '#7b5ea7', '#4a3470'], lilac: ['#f1ecfd', '#bfaee6', '#8b76c0'],
-    mist: ['#ffffff', '#f0ecf5', '#cfc6dc'], cyan: ['#d2f5ff', '#3fcdf2', '#0d93c4'], sea: ['#b3e6f6', '#2f9fc4', '#19678a'],
-    apricot: ['#ffeadb', '#f2a982', '#d27650'], rose: ['#f8ccd7', '#c45a78', '#8a2f4a'], gold: ['#f6e8bd', '#c9a95a', '#8c7130'],
-    teal: ['#bff0e7', '#2aa592', '#146b5f'], ok: ['#c8eed9', '#3a9a6c', '#1f6b47'], warn: ['#fde6c1', '#e0a144', '#a2681a'],
-    bad: ['#f8ccd4', '#cf4b63', '#8e2340'], bad2: ['#e9a9b6', '#8e2340', '#5a1027']
+    ink: ['#5d6396', '#161a3a', '#0b0d24'], deep: ['#8c92c9', '#3a418a', '#1c2160'], soft: ['#ffffff', '#d9dcf5', '#a4aad8'],
+    mist: ['#ffffff', '#efede6', '#cfcbbf'], think: ['#e2e5ff', '#5b6cff', '#2a35b8'], build: ['#fff1c9', '#ffb21e', '#d07a00'],
+    spark: ['#ffe0da', '#ff6a55', '#c23a2a'], sea: ['#d2f1f4', '#2fa7b8', '#17707d'], gold: ['#f6e8bd', '#c9a95a', '#8c7130'],
+    teal: ['#c6f0e8', '#1f9e8f', '#0f6359'], ok: ['#c8eed9', '#3a9a6c', '#1f6b47'], warn: ['#fde6c1', '#e0a144', '#a2681a'],
+    bad: ['#f8ccd4', '#cf4b63', '#8e2340'], bad2: ['#e9a9b6', '#8e2340', '#5a1027'],
+    // brand-only slots: never re-tinted by a project theme (the logo stays ProductLab)
+    brandBuild: ['#fff1c9', '#ffb21e', '#d07a00'], brandThink: ['#e2e5ff', '#5b6cff', '#2a35b8']
   };
-  const LIQUID = { cyan: ['#8fe5fb', '#0fa2d4'], apricot: ['#f9cdb0', '#df8058'], plum: ['#b39fdc', '#5b4285'], mist: ['#f3f0f7', '#d9d1e5'] };
+  const LIQUID = { think: ['#9aa6ff', '#3341d6'], build: ['#ffd77a', '#f09400'], spark: ['#ffb2a6', '#e5483a'], deep: ['#8c92c9', '#2a2f72'], mist: ['#f4f2ec', '#d9d5c9'] };
+
+  function toneVars() {
+    let css = '';
+    Object.keys(TONES).forEach((k) => TONES[k].forEach((c, i) => { css += '--tn-' + k + '-' + i + ':' + c + ';'; }));
+    Object.keys(LIQUID).forEach((k) => LIQUID[k].forEach((c, i) => { css += '--lq-' + k + '-' + i + ':' + c + ';'; }));
+    return ':root{' + css + '}';
+  }
 
   function defs() {
+    const stop = (o, v, extra) => '<stop offset="' + o + '" style="stop-color:var(' + v + ')' + (extra || '') + '"/>';
     let g = '';
     Object.keys(TONES).forEach((k) => {
-      const t = TONES[k];
-      g += '<radialGradient id="g-' + k + '" cx="34%" cy="28%" r="78%"><stop offset="0" stop-color="' + t[0] + '"/><stop offset=".55" stop-color="' + t[1] + '"/><stop offset="1" stop-color="' + t[2] + '"/></radialGradient>';
+      g += '<radialGradient id="g-' + k + '" cx="34%" cy="28%" r="78%">' + stop(0, '--tn-' + k + '-0') + stop('.55', '--tn-' + k + '-1') + stop(1, '--tn-' + k + '-2') + '</radialGradient>';
     });
     Object.keys(LIQUID).forEach((k) => {
-      g += '<linearGradient id="liq-' + k + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + LIQUID[k][0] + '"/><stop offset="1" stop-color="' + LIQUID[k][1] + '"/></linearGradient>';
+      g += '<linearGradient id="liq-' + k + '" x1="0" y1="0" x2="0" y2="1">' + stop(0, '--lq-' + k + '-0') + stop(1, '--lq-' + k + '-1') + '</linearGradient>';
     });
     const mix = (hex, k) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - k) + 255 * k).toString(16).padStart(2, '0')).join('');
     PALETTE.forEach((c, i) => { g += '<linearGradient id="cg-' + i + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + mix(c, 0.38) + '"/><stop offset=".55" stop-color="' + mix(c, 0.12) + '"/><stop offset="1" stop-color="' + c + '"/></linearGradient>'; });
     g += '<radialGradient id="g-shine" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
-      '<radialGradient id="g-clear" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#f4f0fa" stop-opacity=".55"/><stop offset="1" stop-color="#d9cfe8" stop-opacity=".8"/></radialGradient>' +
-      '<radialGradient id="g-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2f2142" stop-opacity=".22"/><stop offset="1" stop-color="#2f2142" stop-opacity="0"/></radialGradient>' +
+      '<radialGradient id="g-clear" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#f3f2f8" stop-opacity=".55"/><stop offset="1" stop-color="#cfd2ea" stop-opacity=".8"/></radialGradient>' +
+      '<radialGradient id="g-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#161a3a" stop-opacity=".22"/><stop offset="1" stop-color="#161a3a" stop-opacity="0"/></radialGradient>' +
       '<linearGradient id="g-rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".7"/></linearGradient>';
     return '<svg id="pl-defs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs>' + g + '</defs></svg>';
   }
+  if (root.document && root.document.head && !root.document.getElementById('pl-tones')) root.document.head.insertAdjacentHTML('beforeend', '<style id="pl-tones">' + toneVars() + '</style>');
   if (root.document && root.document.body && !root.document.getElementById('pl-defs')) root.document.body.insertAdjacentHTML('afterbegin', defs());
 
   let uid = 0;
@@ -280,23 +294,23 @@
       (opt.shadow ? '<ellipse cx="' + cx + '" cy="' + (cy + r + 6) + '" rx="' + (r * 0.72).toFixed(1) + '" ry="' + (r * 0.12).toFixed(1) + '" fill="url(#g-glow)"/>' : '') +
       '<clipPath id="' + id + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 1.5) + '"/></clipPath>' +
       '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#g-clear)"/>' +
-      (lv > 0 ? '<g clip-path="url(#' + id + ')"><path class="liquid' + (opt.wave ? ' wave' : '') + '" d="' + d + '" fill="url(#liq-' + (LIQUID[liquid] ? liquid : 'apricot') + ')"/></g>' : '') +
+      (lv > 0 ? '<g clip-path="url(#' + id + ')"><path class="liquid' + (opt.wave ? ' wave' : '') + '" d="' + d + '" fill="url(#liq-' + (LIQUID[liquid] ? liquid : 'build') + ')"/></g>' : '') +
       '<ellipse cx="' + (cx - r * 0.3).toFixed(1) + '" cy="' + (cy - r * 0.45).toFixed(1) + '" rx="' + (r * 0.46).toFixed(1) + '" ry="' + (r * 0.24).toFixed(1) + '" fill="url(#g-shine)" opacity=".9"/>' +
       '<circle class="rim' + (opt.dashed ? ' pending' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (r - 0.7) + '" fill="none"/></g>';
   }
 
   function logo() {
-    return '<svg class="logo" viewBox="0 0 34 34" aria-hidden="true">' + orb(17, 18, 14, 'apricot') + orb(11.5, 11, 5.5, 'cyan', { rim: false }) + '</svg>';
+    return '<svg class="logo" viewBox="0 0 34 34" aria-hidden="true">' + orb(17, 18, 14, 'brandBuild') + orb(11.5, 11, 5.5, 'brandThink', { rim: false }) + '</svg>';
   }
 
   /** Small mark beside page titles. */
   function motif() {
-    return '<svg viewBox="0 0 40 40" aria-hidden="true">' + orb(22, 22, 14, 'lilac') + orb(13, 13, 7, 'cyan') + '</svg>';
+    return '<svg viewBox="0 0 40 40" aria-hidden="true">' + orb(22, 22, 14, 'soft') + orb(13, 13, 7, 'think') + '</svg>';
   }
 
   /** Cluster of glass orbs for dark heroes. */
   function heroArt() {
-    return '<svg class="hero-art" viewBox="0 0 380 300" aria-hidden="true">' + orb(238, 168, 112, 'apricot') + orb(118, 206, 58, 'lilac') + orb(140, 88, 34, 'cyan') + '</svg>';
+    return '<svg class="hero-art" viewBox="0 0 380 300" aria-hidden="true">' + orb(238, 168, 112, 'build') + orb(118, 206, 58, 'soft') + orb(140, 88, 34, 'think') + '</svg>';
   }
 
   /**
@@ -316,7 +330,7 @@
       const pending = st === 'pending' || st === 'skipped';
       const accent = st === 'running' || s.current;
       const level = pending ? 0 : st === 'running' ? 0.5 : st === 'failed' ? 0.12 : Math.max(0.28, Math.min(0.9, (s.fill == null ? 1 : s.fill) * 0.9));
-      const body = sphere(cx, cy, r, level, accent ? 'cyan' : st === 'failed' ? 'mist' : 'apricot', { wave: st === 'running', dashed: pending, shadow: r > 30 }) +
+      const body = sphere(cx, cy, r, level, st === 'failed' ? 'mist' : s.kind === 'build' ? 'build' : 'think', { wave: st === 'running', dashed: pending, shadow: r > 30 }) +
         (st === 'failed' ? '<path class="failmark" d="M' + (cx - 14) + ' ' + (cy - 14) + 'l28 28M' + (cx + 14) + ' ' + (cy - 14) + 'l-28 28"/>' : '') +
         (s.big != null && st !== 'failed' && !pending ? '<text class="big" x="' + cx + '" y="' + (cy + r * 0.2) + '">' + esc(s.big) + '</text>' : '') +
         '<text class="lbl" x="' + cx + '" y="' + (cy + r + 28) + '">' + esc(s.label) + '</text>' +
@@ -334,7 +348,7 @@
     return h >>> 0;
   }
 
-  const AVATAR_TONES = ['plum', 'sea', 'apricot', 'rose', 'teal', 'gold'];
+  const AVATAR_TONES = ['deep', 'sea', 'build', 'spark', 'teal', 'gold'];
   function initials(name) {
     const words = String(name || '?').replace(/^(the|a|an)\s+/i, '').split(/[\s\-/]+/).filter((w) => /[A-Za-z0-9]/.test(w));
     return ((words[0] || '?')[0] + (words[1] ? words[1][0] : '')).toUpperCase();
@@ -361,14 +375,14 @@
       { id: 'discover', label: 'People & needs', done: Math.min(1, p.needs.length / 4), big: p.needs.length, sub: p.personas.length + (p.personas.length === 1 ? ' persona' : ' personas'), detail: p.needs.length + ' needs and ' + p.personas.length + ' personas' },
       { id: 'ideate', label: 'Ideas', done: Math.min(1, p.concepts.length / 3), big: p.concepts.length, sub: 'concepts', detail: p.concepts.length + ' concepts' },
       { id: 'evaluate', label: 'Decision', done: rated ? 1 : p.concepts.length ? 0.4 : 0, big: rated ? '✓' : '–', sub: rated ? 'all rated' : 'rate concepts', detail: rated ? 'Every concept is rated' : 'Rate every concept' },
-      { id: 'build', label: 'Build plan', done: Math.min(1, p.features.length / 5), big: p.features.length, sub: 'features', detail: p.features.length + ' features planned' },
+      { id: 'build', kind: 'build', label: 'Build plan', done: Math.min(1, p.features.length / 5), big: p.features.length, sub: 'features', detail: p.features.length + ' features planned' },
       { id: 'report', label: 'Traced', done: a.summary.total ? Math.min(1, a.summary.traceability / 0.8) : 0, big: a.summary.total ? Math.round(a.summary.traceability * 100) + '%' : '–', sub: 'claims backed', detail: 'Traceability ' + pct(a.summary.traceability) }
     ];
   }
 
   /** Sidebar rail node: a tiny glass bead filled to how complete the step is. */
-  function railNode(done) {
-    return '<svg class="node" viewBox="0 0 28 28" aria-hidden="true">' + sphere(14, 14, 11, done ? Math.max(0.25, Math.min(0.92, done * 0.92)) : 0, 'apricot', { shadow: false, dashed: !done }) + '</svg>';
+  function railNode(done, kind) {
+    return '<svg class="node" viewBox="0 0 28 28" aria-hidden="true">' + sphere(14, 14, 11, done ? Math.max(0.25, Math.min(0.92, done * 0.92)) : 0, kind === 'build' ? 'build' : 'think', { shadow: false, dashed: !done }) + '</svg>';
   }
 
   PL.comp = { icon, INK, TONES, orb, sphere, defs, initials, logo, motif, heroArt, press, avatar, plates, stepProgress, railNode, badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
