@@ -19,11 +19,11 @@
           '<input style="flex:1;min-width:180px;font-weight:700;font-size:1.05rem" data-act="set" data-path="concepts.' + esc(c.id) + '.name" value="' + esc(c.name) + '" aria-label="Concept name">' +
           '<span class="pill grey">' + esc(ORIGIN[c.origin] || c.origin || 'Team idea') + '</span><span class="pill" title="Evidence score">Evidence ' + pct(score) + '</span>' +
           (sel ? '<span class="pill">Selected</span>' : '<button class="btn small" data-act="select" data-id="' + esc(c.id) + '">Select</button>') +
-          '<button class="icon-btn" data-act="del" data-path="concepts.' + esc(c.id) + '" data-confirm="Delete concept ' + esc(c.name) + '?" aria-label="Delete">✕</button></div>' +
+          '<button class="icon-btn" data-act="del" data-path="concepts.' + esc(c.id) + '" data-confirm="Delete concept ' + esc(c.name) + '?" aria-label="Delete">' + C.icon('x') + '</button></div>' +
           '<input class="wide muted" style="margin-top:6px" placeholder="Tagline" data-act="set" data-path="concepts.' + esc(c.id) + '.tagline" value="' + esc(c.tagline || '') + '">' +
           '<textarea rows="2" style="margin-top:6px" placeholder="Description" data-act="set" data-path="concepts.' + esc(c.id) + '.description">' + esc(c.description || '') + '</textarea>' +
           '<div class="row small" style="margin:6px 0"><label>Needs addressed</label><input class="mono" style="width:200px" data-act="set" data-type="ids" data-path="concepts.' + esc(c.id) + '.needs" value="' + esc((c.needs || []).join(', ')) + '"></div>' +
-          (c.claims || []).map((cl, i) => '<div class="claim"><div class="row"><textarea rows="2" style="flex:1" data-act="set" data-path="concepts.' + esc(c.id) + '.claims.' + i + '.text">' + esc(cl.text) + '</textarea><button class="icon-btn" data-act="del-claim" data-id="' + esc(c.id) + '" data-i="' + i + '" aria-label="Remove claim">✕</button></div>' +
+          (c.claims || []).map((cl, i) => '<div class="claim"><div class="row"><textarea rows="2" style="flex:1" data-act="set" data-path="concepts.' + esc(c.id) + '.claims.' + i + '.text">' + esc(cl.text) + '</textarea><button class="icon-btn" data-act="del-claim" data-id="' + esc(c.id) + '" data-i="' + i + '" aria-label="Remove claim">' + C.icon('x') + '</button></div>' +
             C.citeEditor(ctx, 'concepts.' + c.id + '.claims.' + i + '.evidence', cl.evidence, cl.text) + '</div>').join('') +
           '<button class="btn small" data-act="add-claim" data-id="' + esc(c.id) + '">+ Claim</button></div>';
       }).join('') : C.empty('No concepts yet. Generate some with Morphological analysis, Random association or the AI assistant.'));
@@ -67,10 +67,10 @@
       '</div>' + explore +
       '<details class="card"' + (params.length ? '' : ' open') + '><summary>Edit parameters and compatibility rules</summary>' +
       '<p class="muted small">One option per line. Add a short description after a colon to help the engine match options to needs, e.g. <span class="mono">Mobile app: smartphone tracking information</span>.</p>' +
-      '<div class="grid two">' + params.map((pm) => '<div class="field"><div class="row"><input data-act="set" data-path="morph.params.' + esc(pm.id) + '.name" value="' + esc(pm.name) + '" style="font-weight:700"><button class="icon-btn" data-act="del" data-path="morph.params.' + esc(pm.id) + '" data-confirm="Delete parameter ' + esc(pm.name) + '?" aria-label="Delete parameter">✕</button></div>' +
+      '<div class="grid two">' + params.map((pm) => '<div class="field"><div class="row"><input data-act="set" data-path="morph.params.' + esc(pm.id) + '.name" value="' + esc(pm.name) + '" style="font-weight:700"><button class="icon-btn" data-act="del" data-path="morph.params.' + esc(pm.id) + '" data-confirm="Delete parameter ' + esc(pm.name) + '?" aria-label="Delete parameter">' + C.icon('x') + '</button></div>' +
         '<textarea rows="4" class="mono small" data-act="opts" data-param="' + esc(pm.id) + '" data-focus="opts-' + esc(pm.id) + '">' + esc(pm.options.map((o) => typeof o === 'string' ? o : o.label + (o.hint ? ': ' + o.hint : '')).join('\n')) + '</textarea></div>').join('') + '</div>' +
       '<button class="btn small" data-act="add-param">+ Parameter</button>' +
-      '<h3 style="margin-top:16px">Compatibility rules</h3>' + (p.morph.rules.length ? '<ul class="small">' + p.morph.rules.map((r, i) => '<li><b>' + esc(r.a[1]) + '</b> cannot go with <b>' + esc(r.b[1]) + '</b> — ' + esc(r.reason) + ' <button class="icon-btn" data-act="del-rule" data-i="' + i + '" aria-label="Delete rule">✕</button></li>').join('') + '</ul>' : '<p class="muted small">No rules.</p>') +
+      '<h3 style="margin-top:16px">Compatibility rules</h3>' + (p.morph.rules.length ? '<ul class="small">' + p.morph.rules.map((r, i) => '<li><b>' + esc(r.a[1]) + '</b> cannot go with <b>' + esc(r.b[1]) + '</b> — ' + esc(r.reason) + ' <button class="icon-btn" data-act="del-rule" data-i="' + i + '" aria-label="Delete rule">' + C.icon('x') + '</button></li>').join('') + '</ul>' : '<p class="muted small">No rules.</p>') +
       '<button class="btn small" data-act="add-rule"' + (params.length < 2 ? ' disabled' : '') + '>+ Rule</button></details>';
   }
 

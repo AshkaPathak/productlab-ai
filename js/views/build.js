@@ -17,14 +17,14 @@
     const rows = P.prioritize(p, ctx.index);
     return '<div class="card"><div class="row between"><div><h2>Feature prioritisation' + (sel ? ' for ' + esc(sel.name) : '') + '</h2>' +
       '<p class="muted small" style="margin:0">RICE = Reach × Impact × Confidence ÷ Effort. <b>Evidence-adjusted</b> RICE scales confidence by (0.5 + 0.5 × evidence score), so features nobody can back with evidence drop down the list.</p></div>' +
-      '<div class="row">' + (sel ? '<button class="btn" data-act="replan"' + (replanBusy ? ' disabled' : '') + ' title="Draft features, constraints and business model for the selected concept with the AI model">' + (replanBusy ? '<span class="spin dark"></span> Planning\u2026' : '\u2726 Re-plan for ' + esc(sel.name)) + '</button>' : '') +
+      '<div class="row">' + (sel ? '<button class="btn" data-act="replan"' + (replanBusy ? ' disabled' : '') + ' title="Draft features, constraints and business model for the selected concept with the AI model">' + (replanBusy ? '<span class="spin dark"></span> Planning\u2026' : C.icon('redo') + ' Re-plan for ' + esc(sel.name)) + '</button>' : '') +
       '<button class="btn primary" data-act="add-feature">+ Feature</button></div></div>' + PL.fig.riceBubbles(rows) + '</div>' +
       (rows.length ? rows.map((r) => {
         const f = r.feature; const id = esc(f.id); const base = 'features.' + id;
         return '<div class="card"><div class="row"><span class="pill">#' + r.rank + '</span><span class="mono muted">' + id + '</span>' +
           '<input style="flex:1;min-width:200px;font-weight:700" data-act="set" data-path="' + base + '.name" value="' + esc(f.name) + '">' +
           '<span class="small">RICE <b>' + fix(r.raw, 1) + '</b>, adjusted to <b>' + fix(r.adjusted, 1) + '</b> for ' + pct(r.evidence) + ' evidence</span>' +
-          '<button class="icon-btn" data-act="del" data-path="' + base + '" data-confirm="Delete feature ' + esc(f.name) + '?" aria-label="Delete">✕</button></div>' +
+          '<button class="icon-btn" data-act="del" data-path="' + base + '" data-confirm="Delete feature ' + esc(f.name) + '?" aria-label="Delete">' + C.icon('x') + '</button></div>' +
           '<div class="row small" style="margin-top:8px">' +
           '<label>Reach %</label><input type="number" min="0" max="100" data-act="set" data-type="number" data-path="' + base + '.reach" value="' + esc(f.reach) + '">' +
           '<label>Impact</label><select data-act="set" data-type="number" data-path="' + base + '.impact">' + IMPACT.map((x) => '<option value="' + x.v + '"' + (Number(f.impact) === x.v ? ' selected' : '') + '>' + x.l + '</option>').join('') + '</select>' +

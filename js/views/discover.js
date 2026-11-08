@@ -14,7 +14,7 @@
         p.needs.map((n) => '<tr><td class="mono">' + esc(n.id) + '</td><td><textarea rows="2" data-act="set" data-path="needs.' + esc(n.id) + '.statement">' + esc(n.statement) + '</textarea>' +
           C.citeEditor(ctx, 'needs.' + n.id + '.evidence', n.evidence, n.statement) + '</td>' +
           '<td><select data-act="set" data-type="number" data-path="needs.' + esc(n.id) + '.severity" aria-label="Severity">' + [5, 4, 3, 2, 1].map((s) => '<option value="' + s + '"' + (Number(n.severity) === s ? ' selected' : '') + '>' + s + (s === 5 ? ' critical' : s === 1 ? ' minor' : '') + '</option>').join('') + '</select></td>' +
-          '<td><button class="icon-btn" data-act="del" data-path="needs.' + esc(n.id) + '" data-confirm="Delete need ' + esc(n.id) + '?" aria-label="Delete">✕</button></td></tr>').join('') +
+          '<td><button class="icon-btn" data-act="del" data-path="needs.' + esc(n.id) + '" data-confirm="Delete need ' + esc(n.id) + '?" aria-label="Delete">' + C.icon('x') + '</button></td></tr>').join('') +
         '</tbody></table></div>' : C.empty('No needs yet. Use the Opportunity miner to turn evidence themes into needs.')) +
       (orphans.length ? '<p class="muted small" style="margin-top:10px">' + orphans.length + ' evidence findings are not used by any need yet: <span class="mono">' + esc(orphans.join(', ')) + '</span></p>' : '') +
       '</div><div class="card"><h2>How might we …</h2><textarea rows="2" data-act="set" data-path="hmw">' + esc(p.hmw) + '</textarea></div>';
@@ -43,11 +43,11 @@
   function personasTab(ctx) {
     const p = ctx.project;
     return '<div class="row between" style="margin-bottom:12px"><p class="muted small" style="margin:0">Personas built from evidence are proto-personas: assumptions to validate with real users. Pain points cite the evidence they rest on.</p><button class="btn primary" data-act="add-persona">+ Add persona</button></div>' +
-      '<div class="grid two">' + p.personas.map((ps) => '<div class="card persona-card"><div class="row between">' + C.avatar(ps.name) + '<input class="wide" style="font-weight:700;font-size:1.05rem" data-act="set" data-path="personas.' + esc(ps.id) + '.name" value="' + esc(ps.name) + '" aria-label="Persona name"><button class="icon-btn" data-act="del" data-path="personas.' + esc(ps.id) + '" data-confirm="Delete persona?" aria-label="Delete persona">✕</button></div>' +
+      '<div class="grid two">' + p.personas.map((ps) => '<div class="card persona-card"><div class="row between">' + C.avatar(ps.name) + '<input class="wide" style="font-weight:700;font-size:1.05rem" data-act="set" data-path="personas.' + esc(ps.id) + '.name" value="' + esc(ps.name) + '" aria-label="Persona name"><button class="icon-btn" data-act="del" data-path="personas.' + esc(ps.id) + '" data-confirm="Delete persona?" aria-label="Delete persona">' + C.icon('x') + '</button></div>' +
         '<input class="wide muted" style="margin-top:6px" data-act="set" data-path="personas.' + esc(ps.id) + '.role" value="' + esc(ps.role || '') + '" aria-label="Role">' +
         (ps.note ? '<div class="muted small" style="margin-top:4px">' + esc(ps.note) + '</div>' : '') +
         '<div class="field" style="margin-top:10px"><label>Goals (comma separated)</label><input class="wide" data-act="set" data-type="list" data-path="personas.' + esc(ps.id) + '.goals" value="' + esc((ps.goals || []).join(', ')) + '"></div>' +
-        '<label>Pain points</label>' + (ps.pains || []).map((pain, i) => '<div class="claim"><div class="row"><textarea rows="2" style="flex:1" data-act="set" data-path="personas.' + esc(ps.id) + '.pains.' + i + '.text">' + esc(pain.text) + '</textarea><button class="icon-btn" data-act="del-pain" data-persona="' + esc(ps.id) + '" data-i="' + i + '" aria-label="Remove pain point">✕</button></div>' +
+        '<label>Pain points</label>' + (ps.pains || []).map((pain, i) => '<div class="claim"><div class="row"><textarea rows="2" style="flex:1" data-act="set" data-path="personas.' + esc(ps.id) + '.pains.' + i + '.text">' + esc(pain.text) + '</textarea><button class="icon-btn" data-act="del-pain" data-persona="' + esc(ps.id) + '" data-i="' + i + '" aria-label="Remove pain point">' + C.icon('x') + '</button></div>' +
           C.citeEditor(ctx, 'personas.' + ps.id + '.pains.' + i + '.evidence', pain.evidence, pain.text) + '</div>').join('') +
         '<button class="btn small" data-act="add-pain" data-persona="' + esc(ps.id) + '">+ Pain point</button></div>').join('') + '</div>' +
       (p.personas.length ? '' : C.empty('No personas yet.'));
