@@ -116,6 +116,28 @@ The reported flip point is the weight closest to the current one at which the to
 
 **Technology stack.** A transparent rule base maps constraints (platform, sensitive data, AI type, wearables, offline use, budget, team skills, region, scale) to a recommendation per layer. Each pick carries the constraint that triggered it and alternatives.
 
+## 6b. Autopilot (`research.js`, `autopilot.js`)
+
+The autopilot chains the steps above from a single problem statement:
+
+1. **Plan.** The model restates the challenge, writes a How Might We question and proposes 3-4 short academic search queries. With no model, the content words of the problem are used as the query.
+2. **Research.** Each query is sent to the OpenAlex works API (`search=…&filter=has_abstract:true`). Abstracts are rebuilt from OpenAlex's inverted index and split into sentences.
+
+   Each sentence of 8-60 words is scored as cosine(problem, sentence), with three adjustments:
+   - +0.05 for result cues (found, reported, %, participants, and so on)
+   - +0.04 for numbers
+   - −0.12 for aims, methods or copyright text
+
+   The best two sentences per paper (up to 24 overall) become findings, **quoted verbatim**, with the paper as reference. Systematic reviews get strength 3, journal articles 2 and preprints 1.
+
+   With a Gemini key, the model is also called with the `google_search` tool. Only text segments that the API's `groundingSupports` link to a `groundingChunk` (web page) are kept, each with its source.
+3. **Users.** From the numbered evidence, the model drafts needs (with severity), proto-personas, competitors and synonym groups, citing evidence IDs. With no model, needs are drafted from evidence themes (Section 3).
+4. **Ideas.** The model proposes morphological parameters with option hints and compatibility rules. It then generates four concepts in grounded mode (Section 4).
+5. **Evaluate.** The model suggests a 1-5 rating with a one-sentence reason and evidence for every concept × criterion, plus failure modes. The weighted decision matrix ranks the concepts; the team then adjusts ratings or weights and selects a concept.
+6. **Build.** For the selected concept, the model drafts features (RICE inputs, MoSCoW, dependencies by name, evidence), product constraints and a Business Model Canvas. The rule-based recommender (Section 6) turns the constraints into the technology stack and languages. This step can be re-run for any concept.
+
+Model replies are parsed defensively: values are clamped to valid ranges, IDs are normalised, and unknown fields are dropped. Each step fails independently: if a step errors, the project keeps everything produced so far. The finished project is audited by the citation guard like any other.
+
 ## 7. Evaluation study statistics (`experiment.js`)
 
 - **Blinding.** Study concepts are shuffled with a seeded Fisher-Yates shuffle and given codes S01, S02, and so on. The rating sheet omits the condition, and the code-to-entry key is stored separately.
@@ -127,7 +149,7 @@ The reported flip point is the weight closest to the current one at which the to
 
 ## Validation
 
-`npm test` runs 42 unit tests, including:
+`npm test` runs 53 unit tests, including:
 - reproduction of the course's exemplar decision matrix (390 / 425 / 370)
 - the hand-calculated PCOS matrix (4.47 / 4.03 / 3.96 / 3.86 / 3.82)
 - an analytically derived flip point (0.556)
@@ -135,3 +157,4 @@ The reported flip point is the weight closest to the current one at which the to
 - CSV round-trips
 - dependency-aware scheduling
 - detection of hallucinated citation IDs
+- an end-to-end autopilot run against mocked OpenAlex and Gemini APIs, checking that every paper finding is verbatim from its abstract and that invented citations are flagged

@@ -31,6 +31,25 @@ Projects are saved in the browser. Use **Export JSON** on the Projects page to b
 
 ---
 
+## Start from a problem statement
+
+Type a problem in one or two sentences, for example *"People save posts on Instagram, YouTube and X but can never find them again"*. Then click **Run autopilot**. In about two minutes ProductLab produces:
+
+| Step | Output | Where it comes from |
+|---|---|---|
+| 1. Understand | Project name, refined challenge, How Might We question, search queries | Language model |
+| 2. Research | Evidence findings with full references | **Real sources only.** Sentences are quoted from paper abstracts in [OpenAlex](https://openalex.org) (free index of 250M+ papers). Optional web facts come from Gemini's Google Search grounding, which links every fact to a web page. |
+| 3. Users | Needs with severity, proto-personas, competitors, domain vocabulary | Language model, citing evidence IDs |
+| 4. Ideas | 4 product concepts and a morphological box | Language model (grounded), plus the morphological engine |
+| 5. Decide | Weighted decision matrix with a suggested score and reason for every cell, sensitivity and Monte Carlo analysis, risks | Language model suggests, **you decide**: change any score or weight and the ranking updates |
+| 6. Build | Features with RICE estimates, MVP roadmap, **requirements** (languages, frameworks, backend, database, privacy), Business Model Canvas | Language model drafts features and constraints; the rule-based recommender picks the stack |
+
+When you choose a different concept in the matrix, open **Build plan → Re-plan for …** to get the features and requirements for that idea.
+
+Everything the model writes must cite evidence IDs. The citation guard then checks every claim, so an invented citation shows up as *Missing evidence*.
+
+**Setup:** add a free Google Gemini API key in **Settings**. Without a key, autopilot still searches papers and groups the evidence into themes; the other steps need a model.
+
 ## What it does
 
 | Step | Module | Creative-intelligence technique | What you get |
@@ -96,7 +115,7 @@ node cli/productlab.js audit my-project.productlab.json   # any exported project
 ## Tests
 
 ```bash
-npm test        # 42 unit tests, Node's built-in test runner, no dependencies
+npm test        # 53 unit tests, Node's built-in test runner, no dependencies
 ```
 
 The tests reproduce the course's decision-matrix exemplar (390 / 425 / 370) and the corrected PCOS matrix. They also cover an analytically derived sensitivity flip point, the exact Wilcoxon p-value, CSV round-trips, dependency scheduling and detection of hallucinated citations.
@@ -117,6 +136,8 @@ js/engine/            framework-free engine, shared by app, CLI and tests
   planning.js         RICE, scheduling, tech stack rules
   report.js           strategy report generator
   llm.js              optional language-model client (Gemini / OpenAI-compatible)
+  research.js         OpenAlex paper search, verbatim finding extraction, grounded web search
+  autopilot.js        problem statement -> complete project pipeline
   experiment.js       blind rating sheets and statistics
 js/data/              sample case studies (verified evidence)
 js/app/               store, router, shared UI components and charts
@@ -128,7 +149,7 @@ docs/                 methodology, evaluation protocol, case-study evidence
 
 ## Using it for your own problem
 
-1. **Projects → New project.** Describe the challenge and your How Might We question.
+1. **Start from a problem** to let autopilot draft everything, or **Projects → Blank project** to build it by hand.
 2. **Evidence.** Add sources (papers, reports, laws, your own interviews) and break them into one-fact findings. Paste interview notes to turn each line into evidence.
 3. **Overview → Domain vocabulary.** Add synonym groups for your field. This noticeably improves matching.
 4. Work through **Discover → Ideate → Evaluate → Build plan**. Cite evidence wherever the badge says *Uncited*.
@@ -138,6 +159,8 @@ docs/                 methodology, evaluation protocol, case-study evidence
 
 - The citation guard measures **lexical** support, not truth. A flag is a prompt for human review. Thresholds are adjustable in Settings.
 - Ratings, RICE inputs and competitor positions are team judgements. The tool makes them explicit and testable (sensitivity, Monte Carlo) but cannot make them objective.
+- Autopilot quality depends on what the paper index and the web contain for your problem. Niche problems may return few findings: add your own interview notes on the Evidence page.
+- Ratings and estimates from autopilot are AI suggestions with reasons, not measurements. They are labelled as such in the app.
 - Data is stored in the browser's local storage. Export regularly. There is no multi-user server: teams share project files.
 - The sample case study is not medical advice. Product ideas involving health data must be reviewed by clinicians and against data-protection law (in India, the DPDP Act 2023 and DPDP Rules 2025).
 
