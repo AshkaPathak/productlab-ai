@@ -26,6 +26,7 @@
         '<td class="num"><input type="number" min="0" step="1" data-act="set" data-type="number" data-path="criteria.' + esc(c.id) + '.weight" value="' + esc(c.weight) + '"></td><td class="num">' + pct(w[i]) + '</td>' +
         '<td><button class="icon-btn" data-act="del" data-path="criteria.' + esc(c.id) + '" data-confirm="Delete criterion ' + esc(c.name) + '?" aria-label="Delete">✕</button></td></tr>').join('') + '</tbody></table></div></div>';
     const grid = '<div class="card"><h2>Weighted decision matrix</h2><p class="muted small">Total = Σ (weight × rating). Rate each concept 1–5 per criterion. Use ✎ to record why, with evidence.</p>' +
+      (p.autopilot && p.autopilot.model ? '<div class="infobox">These ratings were <b>suggested by AI</b> (' + esc(p.autopilot.model) + ') with a reason for each (\u{1F4CE}). They are a starting point: change any score or weight and the ranking updates. Then select the concept your team wants to build.</div>' : '') +
       '<div class="table-wrap"><table><thead><tr><th>Concept</th>' + p.criteria.map((c, i) => '<th class="num">' + esc(c.name) + '<br><span class="muted">' + pct(w[i]) + '</span></th>').join('') + '<th class="num">Score</th><th class="num">Rank</th></tr></thead><tbody>' +
       p.concepts.map((c) => {
         const r = byId.get(c.id);

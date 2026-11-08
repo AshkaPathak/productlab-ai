@@ -66,7 +66,8 @@
     const w = o.width - labelW - 60;
     const h = top + rows.length * (barH + gap);
     let svg = '<svg class="chart" viewBox="0 0 ' + o.width + ' ' + h + '" role="img" aria-label="Bar chart">';
-    if (legend) legend.forEach((l, i) => { svg += '<rect x="' + (labelW + i * 110) + '" y="4" width="10" height="10" rx="2" fill="' + PALETTE[i % PALETTE.length] + '"/><text x="' + (labelW + i * 110 + 14) + '" y="13" class="lg">' + esc(l) + '</text>'; });
+    const step = legend ? Math.min(110, (o.width - labelW) / legend.length) : 0;
+    if (legend) legend.forEach((l, i) => { svg += '<rect x="' + (labelW + i * step) + '" y="4" width="10" height="10" rx="2" fill="' + PALETTE[i % PALETTE.length] + '"/><text x="' + (labelW + i * step + 14) + '" y="13" class="lg">' + esc(l) + '</text>'; });
     rows.forEach((r, ri) => {
       const y = top + ri * (barH + gap);
       svg += '<text x="' + (labelW - 8) + '" y="' + (y + barH * 0.68) + '" text-anchor="end" class="lb">' + esc(r.label) + '</text>';

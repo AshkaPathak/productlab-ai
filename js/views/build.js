@@ -9,6 +9,7 @@
 
   const IMPACT = [{ v: 3, l: '3 massive' }, { v: 2, l: '2 high' }, { v: 1, l: '1 medium' }, { v: 0.5, l: '0.5 low' }, { v: 0.25, l: '0.25 minimal' }];
   const MOSCOW = ['Must', 'Should', 'Could', "Won't"];
+  let replanBusy = false;
 
   function featuresTab(ctx) {
     const p = ctx.project;
@@ -16,7 +17,8 @@
     const rows = P.prioritize(p, ctx.index);
     return '<div class="card"><div class="row between"><div><h2>Feature prioritisation' + (sel ? ' for ' + esc(sel.name) : '') + '</h2>' +
       '<p class="muted small" style="margin:0">RICE = Reach × Impact × Confidence ÷ Effort. <b>Evidence-adjusted</b> RICE scales confidence by (0.5 + 0.5 × evidence score), so features nobody can back with evidence drop down the list.</p></div>' +
-      '<button class="btn primary" data-act="add-feature">+ Feature</button></div></div>' +
+      '<div class="row">' + (sel ? '<button class="btn" data-act="replan"' + (replanBusy ? ' disabled' : '') + ' title="Draft features, constraints and business model for the selected concept with the AI model">' + (replanBusy ? '<span class="spin dark"></span> Planning\u2026' : '\u2726 Re-plan for ' + esc(sel.name)) + '</button>' : '') +
+      '<button class="btn primary" data-act="add-feature">+ Feature</button></div></div></div>' +
       (rows.length ? rows.map((r) => {
         const f = r.feature; const id = esc(f.id); const base = 'features.' + id;
         return '<div class="card"><div class="row"><span class="pill">#' + r.rank + '</span><span class="mono muted">' + id + '</span>' +
@@ -93,6 +95,20 @@
       ]) + (tab === 'roadmap' ? roadmapTab(ctx) : tab === 'stack' ? stackTab(ctx) : tab === 'canvas' ? canvasTab(ctx) : featuresTab(ctx));
     },
     actions: {
+      async replan(el, e, ctx) {
+        const p = ctx.project;
+        const settings = Object.assign({}, ctx.state.settings.ai, { apiKey: ctx.state.apiKey });
+        if (!PL.autopilot.hasModel(settings)) { toast('Connect an AI model in Settings first', 'bad'); return; }
+        const sel = p.concepts.find((c) => c.id === p.selectedConcept);
+        if (p.features.length && !(await PL.ui.confirmModal('Replace the ' + p.features.length + ' current features, constraints and business model with a new plan for ' + sel.name + '?', 'Re-plan'))) return;
+        replanBusy = true; ctx.render();
+        try {
+          const b = await PL.autopilot.buildPlan(p, sel.id, settings);
+          ctx.commit((pr) => { pr.features = b.features; pr.constraints = Object.assign({}, pr.constraints, b.constraints, { skills: pr.constraints.skills }); pr.bmc = Object.assign({}, pr.bmc, b.bmc); });
+          toast(b.features.length + ' features planned for ' + sel.name, 'ok');
+        } catch (err) { toast('Re-plan failed: ' + err.message, 'bad'); }
+        replanBusy = false; ctx.render();
+      },
       async 'add-feature'(el, e, ctx) {
         const v = await formModal('Add feature', [
           { name: 'name', label: 'Feature', required: true },
