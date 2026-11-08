@@ -60,6 +60,12 @@ Everything the model writes must cite evidence IDs. The citation guard then chec
 
 **Setup:** add a free Google Gemini API key in **Settings**. Without a key, autopilot still searches papers and groups the evidence into themes; the other steps need a model.
 
+## Colours and themes
+
+ProductLab's own colours carry meaning. **Blueprint blue** is thinking (evidence, people, ideas, decisions), **amber** is building (the build plan and the main buttons) and a **coral spark** marks creative moments. They sit on warm sketch paper with a faint blueprint grid. In the progress spheres, thinking steps fill blue and the build step fills amber.
+
+Each project's **Story** takes on a theme that suits its subject, picked from the project's domain, name and problem text: Bloom (health and care), Harvest (food and the planet), Signal (digital life), Campus (learning and students) or Tide (water, cities and travel). A different theme can be chosen under *Story theme* on the project Overview. The rest of the app keeps the ProductLab colours. Every orb, liquid and chart accent reads its colour from a CSS variable, so a theme re-tints the whole Story without touching the markup. Chart category colours stay fixed and were checked for colour-blind separation.
+
 ## Story view
 
 **Story** (in the sidebar, and the first button after an autopilot run) tells the whole project as one scrolling page. Each step gets a full-screen chapter: a headline with the key number, one sentence, and a graphic that builds as you scroll to it. The graphics are:

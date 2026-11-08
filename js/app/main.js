@@ -76,7 +76,7 @@
       const disabled = n.needsProject && !project;
       const p = n.step && prog ? prog[n.step - 1] : null;
       return '<a href="#/' + n.id + '" class="nav-item' + (route === n.id ? ' active' : '') + (disabled ? ' disabled' : '') + '"' + (route === n.id ? ' aria-current="page"' : '') + (n.hint ? ' title="' + esc(n.hint) + '"' : '') + (disabled ? ' aria-disabled="true" tabindex="-1"' : '') + '>' +
-        (n.step ? C.railNode(p ? p.done : 0) : '<span class="nav-icon">' + icon(n.id) + '</span>') + '<span>' + esc(n.label) + '</span>' +
+        (n.step ? C.railNode(p ? p.done : 0, p && p.kind) : '<span class="nav-icon">' + icon(n.id) + '</span>') + '<span>' + esc(n.label) + '</span>' +
         (p && p.big != null && p.big !== '\u2013' ? '<small>' + esc(p.big) + '</small>' : '') + '</a>';
     };
     const groups = [
@@ -109,6 +109,7 @@
       : '';
     app.innerHTML = sidebar(ctx.project) + '<main class="main" id="main" tabindex="-1">' + head + '<div class="view view-' + esc(route) + '">' + body + '</div></main>';
     if (view.after) { try { view.after(ctx, app); } catch (e) { console.error(e); } }
+    if (PL.theme) { try { PL.theme.apply(route === 'story' ? ctx.project : null); } catch (e) { console.error(e); } }
     if (PL.motion) { try { PL.motion.attach(route, app); } catch (e) { console.error(e); } }
     if (focusKey) {
       const el = app.querySelector('[data-path="' + CSS.escape(focusKey) + '"],[data-focus="' + CSS.escape(focusKey) + '"]');
