@@ -13,21 +13,21 @@
     render(ctx) {
       const list = ctx.state.projects.map((p) => {
         const cur = p.id === ctx.state.currentId;
-        return '<div class="card' + (cur ? ' concept-card selected' : '') + '">' +
-          '<div class="row between"><div><div class="muted small">' + esc(p.domain || 'Project') + '</div><h2>' + esc(p.name) + '</h2></div>' + (cur ? '<span class="pill">Open</span>' : '') + '</div>' +
-          '<p class="muted small">' + esc((p.challenge || '').slice(0, 220)) + (p.challenge && p.challenge.length > 220 ? '…' : '') + '</p>' +
-          '<div class="row small muted">' + p.findings.length + ' evidence · ' + p.needs.length + ' needs · ' + p.concepts.length + ' concepts · ' + p.features.length + ' features · updated ' + esc(String(p.updatedAt || '').slice(0, 10)) + '</div>' +
-          '<div class="row" style="margin-top:12px"><button class="btn primary" data-act="open" data-id="' + esc(p.id) + '">Open</button>' +
-          '<button class="btn" data-act="dup" data-id="' + esc(p.id) + '">Duplicate</button>' +
-          '<button class="btn" data-act="export" data-id="' + esc(p.id) + '">Export JSON</button>' +
-          '<span class="spacer"></span><button class="btn ghost danger" data-act="remove" data-id="' + esc(p.id) + '">Delete</button></div></div>';
+        let st = [];
+        try { st = C.stepProgress(p).map((x) => ({ label: '', state: x.done > 0 ? 'done' : 'pending', fill: x.done })); } catch (e) { st = []; }
+        return '<article class="project-row' + (cur ? ' current' : '') + '"><div><div class="muted small">' + esc(p.domain || 'Project') + ', updated ' + esc(String(p.updatedAt || '').slice(0, 10)) + '</div><h2>' + esc(p.name) + '</h2>' +
+          '<p class="muted">' + esc((p.challenge || '').slice(0, 220)) + (p.challenge && p.challenge.length > 220 ? '\u2026' : '') + '</p>' +
+          '<div class="row"><button class="btn primary" data-act="open" data-id="' + esc(p.id) + '">Open</button>' +
+          '<button class="btn ghost" data-act="dup" data-id="' + esc(p.id) + '">Duplicate</button>' +
+          '<button class="btn ghost" data-act="export" data-id="' + esc(p.id) + '">Export</button>' +
+          '<button class="btn ghost danger" data-act="remove" data-id="' + esc(p.id) + '">Delete</button></div></div>' +
+          (st.length ? C.press(st, { r: 26, gap: 62, label: p.name + ' progress' }) : '') + '</article>';
       }).join('');
-      return '<section class="hero"><h1>ProductLab AI</h1><p>Turn real evidence into a product strategy your team can defend. ' +
-        'Collect findings with sources, mine user needs, generate concepts with Random Association and Morphological Analysis, choose with a weighted decision matrix and sensitivity analysis, then plan features and an MVP roadmap — with every claim checked against the evidence it cites.</p>' +
-        '<div class="row"><button class="btn primary" data-act="go" data-to="start">\u2726 Start from a problem statement</button><button class="btn ghost" data-act="new">Blank project</button><label class="btn ghost" for="import-project">Import project (.json)</label>' +
-        '<input id="import-project" type="file" accept=".json,application/json" hidden data-act="import"><button class="btn ghost" data-act="samples">Restore sample case studies</button></div></section>' +
-        (list || C.empty('No projects yet. Create one or restore the sample case studies.')) +
-        '<p class="muted small">Projects are stored only in this browser. Export a project to share it with your team or to back it up; teammates can import the file.</p>';
+      return '<section class="hero">' + C.heroArt() + '<h1>Your product labs</h1><p>Each project keeps its evidence, people, ideas, decision and build plan together. Start from a problem statement and ProductLab drafts the rest, or build a project by hand.</p>' +
+        '<div class="row"><button class="btn accent" data-act="go" data-to="start">Start from a problem</button><button class="btn ghost" data-act="new">Blank project</button><label class="btn ghost" for="import-project">Import a project file</label>' +
+        '<input id="import-project" type="file" accept=".json,application/json" hidden data-act="import"><button class="btn ghost" data-act="samples">Restore the sample projects</button></div></section>' +
+        (list || C.empty('No projects yet. Start from a problem statement or restore the samples.')) +
+        '<p class="muted small" style="margin-top:18px">Projects are stored in this browser. Export one to back it up or share it; teammates can import the file.</p>';
     },
     actions: {
       open(el, e, ctx) { ctx.state.currentId = el.dataset.id; S.save(); ctx.go('overview'); },
@@ -76,21 +76,10 @@
 
   /* ---------------- Overview ---------------- */
 
-  function progress(p, audit) {
-    const rated = p.concepts.length && p.concepts.every((c) => p.criteria.every((k) => p.ratings[c.id] && p.ratings[c.id][k.id] && p.ratings[c.id][k.id].value !== ''));
-    return [
-      { id: 'evidence', label: 'Collect evidence', done: Math.min(1, p.findings.length / 10), detail: p.findings.length + ' findings, ' + p.references.length + ' sources' },
-      { id: 'discover', label: 'Identify needs', done: Math.min(1, p.needs.length / 4), detail: p.needs.length + ' needs, ' + p.personas.length + ' personas' },
-      { id: 'ideate', label: 'Generate concepts', done: Math.min(1, p.concepts.length / 3), detail: p.concepts.length + ' concepts' },
-      { id: 'evaluate', label: 'Evaluate & select', done: rated ? 1 : p.concepts.length ? 0.4 : 0, detail: rated ? 'All concepts rated' : 'Rate every concept' },
-      { id: 'build', label: 'Plan the build', done: Math.min(1, p.features.length / 5), detail: p.features.length + ' features' },
-      { id: 'report', label: 'Audit & report', done: audit.summary.total ? Math.min(1, audit.summary.traceability / 0.8) : 0, detail: 'Traceability ' + pct(audit.summary.traceability) }
-    ];
-  }
-
+  const NEXT_LABEL = { evidence: 'Collect evidence', discover: 'Identify people and needs', ideate: 'Generate ideas', evaluate: 'Score and choose an idea', build: 'Plan the build', report: 'Fix flagged claims' };
   function nextAction(steps) {
     const s = steps.find((x) => x.done < 1);
-    return s ? s : null;
+    return s ? Object.assign({}, s, { label: NEXT_LABEL[s.id] }) : null;
   }
 
   PL.views.overview = {
@@ -99,20 +88,15 @@
       const audit = PL.evidence.audit(p, ctx.index);
       const ranked = p.concepts.length ? PL.decision.wdm(p.concepts, p.criteria, p.ratings) : [];
       const sched = p.features.length ? PL.planning.schedule(p) : null;
-      const steps = progress(p, audit);
+      const steps = C.stepProgress(p, audit);
       const next = nextAction(steps);
       const top = ranked[0];
+      const stagesP = C.stepProgress(p, audit).map((x) => ({ label: x.label, state: x.done > 0 ? 'done' : 'pending', fill: x.done, big: x.big, sub: x.sub, href: '#/' + x.id, current: next && next.id === x.id }));
       return (p.caveats ? '<div class="warnbox">' + esc(p.caveats) + '</div>' : '') +
-        '<div class="stats">' +
-        C.stat('Evidence findings', p.findings.length, p.references.length + ' sources') +
-        C.stat('Validated needs', p.needs.length) +
-        C.stat('Concepts', p.concepts.length) +
-        C.stat('Traceability', pct(audit.summary.traceability), audit.summary.supported + ' supported of ' + audit.summary.total + ' claims') +
-        C.stat('Top concept', top ? esc(top.name) : '–', top ? 'score ' + fix(top.total) + ' / 5' : '') +
-        C.stat('MVP duration', sched ? Math.ceil(sched.mvpWeeks) + ' wks' : '–', sched ? sched.phases[0].tasks.length + ' Must features' : '') +
-        '</div>' +
-        (next ? '<div class="infobox">Next step: <a href="#/' + next.id + '">' + esc(next.label) + '</a> — ' + esc(next.detail) + '</div>' : '<div class="okbox">Every workflow step has content. Review the <a href="#/report">traceability audit</a> and export the report.</div>') +
-        '<div class="steps" style="margin-bottom:16px">' + steps.map((s, i) => '<a class="step' + (s.done >= 1 ? ' done' : '') + '" href="#/' + s.id + '"><div class="row"><span class="num">' + (i + 1) + '</span><b>' + esc(s.label) + '</b></div><div class="muted small" style="margin-top:6px">' + esc(s.detail) + '</div><div class="progress"><span style="width:' + Math.round(s.done * 100) + '%"></span></div></a>').join('') + '</div>' +
+        (next ? '<div class="next"><span>Next</span><b>' + esc(next.label) + '</b><span class="muted small">' + esc(next.detail) + '</span><a class="btn primary" href="#/' + next.id + '">Continue</a></div>'
+          : '<div class="next"><b>Every step has content.</b><span class="muted small">Check the audit, then export the report.</span><a class="btn primary" href="#/report">Open the audit</a></div>') +
+        '<div class="press-wrap">' + C.press(stagesP, { label: 'Project progress' }) + '</div>' +
+        (top ? '<p class="lead">Leading idea: <b>' + esc(top.name) + '</b>, scoring ' + fix(top.total) + ' out of 5' + (sched ? '. Its first release takes about ' + Math.ceil(sched.mvpWeeks) + ' weeks.' : '.') + '</p>' : '') +
         '<div class="grid two"><div class="card"><h2>Project brief</h2>' +
         '<div class="field"><label>Name</label><input class="wide" data-act="set" data-path="name" value="' + esc(p.name) + '"></div>' +
         '<div class="field"><label>Domain</label><input class="wide" data-act="set" data-path="domain" value="' + esc(p.domain) + '"></div>' +
