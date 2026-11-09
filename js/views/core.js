@@ -129,14 +129,21 @@
       const ai = s.ai;
       const presets = PL.llm.PRESETS;
       return '<div class="grid two"><div class="card"><h2>AI assistant (optional)</h2>' +
-        '<p class="muted small">ProductLab AI works fully offline. Connect a language model only if you want AI-generated concepts. Generated claims are always checked by the citation guard before you can use them.</p>' +
+        '<p class="muted small">Without a model, ProductLab still finds research papers and groups them into themes. Connect one to get people, ideas, scores and a build plan. Every claim the model writes is checked by the citation guard.</p>' +
+        (ai.provider === 'gemini' ? '<details class="keyguide"' + (ctx.state.apiKey ? '' : ' open') + '><summary>Get a free Gemini key (about two minutes)</summary><ol>' +
+          '<li>Open <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio, API keys</a> and sign in with a Google account.</li>' +
+          '<li>Choose <b>Create API key</b>. No card is needed for the free tier.</li>' +
+          '<li>Copy the key (it starts with <span class="mono">AIza</span>), paste it below and press <b>Test connection</b>.</li></ol>' +
+          '<p class="muted small">Free keys have daily and per-minute limits, which Google shows in AI Studio; ProductLab waits and retries when asked to slow down. On the free tier Google may use what you send to improve its products, so avoid confidential details. Searching the web (Google Search grounding) needs a paid Gemini project.</p></details>' : '') +
         '<div class="field"><label for="ai-preset">Provider</label><select id="ai-preset" class="wide" data-act="preset">' + Object.keys(presets).map((k) => '<option value="' + k + '"' + (ai.preset === k ? ' selected' : '') + '>' + esc(presets[k].label) + '</option>').join('') + '<option value="custom"' + (ai.preset === 'custom' ? ' selected' : '') + '>Custom OpenAI-compatible endpoint</option></select></div>' +
         '<div class="field"><label for="ai-base">Base URL</label><input id="ai-base" class="wide mono" data-act="aiset" data-key="baseUrl" value="' + esc(ai.baseUrl) + '"></div>' +
-        '<div class="field"><label for="ai-model">Model</label><input id="ai-model" class="wide mono" data-act="aiset" data-key="model" value="' + esc(ai.model) + '"><small class="help">Model names change often — check your provider’s current list.</small></div>' +
+        '<div class="field"><label for="ai-model">Model</label><input id="ai-model" class="wide mono" list="ai-models" data-act="aiset" data-key="model" value="' + esc(ai.model) + '">' +
+        (ai.provider === 'gemini' ? '<datalist id="ai-models">' + PL.llm.GEMINI_MODELS.map((m) => '<option value="' + m.id + '">' + esc(m.note) + '</option>').join('') + '</datalist>' +
+          '<small class="help">' + PL.llm.GEMINI_MODELS.map((m) => '<span class="mono">' + m.id + '</span>: ' + esc(m.note)).join('<br>') + '</small>' : '<small class="help">Model names change often, so check your provider\u2019s current list.</small>') + '</div>' +
         '<div class="field"><label for="ai-key">API key</label><input id="ai-key" class="wide mono" type="password" autocomplete="off" data-act="aikey" value="' + esc(ctx.state.apiKey) + '" placeholder="' + (ai.provider === 'gemini' ? 'Get a free key at aistudio.google.com' : 'sk-…') + '"></div>' +
         '<label class="check"><input type="checkbox" data-act="remember"' + (ai.remember ? ' checked' : '') + '> Remember the key on this device (otherwise it is forgotten when the tab closes)</label>' +
         '<div class="row" style="margin-top:12px"><button class="btn primary" data-act="test">Test connection</button><span class="muted small" id="ai-status"></span></div>' +
-        '<p class="muted small" style="margin-top:10px">The key is sent only to the provider above, directly from your browser.</p>' +
+        '<p class="muted small" style="margin-top:10px">The key stays in this browser and is sent only to the provider above. It is never saved in the project, the exported files or the code repository.</p>' +
         '<h2 style="margin-top:22px">Paper search (OpenAlex)</h2><p class="muted small">Autopilot searches the free OpenAlex index of research papers. Without a key it allows about 100 searches a day; a free key from openalex.org raises that.</p>' +
         '<div class="field"><label for="oa-key">OpenAlex API key (optional)</label><input id="oa-key" class="wide mono" type="password" autocomplete="off" data-act="oakey" value="' + esc(ctx.state.settings.openAlexKey || '') + '"></div></div>' +
         '<div class="card"><h2>Citation guard</h2><p class="muted small">Each claim is compared with the evidence it cites using TF-IDF cosine similarity. Above the <b>strong</b> threshold a claim counts as supported; between the thresholds it is partially supported; below, the citation is flagged as not supporting the claim.</p>' +

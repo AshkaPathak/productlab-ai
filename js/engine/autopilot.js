@@ -234,11 +234,13 @@
    */
   const n = (k, one, many) => k + ' ' + (k === 1 ? one : many);
 
-  async function run(problem, settings, options) {
+  async function run(problem, rawSettings, options) {
     const o = Object.assign({ web: true, papersPerQuery: 8, openAlexKey: '', fetch: null, onStep() {}, onLog() {} }, options || {});
+    const log = (m) => o.onLog(m);
+    // free AI keys allow only a few requests a minute: say so when the provider asks us to wait
+    const settings = Object.assign({}, rawSettings, { onWait: (sec) => log('The AI provider asked for a short pause; waiting ' + Math.round(sec) + ' seconds.') });
     const f = o.fetch; const ai = hasModel(settings);
     const step = (id, status, detail) => o.onStep(id, status, detail || '');
-    const log = (m) => o.onLog(m);
     const started = new Date();
     const project = {
       name: '', domain: '', team: [], challenge: problem, hmw: '', glossary: [], references: [], findings: [], needs: [], personas: [],

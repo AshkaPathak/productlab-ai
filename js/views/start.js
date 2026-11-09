@@ -75,9 +75,9 @@
 
   const FAQ = [
     ['Do I need to know product design or research methods?', 'No. Write the problem the way you would explain it to a friend. Every step explains itself, and you can change anything it suggests.'],
-    ['What do I need to start?', 'Just the problem. For people, ideas, scores and a build plan, add a free Google Gemini API key in Settings. Without one, ProductLab still finds research and groups it into themes.'],
+    ['What do I need to start?', 'Just the problem. For people, ideas, scores and a build plan, add a free Google Gemini API key in Settings; the steps are shown there and take about two minutes. Without one, ProductLab still finds research and groups it into themes. Searching the web as well needs a paid Gemini project.'],
     ['How do I know it is not making things up?', 'Facts are only taken from sources, never written from the model’s memory, and every claim is checked against the fact it cites. Anything unsupported is flagged in red.'],
-    ['Where is my work saved?', 'In this browser only. The only things sent anywhere are search phrases to OpenAlex and, if you add a key, the text the AI model needs. You can export any project as a file from Projects.']
+    ['Where is my work saved?', 'In this browser only. The only things sent anywhere are search phrases to OpenAlex and, if you add a key, the text the AI model needs. On Google\u2019s free tier, Google may use that text to improve its products, so leave out anything confidential. You can export any project as a file from Projects.']
   ];
 
   function idle(ctx) {
@@ -100,7 +100,7 @@
       '<div class="composer"><label for="problem" class="sr-only">Problem statement</label><textarea id="problem" rows="3" data-focus="problem" placeholder="e.g. ' + esc(EXAMPLES[0].text) + '">' + esc(u.problem || '') + '</textarea>' +
       '<div class="row"><span class="muted small">Or try one:</span>' + EXAMPLES.map((x, i) => '<button class="example" data-act="example" data-i="' + i + '">' + esc(x.short) + '</button>').join('') + '</div></div>' +
       '<div class="row start-actions"><button class="btn accent big" data-act="run">Find users, ideas and a plan</button>' +
-      '<label class="check small"><input type="checkbox" id="opt-web"' + (canWeb && u.web !== false ? ' checked' : '') + (canWeb ? '' : ' disabled') + '> Search the web too</label>' +
+      '<label class="check small" title="Uses Google Search grounding, which Google includes only on paid Gemini projects"><input type="checkbox" id="opt-web"' + (canWeb && u.web === true ? ' checked' : '') + (canWeb ? '' : ' disabled') + '> Search the web too (paid Gemini key)</label>' +
       '<label class="small" for="opt-papers">Papers per search</label><select id="opt-papers">' + [5, 8, 12].map((n) => '<option' + (Number(u.papers || 8) === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>' +
       (ai ? '<p class="muted small">Using ' + esc(s.model) + '. A run takes 1 to 2 minutes, and you can watch each step happen.</p>'
         : '<div class="warnbox">Without an AI model, ProductLab only gathers research and groups it into themes. <a href="#/settings">Add a free Gemini key</a> to get users, ideas, scores and a build plan.</div>') +

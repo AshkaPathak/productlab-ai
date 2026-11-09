@@ -150,7 +150,11 @@
       body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: WEB_PROMPT(problem) }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } })
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error('Gemini web search error ' + res.status + ': ' + ((data.error && data.error.message) || res.statusText));
+    if (!res.ok) {
+      // Google includes Search grounding only on paid Gemini projects for Gemini 3 models.
+      if (res.status === 400 || res.status === 403 || res.status === 429) throw new Error('web search is not available for this key (Google includes Search grounding only on paid Gemini projects), so this run uses research papers only');
+      throw new Error('Gemini web search error ' + res.status + ': ' + ((data.error && data.error.message) || res.statusText));
+    }
     const cand = (data.candidates || [])[0] || {};
     const gm = cand.groundingMetadata || {};
     const chunks = (gm.groundingChunks || []).map((c) => c.web || {}).map((w) => ({ url: w.uri || '', title: w.title || '', org: domainOf(w.uri, w.title) }));

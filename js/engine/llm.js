@@ -12,7 +12,7 @@
   'use strict';
 
   const PRESETS = {
-    gemini: { label: 'Google Gemini (free tier available)', provider: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-3.5-flash' },
+    gemini: { label: 'Google Gemini (free tier available)', provider: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-3.8-flash' },
     openai: { label: 'OpenAI', provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
     groq: { label: 'Groq (OpenAI-compatible)', provider: 'openai', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
     openrouter: { label: 'OpenRouter (OpenAI-compatible)', provider: 'openai', baseUrl: 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct' },
@@ -89,6 +89,51 @@
     })).filter((c) => c.name);
   }
 
+  /* Gemini models suggested in Settings. Free-tier limits are set per Google
+     project and shown in Google AI Studio; Flash-Lite allows more requests. */
+  const GEMINI_MODELS = [
+    { id: 'gemini-3.8-flash', note: 'best quality; lower free limits' },
+    { id: 'gemini-3.6-flash', note: 'previous Flash' },
+    { id: 'gemini-3.5-flash-lite', note: 'faster; higher free limits' }
+  ];
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /** Seconds Google asks us to wait, from a 429 body ("retryDelay": "17s"), if any. */
+  function retryDelay(data) {
+    const d = ((data && data.error && data.error.details) || []).find((x) => x && x.retryDelay);
+    const m = d && String(d.retryDelay).match(/([\d.]+)s/);
+    return m ? Number(m[1]) : null;
+  }
+
+  /** Turn a provider error into something a non-expert can act on. */
+  function explain(status, message, model) {
+    const msg = String(message || '');
+    if (/API key not valid|API_KEY_INVALID|invalid api key|Incorrect API key/i.test(msg) || status === 401) return 'The AI provider did not accept the key. Check it in Settings (Gemini keys start with "AIza").';
+    if (status === 404 || /not found|is not supported/i.test(msg)) return 'The model "' + model + '" is not available to this key. In Settings, try gemini-3.8-flash or gemini-3.5-flash-lite.';
+    if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'Today\u2019s free quota for ' + model + ' is used up. It resets at midnight US Pacific time. Meanwhile, switch the model to gemini-3.5-flash-lite in Settings, which allows more free requests.';
+    if (status === 429) return 'The AI provider is limiting how fast this key can make requests. Wait a minute and run again.';
+    if (status === 403) return 'This key is not allowed to use ' + model + '. Check the key\u2019s project in Google AI Studio.';
+    if (status >= 500) return 'The AI provider had a temporary problem (' + status + '). Try again in a minute.';
+    return 'AI provider error ' + status + ': ' + msg;
+  }
+
+  /** POST with up to two retries on rate limits and server hiccups, waiting as long as the provider asks. */
+  async function send(f, url, init, s) {
+    let res; let data;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      res = await f(url, init);
+      data = await res.json().catch(() => ({}));
+      const msg = (data.error && (data.error.message || data.error)) || res.statusText;
+      const daily = /per ?day|PerDay|daily/i.test(String(msg));
+      if (res.ok || !(res.status === 429 || res.status === 500 || res.status === 503) || daily || attempt === 2) break;
+      const wait = Math.min(60, retryDelay(data) || (attempt ? 30 : 12));
+      if (typeof s.onWait === 'function') s.onWait(wait);
+      await sleep((s.retryScale == null ? 1000 : s.retryScale) * wait);
+    }
+    return { res, data };
+  }
+
   /** Call the configured provider. fetchImpl is injectable for tests. */
   async function chat(settings, messages, fetchImpl) {
     const f = fetchImpl || (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : null);
@@ -101,23 +146,21 @@
       if (!s.apiKey) throw new Error('Gemini needs an API key');
       const sys = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
       const contents = messages.filter((m) => m.role !== 'system').map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
-      res = await f(base + '/models/' + encodeURIComponent(s.model) + ':generateContent', {
+      ({ res, data } = await send(f, base + '/models/' + encodeURIComponent(s.model) + ':generateContent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': s.apiKey },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { temperature: s.temperature, responseMimeType: 'application/json' } })
-      });
-      data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error('Gemini error ' + res.status + ': ' + ((data.error && data.error.message) || res.statusText));
+      }, s));
+      if (!res.ok) throw new Error(explain(res.status, (data.error && data.error.message) || res.statusText, s.model));
       const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
       return parts.map((p) => p.text || '').join('');
     }
     const headers = { 'Content-Type': 'application/json' };
     if (s.apiKey) headers.Authorization = 'Bearer ' + s.apiKey;
-    res = await f(base + '/chat/completions', {
+    ({ res, data } = await send(f, base + '/chat/completions', {
       method: 'POST', headers, body: JSON.stringify({ model: s.model, messages, temperature: s.temperature })
-    });
-    data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error('Model error ' + res.status + ': ' + ((data.error && (data.error.message || data.error)) || res.statusText));
+    }, s));
+    if (!res.ok) throw new Error(explain(res.status, (data.error && (data.error.message || data.error)) || res.statusText, s.model));
     return (((data.choices || [])[0] || {}).message || {}).content || '';
   }
 
@@ -128,5 +171,5 @@
     return { concepts: normalizeConcepts(extractJSON(reply), o.mode === 'grounded' ? 'ai' : 'ai-baseline'), raw: reply, messages };
   }
 
-  return { PRESETS, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts };
+  return { PRESETS, GEMINI_MODELS, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay };
 });

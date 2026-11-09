@@ -99,6 +99,8 @@
       state.currentId = state.projects.length ? state.projects[0].id : null;
     }
     state.apiKey = safeGet(root.sessionStorage, KEY_SECRET) || safeGet(root.localStorage, KEY_SECRET) || '';
+    // gemini-3.5-flash is no longer offered in AI Studio (Google routes it to 3.6 Flash); move to the recommended model
+    if (state.settings && state.settings.ai && state.settings.ai.model === 'gemini-3.5-flash') state.settings.ai.model = 'gemini-3.8-flash';
     if (!state.projects.find((p) => p.id === state.currentId)) state.currentId = state.projects[0] ? state.projects[0].id : null;
   }
 

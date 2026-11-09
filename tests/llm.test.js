@@ -50,5 +50,5 @@ test('chat speaks the Gemini protocol and surfaces API errors', async () => {
   const s = { provider: 'gemini', baseUrl: 'https://g.test/v1beta', model: 'g-1', apiKey: 'k' };
   assert.equal(await L.chat(s, [{ role: 'system', content: 'sys' }, { role: 'user', content: 'u' }], ok), '{"x":1}');
   const bad = async () => ({ ok: false, status: 400, statusText: 'Bad', json: async () => ({ error: { message: 'API key not valid' } }) });
-  await assert.rejects(L.chat(s, [{ role: 'user', content: 'u' }], bad), /API key not valid/);
+  await assert.rejects(L.chat(s, [{ role: 'user', content: 'u' }], bad), /did not accept the key/);
 });

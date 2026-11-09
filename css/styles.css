@@ -672,3 +672,8 @@ pre.code { background: rgba(22, 26, 58, .92); color: #e7e9f8; padding: 14px; bor
 /* home hook */
 .home-hero h1.hook { max-width: 19ch; }
 .home-hero h1.hook em { color: var(--build); }
+.keyguide { margin: 4px 0 14px; padding: 12px 16px; border-radius: var(--r-md); background: var(--build-soft); border: 1px solid rgba(255, 178, 30, .35); }
+.keyguide summary { font-size: .95rem; }
+.keyguide ol { margin: 10px 0 8px; padding-left: 20px; }
+.keyguide li { margin-bottom: 4px; font-size: .93rem; }
+.keyguide p { margin: 0; }
