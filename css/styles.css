@@ -896,3 +896,4 @@ input:focus, select:focus, textarea:focus { border-color: var(--think); box-shad
   .home-hero h1.hook { font-size: 2rem; }
   .steps6 { grid-template-columns: 1fr; }
 }
+.brand .logo { width: 36px; height: 36px; }

@@ -304,8 +304,18 @@
       '<circle class="rim' + (opt.dashed ? ' pending' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (r - 0.7) + '" fill="none"/></g>';
   }
 
+  /* The ProductLab mark: a lab flask filled with the six step colours, bottom to top. */
+  const FLASK = 'M19 5h10v13l11.2 18.6A5 5 0 0 1 35.9 44H12.1a5 5 0 0 1-4.3-7.4L19 18z';
+  const STEP_COLOURS = ['#1f6fe0', '#d42a63', '#ffc21a', '#6e45f5', '#ff7a1a', '#0c8a60'];
+  let logoN = 0;
   function logo() {
-    return '<svg class="logo" viewBox="0 0 34 34" aria-hidden="true">' + orb(17, 18, 14, 'brandBuild') + orb(11.5, 11, 5.5, 'brandThink', { rim: false }) + '</svg>';
+    const id = 'pl-flask-' + (++logoN);
+    const bands = STEP_COLOURS.map((c, i) => '<rect x="0" y="' + (44 - (i + 1) * 3.6).toFixed(2) + '" width="48" height="3.7" fill="' + c + '"/>').join('');
+    return '<svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + FLASK + '"/></clipPath></defs>' +
+      '<path d="' + FLASK + '" fill="#fff"/><g clip-path="url(#' + id + ')">' + bands + '</g>' +
+      '<path d="' + FLASK + '" fill="none" stroke="#1a1a2e" stroke-width="2.6" stroke-linejoin="round"/>' +
+      '<path d="M17 5h14" stroke="#1a1a2e" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<circle cx="24" cy="12" r="1.9" fill="#6e45f5"/><circle cx="27" cy="16.5" r="1.3" fill="#ff4f79"/></svg>';
   }
 
   /** Small mark beside page titles. */
