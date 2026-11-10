@@ -47,3 +47,12 @@ test('concept marks never fail, whatever the name', () => {
 test('figures stay empty rather than failing on an empty project', () => {
   figuresFor({}).forEach((html) => assert.ok(typeof html === 'string' && !/undefined|NaN/.test(html)));
 });
+
+test('bar chart labels get room for long names and are shortened only past the limit', () => {
+  const C = PL.comp;
+  const svg = C.stackedBars([{ label: 'Campus Counseling Access Portal', total: 4.28 }, { label: 'X', total: 3 }], null, { max: 5 });
+  assert.ok(svg.includes('>Campus Counseling Access Portal</text>'), 'a 31-character name fits whole');
+  const long = C.stackedBars([{ label: 'A very long concept name that keeps going well past any sensible chart label width', total: 2 }], null, { max: 5 });
+  assert.match(long, /…<\/text>/);
+  assert.match(long, /<title>A very long concept name that keeps going/);
+});

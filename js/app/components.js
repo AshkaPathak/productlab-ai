@@ -73,7 +73,12 @@
   /** Horizontal stacked bars. rows: [{label, segments:[{value,label}], total}] */
   function stackedBars(rows, legend, options) {
     const o = Object.assign({ width: 640, max: null, unit: '' }, options || {});
-    const labelW = 190; const barH = 26; const gap = 10; const top = legend ? 30 : 6;
+    // size the label column to the longest name (about 6.9 units per character at 12.5px), within limits
+    const CH = 6.9; const MAXW = Math.min(300, Math.round(o.width * 0.42));
+    const longest = Math.max(0, ...rows.map((r) => String(r.label || '').length));
+    const labelW = Math.max(120, Math.min(MAXW, Math.round(longest * CH + 16)));
+    const fit = (t) => { const n = Math.floor((labelW - 16) / CH); const str = String(t || ''); return str.length > n ? str.slice(0, Math.max(1, n - 1)).trimEnd() + '\u2026' : str; };
+    const barH = 26; const gap = 10; const top = legend ? 30 : 6;
     const max = o.max || Math.max(1e-9, ...rows.map((r) => r.total));
     const w = o.width - labelW - 60;
     const h = top + rows.length * (barH + gap);
@@ -82,7 +87,7 @@
     if (legend) legend.forEach((l, i) => { svg += '<rect x="' + (labelW + i * step) + '" y="4" width="10" height="10" rx="5" fill="' + PALETTE[i % PALETTE.length] + '"/><text x="' + (labelW + i * step + 14) + '" y="13" class="lg">' + esc(l) + '</text>'; });
     rows.forEach((r, ri) => {
       const y = top + ri * (barH + gap);
-      svg += '<text x="' + (labelW - 8) + '" y="' + (y + barH * 0.68) + '" text-anchor="end" class="lb">' + esc(r.label) + '</text>';
+      svg += '<text x="' + (labelW - 8) + '" y="' + (y + barH * 0.68) + '" text-anchor="end" class="lb"><title>' + esc(r.label) + '</title>' + esc(fit(r.label)) + '</text>';
       let x = labelW;
       (r.segments || [{ value: r.total }]).forEach((s, si) => {
         const sw = (s.value / max) * w;
