@@ -84,3 +84,13 @@ test('a provider that never answers is cut off with a plain message', async () =
 test('new-style keys get a key hint that mentions both formats', () => {
   assert.match(L.explain(400, 'API key not valid. Please pass a valid API key.', 'm'), /"AQ\." or "AIza"/);
 });
+
+test('a main model that hangs is given up on, and Flash-Lite answers instead', async () => {
+  const seen = [];
+  const f = (url, init) => { seen.push(url); return /3\.8/.test(url)
+    ? new Promise((resolve, reject) => { init.signal.addEventListener('abort', () => { const e = new Error('aborted'); e.name = 'AbortError'; reject(e); }); })
+    : Promise.resolve(reply(200, ok)); };
+  const out = await L.chat(Object.assign({}, gemini, { timeoutMs: 20 }), [{ role: 'user', content: 'hi' }], f);
+  assert.equal(out, '{"ok":true}');
+  assert.match(seen[seen.length - 1], /gemini-3\.5-flash-lite/);
+});

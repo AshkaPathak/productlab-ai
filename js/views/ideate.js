@@ -181,9 +181,10 @@
         u.aiBusy = true; u.aiError = ''; ctx.render();
         try {
           const mode = u.aiMode || 'grounded';
-          const r = await PL.llm.generateConcepts(ctx.project, Object.assign({}, s, { apiKey: ctx.state.apiKey }), { mode, count: Number(u.aiCount || 3) });
+          let used = s.model;
+          const r = await PL.llm.generateConcepts(ctx.project, Object.assign({}, s, { apiKey: ctx.state.apiKey, onModel: (m) => { used = m; } }), { mode, count: Number(u.aiCount || 3) });
           if (!r.concepts.length) throw new Error('The model replied, but no concepts could be read from the reply.');
-          u.ai = { concepts: r.concepts, mode, messages: r.messages, model: s.model, at: new Date().toLocaleString() };
+          u.ai = { concepts: r.concepts, mode, messages: r.messages, model: used, at: new Date().toLocaleString() };
         } catch (err) {
           u.aiError = err.message + (/Failed to fetch|NetworkError/.test(err.message) ? ' — the request was blocked (network or CORS). Check the base URL in Settings.' : '');
         }

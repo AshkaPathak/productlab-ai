@@ -127,7 +127,11 @@
     try {
       return await f(url, ctl ? Object.assign({}, init, { signal: ctl.signal }) : init);
     } catch (err) {
-      if (err && err.name === 'AbortError') throw new Error('The AI provider did not answer within ' + Math.round(limit / 1000) + ' seconds. Try again, or pick a lighter model in Settings.');
+      if (err && err.name === 'AbortError') {
+        const e = new Error('The AI provider did not answer within ' + Math.round(limit / 1000) + ' seconds. Try again, or pick a lighter model in Settings.');
+        e.timeout = true;
+        throw e;
+      }
       throw err;
     } finally { if (timer) clearTimeout(timer); }
   }
@@ -190,8 +194,15 @@
       if (canFall && busyUntil[s.model] > now()) {
         used = GEMINI_FALLBACK;
       } else {
-        ({ res, data } = await send(f, url(s.model), init, s, canFall));
-        if (canFall && shouldFallBack(res, data)) { busyUntil[s.model] = now() + BUSY_MS; used = GEMINI_FALLBACK; }
+        try {
+          // an overloaded model sometimes hangs instead of answering 503: give it less time when a fallback exists
+          const first = canFall ? Object.assign({}, s, { timeoutMs: s.timeoutMs == null ? 40000 : s.timeoutMs }) : s;
+          ({ res, data } = await send(f, url(s.model), init, first, canFall));
+          if (canFall && shouldFallBack(res, data)) { busyUntil[s.model] = now() + BUSY_MS; used = GEMINI_FALLBACK; }
+        } catch (err) {
+          if (!(canFall && err && err.timeout)) throw err;
+          busyUntil[s.model] = now() + BUSY_MS; used = GEMINI_FALLBACK;
+        }
       }
       if (used !== s.model) {
         if (typeof s.onFallback === 'function') s.onFallback(s.model, used);
