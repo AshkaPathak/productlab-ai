@@ -70,3 +70,17 @@ test('autopilot stops cleanly when no evidence can be found', async () => {
   assert.equal(steps.research, 'failed');
   assert.equal(p.findings.length, 0);
 });
+
+test('when the chosen model is busy, the run switches models once and records the one that answered', async () => {
+  require('../js/engine/llm.js').resetBusy();
+  const inner = makeFetch();
+  const f = async (url, init) => (/gemini-busy:generateContent$/.test(url)
+    ? { ok: false, status: 503, statusText: 'x', json: async () => ({ error: { message: 'This model is currently experiencing high demand.' } }) }
+    : inner(url, init));
+  const logs = [];
+  const p = await A.run(PROBLEM, Object.assign({}, gemini, { model: 'gemini-busy', retryScale: 0 }), { fetch: f, web: false, onLog: (m) => logs.push(m) });
+  assert.equal(p.autopilot.model, 'gemini-3.5-flash-lite');
+  assert.match(p.caveats, /with gemini-3\.5-flash-lite\./);
+  assert.equal(logs.filter((m) => /busy or out of free quota/.test(m)).length, 1);
+  require('../js/engine/llm.js').resetBusy();
+});
