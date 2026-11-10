@@ -52,15 +52,6 @@
   }
 
   /* Plain-language walkthrough of each step: what happens, what you get. */
-  const HOW = [
-    { id: 'plan', title: 'Understand the problem', does: 'Your sentence is turned into one clear question and a few search phrases.', get: 'A sharper problem statement' },
-    { id: 'research', title: 'Find the research', does: 'Real research papers (from OpenAlex) are read, plus web pages if you allow it. Facts from papers are quoted word for word; facts from the web come with the page that supports them.', get: 'Facts, each with a source you can open' },
-    { id: 'users', title: 'Meet the people', does: 'The facts are grouped to show who has this problem and what they need most.', get: 'Short profiles of typical people, and their needs' },
-    { id: 'ideas', title: 'Suggest ideas', does: 'Several different ways to solve the problem, each linked to the needs it answers.', get: 'A handful of ideas to compare' },
-    { id: 'evaluate', title: 'Help you choose', does: 'Each idea is scored 1 to 5 on things like “do people want it” and “can we build it”, each with a short reason.', get: 'A ranked scorecard you can adjust' },
-    { id: 'build', title: 'Plan the build', does: 'For the idea you pick: what to build first, the languages and tools to build it with, and a rough timeline.', get: 'Requirements and a first-release plan' }
-  ];
-
   const WORDS = [
     ['Finding', 'One fact from a source, quoted exactly, such as a statistic from a study.'],
     ['Persona', 'A short profile of a typical person who has the problem. A starting guess to check with real people.'],
@@ -85,44 +76,36 @@
     const ai = A.hasModel(aiSettings(ctx.state));
     const canWeb = ai && s.provider === 'gemini';
     const u = ctx.ui('start');
-    const preview = A.STEPS.map((x) => ({ label: LABEL[x.id], kind: x.id === 'build' ? 'build' : 'think', state: 'pending', sub: OUTPUT[x.id] }));
+    const G = PL.guide;
     return '<section class="home">' +
-      // 1. what this is, in one breath
-      '<header class="hero home-hero">' + C.heroArt() +
+      // 1. one promise and the box to type in, together
+      '<header class="hero home-hero" id="ask">' +
       '<p class="kicker">ProductLab AI</p>' +
-      '<h1 class="hook">Got a problem that’s <em>everywhere?</em><br>Leave with a plan you can build.</h1>' +
-      '<p class="home-sub">Describe it the way you’d tell a friend. In a couple of minutes, ProductLab reads the research, finds who it hurts, sketches ideas, helps you pick a winner and maps out how to build it. No expertise needed, and every fact links to its source.</p>' +
-      '<div class="row"><button class="btn accent big" data-act="to-ask">Describe your problem</button><button class="btn ghost big" data-act="try-example">See a finished example</button></div></header>' +
+      '<h1 class="hook">Got a problem that\u2019s <em>everywhere?</em><br>Leave with a plan you can build.</h1>' +
+      '<p class="home-sub">Describe it the way you\u2019d tell a friend. ProductLab reads the research, finds who it hurts, suggests ideas, helps you choose and plans the build. No expertise needed.</p>' +
+      '<div class="composer"><label for="problem" class="composer-label">What problem are you trying to solve?</label>' +
+      '<textarea id="problem" rows="3" data-focus="problem" placeholder="e.g. ' + esc(EXAMPLES[0].text) + '">' + esc(u.problem || '') + '</textarea>' +
+      '<div class="row composer-foot"><span class="muted small">Or try one:</span>' + EXAMPLES.map((x, i) => '<button class="example" data-act="example" data-i="' + i + '">' + esc(x.short) + '</button>').join('') +
+      '<span class="spacer"></span><button class="btn primary big" data-act="run">Find users, ideas and a plan <span aria-hidden="true">\u2192</span></button></div>' +
+      '<details class="run-options"><summary>Search options</summary><div class="row">' +
+      '<label class="small" for="opt-papers">Papers per search</label><select id="opt-papers">' + [5, 8, 12].map((n) => '<option' + (Number(u.papers || 8) === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select>' +
+      '<label class="check small" title="Uses Google Search grounding, which Google includes only on paid Gemini projects"><input type="checkbox" id="opt-web"' + (canWeb && u.web === true ? ' checked' : '') + (canWeb ? '' : ' disabled') + '> Search the web too (needs a paid Gemini key)</label></div></details></div>' +
+      (ai ? '<p class="hero-note">Using ' + esc(s.model) + '. Takes 1 to 2 minutes, and you can watch each step happen. <button class="linkish" data-act="try-example">Or see a finished example</button></p>'
+        : '<p class="hero-note">First, <a href="#/settings">add a free Gemini key</a> (two minutes). Without one, ProductLab only gathers research. <button class="linkish" data-act="try-example">See a finished example</button></p>') +
+      '</header>' +
 
-      // 2. the ask
-      '<section class="home-ask" id="ask"><h2 class="ask">What problem are you trying to solve?</h2>' +
-      '<p class="ask-sub">A sentence or two is enough. A good problem says <b>who</b> has it, <b>what goes wrong</b> and <b>why it matters</b>.</p>' +
-      '<div class="composer"><label for="problem" class="sr-only">Problem statement</label><textarea id="problem" rows="3" data-focus="problem" placeholder="e.g. ' + esc(EXAMPLES[0].text) + '">' + esc(u.problem || '') + '</textarea>' +
-      '<div class="row"><span class="muted small">Or try one:</span>' + EXAMPLES.map((x, i) => '<button class="example" data-act="example" data-i="' + i + '">' + esc(x.short) + '</button>').join('') + '</div></div>' +
-      '<div class="row start-actions"><button class="btn accent big" data-act="run">Find users, ideas and a plan</button>' +
-      '<label class="check small" title="Uses Google Search grounding, which Google includes only on paid Gemini projects"><input type="checkbox" id="opt-web"' + (canWeb && u.web === true ? ' checked' : '') + (canWeb ? '' : ' disabled') + '> Search the web too (paid Gemini key)</label>' +
-      '<label class="small" for="opt-papers">Papers per search</label><select id="opt-papers">' + [5, 8, 12].map((n) => '<option' + (Number(u.papers || 8) === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>' +
-      (ai ? '<p class="muted small">Using ' + esc(s.model) + '. A run takes 1 to 2 minutes, and you can watch each step happen.</p>'
-        : '<div class="warnbox">Without an AI model, ProductLab only gathers research and groups it into themes. <a href="#/settings">Add a free Gemini key</a> to get users, ideas, scores and a build plan.</div>') +
-      '</section>' +
+      // 2. the six steps, one colour each
+      '<section class="home-section reveal"><h2 class="big-h">Six steps, each with one clear question.</h2>' +
+      '<p class="lede">ProductLab drafts all six for you. Then you open each step, read a short summary and change anything you disagree with.</p>' +
+      '<ol class="steps6">' + G.STEPS.map((st) => '<li class="s' + st.n + '"><span class="stepnum big s' + st.n + ' has">' + st.n + '</span><div><h3>' + esc(st.name) + '</h3><p class="q">' + esc(st.question) + '</p><p>' + esc(st.what) + '</p></div></li>').join('') + '</ol>' +
+      '<div class="trust"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="var(--s6)"/><path d="M13 22.5l6 6L31 16" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '<div><h3>Every claim is checked</h3><p>Each statement is compared with the source it cites. Anything made up or mismatched is flagged, so you know what to trust.</p></div></div></section>' +
 
-      // 3. how it works
-      '<section class="home-section reveal"><p class="kicker">How it works</p><h2 class="big-h">Six steps, from your sentence to a build plan.</h2>' +
-      '<p class="lede">Each glass fills as its step finishes. Afterwards you can open any step and change what it found; change a score, a weight or a feature and the ranking and build plan recalculate.</p>' +
-      '<div class="press-wrap">' + C.press(preview, { label: 'The six steps' }) + '</div>' +
-      '<ol class="how stagger">' + HOW.map((h, i) => '<li class="how-step" style="--i:' + i + '"><span class="how-n">' + (i + 1) + '</span><div><h3>' + esc(h.title) + '</h3><p>' + esc(h.does) + '</p><p class="how-get">You get: ' + esc(h.get) + '</p></div></li>').join('') + '</ol>' +
-      '<div class="trust"><svg viewBox="0 0 44 44" aria-hidden="true">' + C.orb(22, 22, 19, 'ok') + '<path d="M14 22.5l5.5 5.5L30.5 16" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-      '<div><h3>Then every claim is checked</h3><p>Each statement is compared with the source it cites. Supported claims turn green; anything made up or mismatched is flagged, so you know what to trust.</p></div></div></section>' +
-
-      // 4. vocabulary
-      '<section class="home-section reveal"><p class="kicker">Words you’ll see</p><h2 class="big-h">No jargon left unexplained.</h2>' +
-      '<dl class="words">' + WORDS.map((w, i) => '<div class="word" style="--i:' + i + '"><dt>' + esc(w[0]) + '</dt><dd>' + esc(w[1]) + '</dd></div>').join('') + '</dl></section>' +
-
-      // 5. questions
-      '<section class="home-section reveal"><p class="kicker">Before you start</p><h2 class="big-h">Common questions.</h2>' +
-      '<div class="faq">' + FAQ.map((q, i) => '<details' + (i === 0 ? ' open' : '') + '><summary>' + esc(q[0]) + '</summary><p>' + esc(q[1]) + '</p></details>').join('') + '</div></section>' +
-
-      '<section class="home-end reveal"><h2 class="big-h">Ready when you are.</h2><div class="row center"><button class="btn accent big" data-act="to-ask">Describe your problem</button><button class="btn big" data-act="try-example">See a finished example</button></div></section>' +
+      // 3. help, folded until wanted
+      '<section class="home-section reveal"><h2 class="big-h">Questions?</h2><div class="faq">' +
+      FAQ.map((q) => '<details><summary>' + esc(q[0]) + '</summary><p>' + esc(q[1]) + '</p></details>').join('') +
+      '<details><summary>What do the words mean?</summary><dl class="words">' + WORDS.map((w) => '<div class="word"><dt>' + esc(w[0]) + '</dt><dd>' + esc(w[1]) + '</dd></div>').join('') + '</dl></details>' +
+      '</div></section>' +
       '</section>';
   }
 
@@ -198,7 +181,7 @@
       },
       example(el, e, ctx) { ctx.ui('start').problem = EXAMPLES[Number(el.dataset.i)].text; S.save(); ctx.render(); },
       again(el, e, ctx) { Object.assign(run, { projectId: null, steps: {}, log: [], error: '', entered: false }); ctx.render(); },
-      jump(el, e, ctx) { ctx.state.currentId = run.projectId; ctx.ui(el.dataset.view).tab = el.dataset.tab; S.save(); ctx.go(el.dataset.view); },
+      jump(el, e, ctx) { ctx.state.currentId = run.projectId; Object.assign(ctx.ui(el.dataset.view), { tab: el.dataset.tab, details: true }); S.save(); ctx.go(el.dataset.view); },
       async run(el, e, ctx) {
         const problem = document.getElementById('problem').value.trim();
         if (problem.split(/\s+/).length < 6) { toast('Describe the problem in at least one full sentence', 'bad'); document.getElementById('problem').focus(); return; }

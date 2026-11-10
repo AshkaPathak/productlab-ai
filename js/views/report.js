@@ -49,7 +49,7 @@
       return C.tabs('report', tab, [{ id: 'audit', label: 'Traceability audit' }, { id: 'report', label: 'Strategy report' }]) + (tab === 'report' ? reportTab(ctx) : auditTab(ctx, u));
     },
     actions: {
-      jump(el, e, ctx) { ctx.ui(el.dataset.view).tab = el.dataset.tab; PL.store.save(); ctx.go(el.dataset.view); },
+      jump(el, e, ctx) { Object.assign(ctx.ui(el.dataset.view), { tab: el.dataset.tab, details: true }); PL.store.save(); ctx.go(el.dataset.view); },
       print() { window.print(); },
       md(el, e, ctx) { download(slug(ctx.project.name) + '-strategy.md', PL.report.build(ctx.project), 'text/markdown'); },
       json(el, e, ctx) { download(slug(ctx.project.name) + '.productlab.json', JSON.stringify(ctx.project, null, 2), 'application/json'); }

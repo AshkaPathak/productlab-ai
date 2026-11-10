@@ -228,20 +228,20 @@
   /* Brand colours. Thinking (research, people, ideas, decisions) is blueprint
      blue; building is amber; a coral spark marks creative moments. Story pages
      re-tint the same slots to match each project (see theme.js). */
-  const INK = { ink: '#161a3a', ink2: '#3e4366', think: '#4f5ff0', thinkInk: '#2f3fd6', thinkSoft: '#e9ebff', build: '#ffb21e', buildSoft: '#fff2d2', spark: '#ff6a55', paper: '#f5f3ec', white: '#ffffff', line: '#e2dfd5' };
+  const INK = { ink: '#1a1a2e', ink2: '#3a3b55', think: '#5b3fe4', thinkInk: '#4a2fd0', thinkSoft: '#efebff', build: '#ffa51f', buildSoft: '#fff1dc', spark: '#ff4f79', paper: '#f6f5fb', white: '#ffffff', line: '#e6e4f0' };
 
   /* [highlight, body, shade] per tone slot. Gradients read these through CSS
      variables (--tn-<slot>-0..2), so a theme can override any slot. */
   const TONES = {
-    ink: ['#5d6396', '#161a3a', '#0b0d24'], deep: ['#8c92c9', '#3a418a', '#1c2160'], soft: ['#ffffff', '#d9dcf5', '#a4aad8'],
-    mist: ['#ffffff', '#efede6', '#cfcbbf'], think: ['#e2e5ff', '#5b6cff', '#2a35b8'], build: ['#fff1c9', '#ffb21e', '#d07a00'],
+    ink: ['#6b6c8f', '#1a1a2e', '#0d0d1c'], deep: ['#a99af5', '#5b3fe4', '#3b22b8'], soft: ['#ffffff', '#e4defc', '#b3a6ee'],
+    mist: ['#ffffff', '#efede6', '#cfcbbf'], think: ['#e6e0ff', '#6e4ff0', '#3b22b8'], build: ['#fff0cc', '#ffa51f', '#d9700a'],
     spark: ['#ffe0da', '#ff6a55', '#c23a2a'], sea: ['#d2f1f4', '#2fa7b8', '#17707d'], gold: ['#f6e8bd', '#c9a95a', '#8c7130'],
     teal: ['#c6f0e8', '#1f9e8f', '#0f6359'], ok: ['#c8eed9', '#3a9a6c', '#1f6b47'], warn: ['#fde6c1', '#e0a144', '#a2681a'],
     bad: ['#f8ccd4', '#cf4b63', '#8e2340'], bad2: ['#e9a9b6', '#8e2340', '#5a1027'],
     // brand-only slots: never re-tinted by a project theme (the logo stays ProductLab)
-    brandBuild: ['#fff1c9', '#ffb21e', '#d07a00'], brandThink: ['#e2e5ff', '#5b6cff', '#2a35b8']
+    brandBuild: ['#fff0cc', '#ffa51f', '#d9700a'], brandThink: ['#e6e0ff', '#6e4ff0', '#3b22b8']
   };
-  const LIQUID = { think: ['#9aa6ff', '#3341d6'], build: ['#ffd77a', '#f09400'], spark: ['#ffb2a6', '#e5483a'], deep: ['#8c92c9', '#2a2f72'], mist: ['#f4f2ec', '#d9d5c9'] };
+  const LIQUID = { think: ['#a996ff', '#4a2fd0'], build: ['#ffd17a', '#f58a00'], spark: ['#ffb2a6', '#e5483a'], deep: ['#8c92c9', '#2a2f72'], mist: ['#f4f2ec', '#d9d5c9'] };
 
   function toneVars() {
     let css = '';

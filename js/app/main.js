@@ -6,18 +6,18 @@
   const S = PL.store;
 
   const NAV = [
-    { id: 'start', label: 'Home', icon: '✦', group: 'Workspace', hint: 'What ProductLab does, and where you describe your problem' },
-    { id: 'projects', label: 'Projects', icon: '▦', group: 'Workspace' },
-    { id: 'overview', label: 'Overview', icon: '◎', group: 'Workspace', needsProject: true },
-    { id: 'story', label: 'Story', icon: '◐', group: 'Workspace', needsProject: true, hint: 'Scroll through the whole project, one graphic at a time' },
-    { id: 'evidence', label: 'Evidence', icon: '≡', group: 'Workflow', step: 1, needsProject: true, hint: 'Research synthesizer & evidence graph' },
-    { id: 'discover', label: 'People & needs', icon: '✦', group: 'Workflow', step: 2, needsProject: true, hint: 'Opportunity miner & personas' },
-    { id: 'ideate', label: 'Ideas', icon: '✵', group: 'Workflow', step: 3, needsProject: true, hint: 'Random association, morphological analysis, AI assist' },
-    { id: 'evaluate', label: 'Decision', icon: '⚖', group: 'Workflow', step: 4, needsProject: true, hint: 'Decision matrix, sensitivity, competitors, risks' },
-    { id: 'build', label: 'Build plan', icon: '⚒', group: 'Workflow', step: 5, needsProject: true, hint: 'Features, roadmap, tech stack, business model' },
-    { id: 'report', label: 'Audit & report', icon: '⎙', group: 'Workflow', step: 6, needsProject: true, hint: 'Traceability audit & strategy report' },
-    { id: 'study', label: 'Evaluation study', icon: 'Σ', group: 'Research', needsProject: true, hint: 'Compare against ordinary AI brainstorming' },
-    { id: 'settings', label: 'Settings', icon: '⚙', group: 'Research' }
+    { id: 'start', label: 'Home', group: 'Top', hint: 'What ProductLab does, and where you describe your problem' },
+    { id: 'overview', label: 'Overview', group: 'Project', needsProject: true, hint: 'Where your project stands' },
+    { id: 'evidence', label: 'Research', group: 'Project', step: 1, needsProject: true, hint: 'What do we already know?' },
+    { id: 'discover', label: 'People', group: 'Project', step: 2, needsProject: true, hint: 'Who does this affect, and what do they need?' },
+    { id: 'ideate', label: 'Ideas', group: 'Project', step: 3, needsProject: true, hint: 'How could we solve it?' },
+    { id: 'evaluate', label: 'Decide', group: 'Project', step: 4, needsProject: true, hint: 'Which idea should we build?' },
+    { id: 'build', label: 'Build', group: 'Project', step: 5, needsProject: true, hint: 'What will it take to build?' },
+    { id: 'report', label: 'Check', group: 'Project', step: 6, needsProject: true, hint: 'Can we trust it?' },
+    { id: 'story', label: 'Story', group: 'Project', needsProject: true, hint: 'The whole project as one scrolling page' },
+    { id: 'projects', label: 'All projects', group: 'More' },
+    { id: 'study', label: 'Evaluation study', group: 'More', needsProject: true, hint: 'Compare against ordinary AI brainstorming' },
+    { id: 'settings', label: 'Settings', group: 'More', hint: 'Connect an AI model' }
   ];
 
   const ICONS = {
@@ -68,6 +68,19 @@
     else { route = r; render(); }
   }
 
+  /* one short, consistent count beside each step */
+  function navCount(id, p, prog) {
+    switch (id) {
+      case 'evidence': return p.findings.length ? p.findings.length + ' facts' : '';
+      case 'discover': return p.needs.length ? p.needs.length + (p.needs.length === 1 ? ' need' : ' needs') : '';
+      case 'ideate': return p.concepts.length ? p.concepts.length + (p.concepts.length === 1 ? ' idea' : ' ideas') : '';
+      case 'evaluate': return prog && prog.done >= 1 ? 'scored' : '';
+      case 'build': return p.features.length ? p.features.length + (p.features.length === 1 ? ' feature' : ' features') : '';
+      case 'report': return prog && prog.big && prog.big !== '\u2013' ? prog.big + ' backed' : '';
+      default: return '';
+    }
+  }
+
   function sidebar(project) {
     const C = PL.comp;
     let prog = null;
@@ -75,18 +88,55 @@
     const item = (n) => {
       const disabled = n.needsProject && !project;
       const p = n.step && prog ? prog[n.step - 1] : null;
-      return '<a href="#/' + n.id + '" class="nav-item' + (route === n.id ? ' active' : '') + (disabled ? ' disabled' : '') + '"' + (route === n.id ? ' aria-current="page"' : '') + (n.hint ? ' title="' + esc(n.hint) + '"' : '') + (disabled ? ' aria-disabled="true" tabindex="-1"' : '') + '>' +
-        (n.step ? C.railNode(p ? p.done : 0, p && p.kind) : '<span class="nav-icon">' + icon(n.id) + '</span>') + '<span>' + esc(n.label) + '</span>' +
-        (p && p.big != null && p.big !== '\u2013' ? '<small>' + esc(p.big) + '</small>' : '') + '</a>';
+      const lead = n.step
+        ? '<span class="stepnum s' + n.step + (p && p.done > 0 ? ' has' : '') + '" aria-hidden="true">' + n.step + '</span>'
+        : '<span class="nav-icon">' + icon(n.id) + '</span>';
+      const sub = n.step && project ? '<small>' + esc(navCount(n.id, project, p)) + '</small>' : '';
+      return '<a href="#/' + n.id + '" class="nav-item' + (n.step ? ' step-item' : '') + (route === n.id ? ' active' : '') + (disabled ? ' disabled' : '') + '"' + (route === n.id ? ' aria-current="page"' : '') + (n.hint ? ' title="' + esc(n.hint) + '"' : '') + (disabled ? ' aria-disabled="true" tabindex="-1"' : '') + '>' +
+        lead + '<span class="nav-label">' + esc(n.label) + '</span>' + sub + '</a>';
     };
-    const groups = [
-      '<div class="nav-group">' + NAV.filter((n) => n.group === 'Workspace').map(item).join('') + '</div>',
-      '<div class="nav-group"><div class="nav-title">' + (project ? esc(project.name.length > 30 ? project.name.slice(0, 29) + '\u2026' : project.name) : 'Workflow') + '</div><div class="rail">' + NAV.filter((n) => n.group === 'Workflow').map(item).join('') + '</div></div>',
-      '<div class="nav-group">' + NAV.filter((n) => n.group === 'Research').map(item).join('') + '</div>'
-    ].join('');
+    const group = (g) => NAV.filter((n) => n.group === g).map(item).join('');
+    const pname = project ? project.name : '';
     return '<aside class="sidebar"><a class="brand" href="#/start">' + C.logo() + '<span>ProductLab</span></a>' +
-      '<div class="brand-sub">From problem to product, with sources</div>' + groups +
+      '<nav class="nav-group" aria-label="Main">' + group('Top') + '</nav>' +
+      (project
+        ? '<nav class="nav-group project-nav" aria-label="Your project"><div class="nav-title">Your project</div><div class="nav-project" title="' + esc(project.name) + '">' + esc(pname) + '</div>' + group('Project') + '</nav>'
+        : '<div class="nav-hint">Describe a problem on Home to start a project.</div>') +
+      '<nav class="nav-group more-nav" aria-label="More"><div class="nav-title">More</div>' + group('More') + '</nav>' +
       '<div class="side-foot">' + (S.state.persisted ? 'Saved in this browser' : '<span class="bad-text">Not saved. Export your project to keep it.</span>') + '</div></aside>';
+  }
+
+  /* Step pages: a header that asks the step's question, then a plain summary, then the full tools folded away. */
+  function stepHead(project, nav) {
+    const st = PL.guide && PL.guide.byId(nav.id);
+    if (!st) {
+      return '<header class="pagehead"><div class="crumb">' + esc(project.name) + '</div><h1>' + esc(nav.label) + '</h1></header>';
+    }
+    const i = PL.guide.STEPS.indexOf(st);
+    const prev = PL.guide.STEPS[i - 1]; const next = PL.guide.STEPS[i + 1];
+    return '<header class="pagehead s' + st.n + '"><div class="crumb">' + esc(project.name) + '</div>' +
+      '<div class="pagehead-row"><span class="stepnum big s' + st.n + ' has" aria-hidden="true">' + st.n + '</span><div>' +
+      '<div class="eyebrow">Step ' + st.n + ' of 6 \u00b7 ' + esc(st.name) + '</div><h1>' + esc(st.question) + '</h1><p class="pagehead-what">' + esc(st.what) + '</p></div></div>' +
+      '<div class="stepper" aria-label="Steps">' + PL.guide.STEPS.map((x) => '<a href="#/' + x.id + '" class="dot s' + x.n + (x.id === nav.id ? ' on' : '') + '" title="' + esc(x.n + '. ' + x.name) + '"><span class="sr-only">' + esc(x.n + '. ' + x.name) + '</span></a>').join('') + '</div>' +
+      '</header>';
+  }
+
+  function summaryCard(ctx, nav) {
+    const sm = PL.guide && PL.guide.summary(nav.id, ctx);
+    if (!sm) return '';
+    const st = PL.guide.byId(nav.id);
+    const nextNav = sm.next && NAV.find((n) => n.id === sm.next);
+    const nextLabel = nextNav ? (nextNav.step ? 'Next: ' + nextNav.label : nextNav.id === 'story' ? 'See the whole story' : 'Go to ' + nextNav.label) : '';
+    return '<section class="summary s' + st.n + '" aria-label="Summary"><div class="summary-tag">In short</div><h2 class="summary-head">' + esc(sm.headline) + '</h2>' +
+      (sm.points.length ? '<ul class="summary-points">' + sm.points.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
+      (nextNav ? '<div class="summary-actions"><a class="btn primary big" href="#/' + nextNav.id + '">' + esc(nextLabel) + ' <span aria-hidden="true">\u2192</span></a></div>' : '') + '</section>';
+  }
+
+  function withSummary(ctx, nav, body) {
+    const card = summaryCard(ctx, nav);
+    if (!card) return body;
+    const open = !!ui(nav.id).details;
+    return card + '<details class="deep" data-remember="' + esc(nav.id) + '"' + (open ? ' open' : '') + '><summary><span>All the details and editing tools</span><small>Charts, tables, sources and every field you can change</small></summary><div class="deep-body">' + body + '</div></details>';
   }
 
   function render() {
@@ -104,9 +154,8 @@
       console.error(e);
       body = '<div class="card"><h2>Something went wrong</h2><p class="muted">' + esc(e.message) + '</p><button class="btn" data-act="go" data-to="projects">Back to projects</button></div>';
     }
-    const head = ctx.project && nav && nav.needsProject && nav.id !== 'story'
-      ? '<header class="topbar"><div><div class="crumb">' + esc(ctx.project.domain || 'Project') + '</div><h1>' + esc(ctx.project.name) + '</h1></div><div class="topbar-step">' + PL.comp.motif() + '<span>' + (nav.step ? 'Step ' + nav.step + ' of 6: ' : '') + esc(nav.label) + '</span></div></header>'
-      : '';
+    const head = ctx.project && nav && nav.needsProject && nav.id !== 'story' ? stepHead(ctx.project, nav) : '';
+    if (ctx.project && nav && nav.step) body = withSummary(ctx, nav, body);
     app.innerHTML = sidebar(ctx.project) + '<main class="main" id="main" tabindex="-1">' + head + '<div class="view view-' + esc(route) + '">' + body + '</div></main>';
     if (view.after) { try { view.after(ctx, app); } catch (e) { console.error(e); } }
     if (PL.theme) { try { PL.theme.apply(route === 'story' ? ctx.project : null); } catch (e) { console.error(e); } }
@@ -203,6 +252,14 @@
       if (e.key === 'Enter' && e.target.matches && e.target.matches('.cite-input')) { e.preventDefault(); e.target.blur(); }
       if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('g.node')) { e.preventDefault(); dispatch({ target: e.target, preventDefault() {} }, 'click'); }
     });
+    // remember whether each step's details are open, so experienced users are not asked twice
+    document.addEventListener('toggle', (e) => {
+      const d = e.target;
+      if (!d || !d.matches || !d.matches('details[data-remember]')) return;
+      const u = ui(d.dataset.remember);
+      if (!!u.details === d.open) return;
+      u.details = d.open; S.save();
+    }, true);
     root.addEventListener('hashchange', onHash);
     if (!location.hash) location.hash = '#/start';
     onHash();

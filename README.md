@@ -35,11 +35,13 @@ Projects are saved in the browser. Use **Export JSON** on the Projects page to b
 
 The app opens on **Home**, written for people with no background in product design or research:
 
-- what ProductLab does, in two sentences, with a button to see a finished example (the PCOS/PMOS case study as a scrolling story);
-- **What problem are you trying to solve?**, a box for the problem in everyday words, with tips (who has it, what goes wrong, why it matters) and three examples to try;
-- **How it works**: the six steps, each with what happens and what you get, plus the claim check that follows;
-- **Words you'll see**: plain definitions of finding, persona, need, concept, decision matrix, sensitivity, RICE and MoSCoW, tech stack and traceability;
-- **Common questions**: whether expertise is needed, what you need to start, how made-up facts are caught and where work is saved.
+- one promise in two sentences, with the **What problem are you trying to solve?** box right below it, three examples to try and the button that starts the run (search options are folded away);
+- **six steps, each with one clear question**, in the step's own colour, plus the claim check that follows;
+- **Questions?**: short answers on expertise, what you need to start, made-up facts and where work is saved, and plain definitions of every term, all folded until opened.
+
+## Summary first, details on demand
+
+Each of the six steps asks one plain question (*What do we already know? Who does this affect, and what do they need? How could we solve it? Which idea should we build? What will it take to build? Can we trust it?*) and opens on a short **summary**: one headline, up to three points and a button to the next step. Everything else (charts, tables, sources and every editable field) sits in a folded **All the details and editing tools** section. The app remembers which steps you have opened, so experienced users see the full tools straight away, and links that point at a specific table open it directly.
 
 ## Start from a problem statement
 
@@ -62,7 +64,7 @@ Everything the model writes must cite evidence IDs. The citation guard then chec
 
 ## Colours and themes
 
-ProductLab's own colours carry meaning. **Blueprint blue** is thinking (evidence, people, ideas, decisions), **amber** is building (the build plan and the main buttons) and a **coral spark** marks creative moments. They sit on warm sketch paper with a faint blueprint grid. In the progress spheres, thinking steps fill blue and the build step fills amber.
+ProductLab uses vivid colour on a light, calm base so screens stay easy to read. Each step has its own colour, used for its number in the sidebar, its page header and its summary card: **1 Research** blue, **2 People** rose, **3 Ideas** sunflower, **4 Decide** violet, **5 Build** orange and **6 Check** green. Violet is the one colour for buttons and actions, and the Home page uses a violet-to-coral gradient. All text meets a contrast of at least 4.5:1, and body text is 16.5px.
 
 Each project's **Story** takes on a theme that suits its subject, picked from the project's domain, name and problem text: Bloom (health and care), Harvest (food and the planet), Signal (digital life), Campus (learning and students) or Tide (water, cities and travel). A different theme can be chosen under *Story theme* on the project Overview. The rest of the app keeps the ProductLab colours. Every orb, liquid and chart accent reads its colour from a CSS variable, so a theme re-tints the whole Story without touching the markup. Chart category colours stay fixed and were checked for colour-blind separation.
 
@@ -174,7 +176,7 @@ js/engine/            framework-free engine, shared by app, CLI and tests
   autopilot.js        problem statement -> complete project pipeline
   experiment.js       blind rating sheets and statistics
 js/data/              sample case studies (verified evidence)
-js/app/               store, router, shared UI components, figures and scroll motion
+js/app/               store, router, step guide (plain summaries), shared UI components, figures and scroll motion
 js/views/             one file per workflow step
 cli/                  command-line tool and static server
 tests/                unit tests

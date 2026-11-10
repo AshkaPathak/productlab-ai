@@ -476,5 +476,5 @@
       legend([{ color: '#6f7391', label: 'A: baseline', ring: true }, { color: V('sea'), label: 'B: ProductLab' }]));
   }
 
-  PL.fig = { CAT, STATUS_COL, fig, legend, sourceMap, evidenceUse, needsMap, themeBubbles, coverage, conceptMark, morphPath, radar, tornado, riceBubbles, stackDiagram, claimWaffle, sectionBars, dumbbell };
+  PL.fig = { CAT, STATUS_COL, unstem, fig, legend, sourceMap, evidenceUse, needsMap, themeBubbles, coverage, conceptMark, morphPath, radar, tornado, riceBubbles, stackDiagram, claimWaffle, sectionBars, dumbbell };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
