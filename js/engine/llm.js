@@ -109,29 +109,62 @@
   /** Turn a provider error into something a non-expert can act on. */
   function explain(status, message, model) {
     const msg = String(message || '');
-    if (/API key not valid|API_KEY_INVALID|invalid api key|Incorrect API key/i.test(msg) || status === 401) return 'The AI provider did not accept the key. Check it in Settings (Gemini keys start with "AIza").';
+    if (/API key not valid|API_KEY_INVALID|invalid api key|Incorrect API key/i.test(msg) || status === 401) return 'The AI provider did not accept the key. Check in Settings that the whole key was copied (Gemini keys start with "AQ." or "AIza").';
     if (status === 404 || /not found|is not supported/i.test(msg)) return 'The model "' + model + '" is not available to this key. In Settings, try gemini-3.8-flash or gemini-3.5-flash-lite.';
-    if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'Today\u2019s free quota for ' + model + ' is used up. It resets at midnight US Pacific time. Meanwhile, switch the model to gemini-3.5-flash-lite in Settings, which allows more free requests.';
+    if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'Today\u2019s free quota for ' + model + ' is used up. It resets at midnight US Pacific time.' + (model === GEMINI_FALLBACK ? '' : ' Meanwhile, switch the model to ' + GEMINI_FALLBACK + ' in Settings, which allows more free requests.');
     if (status === 429) return 'The AI provider is limiting how fast this key can make requests. Wait a minute and run again.';
     if (status === 403) return 'This key is not allowed to use ' + model + '. Check the key\u2019s project in Google AI Studio.';
+    if (status === 503 && /demand|overloaded/i.test(msg)) return model + ' is very busy at Google right now. Try again in a few minutes, or pick a lighter model in Settings.';
     if (status >= 500) return 'The AI provider had a temporary problem (' + status + '). Try again in a minute.';
     return 'AI provider error ' + status + ': ' + msg;
   }
 
-  /** POST with up to two retries on rate limits and server hiccups, waiting as long as the provider asks. */
-  async function send(f, url, init, s) {
+  /** One request with a time limit, so a stalled provider can never hang the app. */
+  async function timed(f, url, init, s) {
+    const limit = s.timeoutMs == null ? 90000 : s.timeoutMs;
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl && limit ? setTimeout(() => ctl.abort(), limit) : null;
+    try {
+      return await f(url, ctl ? Object.assign({}, init, { signal: ctl.signal }) : init);
+    } catch (err) {
+      if (err && err.name === 'AbortError') throw new Error('The AI provider did not answer within ' + Math.round(limit / 1000) + ' seconds. Try again, or pick a lighter model in Settings.');
+      throw err;
+    } finally { if (timer) clearTimeout(timer); }
+  }
+
+  /**
+   * POST with retries on rate limits and server hiccups, waiting as long as the
+   * provider asks. When a lighter fallback model exists, an overloaded model
+   * gets one quick retry before the caller switches models.
+   */
+  async function send(f, url, init, s, hasFallback) {
     let res; let data;
     for (let attempt = 0; attempt < 3; attempt++) {
-      res = await f(url, init);
+      res = await timed(f, url, init, s);
       data = await res.json().catch(() => ({}));
       const msg = (data.error && (data.error.message || data.error)) || res.statusText;
       const daily = /per ?day|PerDay|daily/i.test(String(msg));
-      if (res.ok || !(res.status === 429 || res.status === 500 || res.status === 503) || daily || attempt === 2) break;
-      const wait = Math.min(60, retryDelay(data) || (attempt ? 30 : 12));
+      const last = (hasFallback && res.status >= 500) ? attempt >= 1 : attempt >= 2;
+      if (res.ok || !(res.status === 429 || res.status === 500 || res.status === 503) || daily || last) break;
+      const wait = Math.min(60, retryDelay(data) || (res.status >= 500 ? 5 : (attempt ? 30 : 12)));
       if (typeof s.onWait === 'function') s.onWait(wait);
       await sleep((s.retryScale == null ? 1000 : s.retryScale) * wait);
     }
     return { res, data };
+  }
+
+  /* Lighter Gemini model used when the chosen one is overloaded or out of
+     free daily quota. A busy model is skipped for a while so every later
+     request in a run does not pay the same wait again. */
+  const GEMINI_FALLBACK = 'gemini-3.5-flash-lite';
+  const BUSY_MS = 10 * 60 * 1000;
+  const busyUntil = {};
+  const now = () => Date.now();
+
+  function shouldFallBack(res, data) {
+    if (!res || res.ok) return false;
+    const msg = String((data && data.error && (data.error.message || data.error)) || '');
+    return res.status === 503 || res.status === 500 || (res.status === 429 && /per ?day|PerDay|daily/i.test(msg));
   }
 
   /** Call the configured provider. fetchImpl is injectable for tests. */
@@ -146,12 +179,26 @@
       if (!s.apiKey) throw new Error('Gemini needs an API key');
       const sys = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
       const contents = messages.filter((m) => m.role !== 'system').map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
-      ({ res, data } = await send(f, base + '/models/' + encodeURIComponent(s.model) + ':generateContent', {
+      const init = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': s.apiKey },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { temperature: s.temperature, responseMimeType: 'application/json' } })
-      }, s));
-      if (!res.ok) throw new Error(explain(res.status, (data.error && data.error.message) || res.statusText, s.model));
+      };
+      const url = (m) => base + '/models/' + encodeURIComponent(m) + ':generateContent';
+      const canFall = s.fallback !== false && s.model !== GEMINI_FALLBACK;
+      let used = s.model;
+      if (canFall && busyUntil[s.model] > now()) {
+        used = GEMINI_FALLBACK;
+      } else {
+        ({ res, data } = await send(f, url(s.model), init, s, canFall));
+        if (canFall && shouldFallBack(res, data)) { busyUntil[s.model] = now() + BUSY_MS; used = GEMINI_FALLBACK; }
+      }
+      if (used !== s.model) {
+        if (typeof s.onFallback === 'function') s.onFallback(s.model, used);
+        ({ res, data } = await send(f, url(used), init, s, false));
+      }
+      if (typeof s.onModel === 'function') s.onModel(used);
+      if (!res.ok) throw new Error(explain(res.status, (data.error && data.error.message) || res.statusText, used));
       const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
       return parts.map((p) => p.text || '').join('');
     }
@@ -171,5 +218,7 @@
     return { concepts: normalizeConcepts(extractJSON(reply), o.mode === 'grounded' ? 'ai' : 'ai-baseline'), raw: reply, messages };
   }
 
-  return { PRESETS, GEMINI_MODELS, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay };
+  function resetBusy() { Object.keys(busyUntil).forEach((k) => { delete busyUntil[k]; }); }
+
+  return { PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy };
 });

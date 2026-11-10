@@ -238,7 +238,11 @@
     const o = Object.assign({ web: true, papersPerQuery: 8, openAlexKey: '', fetch: null, onStep() {}, onLog() {} }, options || {});
     const log = (m) => o.onLog(m);
     // free AI keys allow only a few requests a minute: say so when the provider asks us to wait
-    const settings = Object.assign({}, rawSettings, { onWait: (sec) => log('The AI provider asked for a short pause; waiting ' + Math.round(sec) + ' seconds.') });
+    let switched = false;
+    const settings = Object.assign({}, rawSettings, {
+      onWait: (sec) => log('The AI provider asked for a short pause; waiting ' + Math.round(sec) + ' seconds.'),
+      onFallback: (from, to) => { if (!switched) { switched = true; log(from + ' is busy or out of free quota, so the AI steps use ' + to + ' for now.'); } }
+    });
     const f = o.fetch; const ai = hasModel(settings);
     const step = (id, status, detail) => o.onStep(id, status, detail || '');
     const started = new Date();

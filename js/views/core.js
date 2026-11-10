@@ -133,7 +133,7 @@
         (ai.provider === 'gemini' ? '<details class="keyguide"' + (ctx.state.apiKey ? '' : ' open') + '><summary>Get a free Gemini key (about two minutes)</summary><ol>' +
           '<li>Open <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio, API keys</a> and sign in with a Google account.</li>' +
           '<li>Choose <b>Create API key</b>. No card is needed for the free tier.</li>' +
-          '<li>Copy the key (it starts with <span class="mono">AIza</span>), paste it below and press <b>Test connection</b>.</li></ol>' +
+          '<li>Copy the key (it starts with <span class="mono">AQ.</span> or <span class="mono">AIza</span>), paste it below and press <b>Test connection</b>.</li></ol>' +
           '<p class="muted small">Free keys have daily and per-minute limits, which Google shows in AI Studio; ProductLab waits and retries when asked to slow down. On the free tier Google may use what you send to improve its products, so avoid confidential details. Searching the web (Google Search grounding) needs a paid Gemini project.</p></details>' : '') +
         '<div class="field"><label for="ai-preset">Provider</label><select id="ai-preset" class="wide" data-act="preset">' + Object.keys(presets).map((k) => '<option value="' + k + '"' + (ai.preset === k ? ' selected' : '') + '>' + esc(presets[k].label) + '</option>').join('') + '<option value="custom"' + (ai.preset === 'custom' ? ' selected' : '') + '>Custom OpenAI-compatible endpoint</option></select></div>' +
         '<div class="field"><label for="ai-base">Base URL</label><input id="ai-base" class="wide mono" data-act="aiset" data-key="baseUrl" value="' + esc(ai.baseUrl) + '"></div>' +
@@ -168,10 +168,19 @@
       async test(el, e, ctx) {
         const st = document.getElementById('ai-status');
         st.textContent = 'Contacting provider…';
+        let busy = '';
+        let used = ctx.state.settings.ai.model;
+        const hooks = {
+          onWait: (sec) => { st.textContent = 'The provider is busy; trying again in ' + Math.round(sec) + ' seconds…'; },
+          onFallback: (from, to) => { busy = from; st.textContent = from + ' is busy right now; trying ' + to + '…'; },
+          onModel: (m) => { used = m; }
+        };
         try {
-          const reply = await PL.llm.chat(Object.assign({}, ctx.state.settings.ai, { apiKey: ctx.state.apiKey, temperature: 0 }), [{ role: 'user', content: 'Reply with the JSON {"ok":true} and nothing else.' }]);
+          const reply = await PL.llm.chat(Object.assign({}, ctx.state.settings.ai, { apiKey: ctx.state.apiKey, temperature: 0 }, hooks), [{ role: 'user', content: 'Reply with the JSON {"ok":true} and nothing else.' }]);
           const j = PL.llm.extractJSON(reply);
-          st.textContent = j && j.ok ? 'Connected ✓' : 'Connected, but the reply was unexpected: ' + reply.slice(0, 80);
+          st.textContent = !(j && j.ok) ? 'Connected, but the reply was unexpected: ' + reply.slice(0, 80)
+            : busy ? 'Connected ✓ The key works. ' + busy + ' is busy at Google right now, so ProductLab will use ' + used + ' until it frees up.'
+              : 'Connected ✓ (' + used + ')';
         } catch (err) { st.textContent = 'Failed: ' + err.message + (/Failed to fetch|NetworkError/.test(err.message) ? ' (network or CORS blocked — check the base URL)' : ''); }
       },
       guard(el, e, ctx) { ctx.state.settings.guard[el.dataset.key] = Number(el.value); S.save(); ctx.render(); },
