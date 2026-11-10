@@ -86,3 +86,33 @@ test('webResearch keeps only grounded segments with sources', async () => {
   assert.equal(r.sources[0].org, 'help.instagram.com');
   await assert.rejects(R.webResearch('x', { provider: 'openai', apiKey: 'k' }), /Gemini/);
 });
+
+test('aims, questions and method lines from the live run are not counted as findings', () => {
+  const notFindings = [
+    'We sought to understand what is known about the management of student mental health, and asked: (1) What proportion of students use mental health services when experiencing psychological distress?',
+    '(2) Does use by students differ across health service types?',
+    'The purpose of the present study was to better understand why Canadian students are not seeking on campus support for psychological issues.',
+    'Conclusion: This 12-week randomized controlled trial systematically evaluated the effects of Tai Chi on stress and sleep quality in college students.',
+    'Levels of stress, sleep functioning and sleep catastrophising were examined over a seven-day period in 48 Access to Higher Education students about to take an exam and 44 non-exam taking controls.'
+  ];
+  notFindings.forEach((s) => assert.equal(R.isFinding(s), false, s));
+  const findings = [
+    'Exam stress significantly impacts college students\' sleep patterns, dietary choices, and coping mechanisms.',
+    'RESULTS: We found that perceived stress and mental distress increased from the time before the exams to the exam period.',
+    'College students are experiencing substantially more mental health issues, although use of counselling services remains low.',
+    'Participants were surveyed in 2024 and 62% reported poor sleep, which was significantly associated with exam anxiety.'
+  ];
+  findings.forEach((s) => assert.equal(R.isFinding(s), true, s));
+});
+
+test('the word-match check drops a paper on an unrelated topic', () => {
+  const works = [
+    { title: 'Exam stress and sleep quality in university students', abstract: 'Exam stress reduced sleep quality among university students during the exam period.' },
+    { title: 'Use of campus counselling services by students', abstract: 'Students under exam stress rarely used campus counselling services for sleep or stress.' },
+    { title: 'Digital sleep interventions for college students', abstract: 'Digital interventions improved sleep and reduced stress in college students.' },
+    { title: 'Corrosion of steel reinforcement in coastal bridges', abstract: 'Chloride exposure accelerated corrosion of reinforcing steel in concrete bridge decks.' }
+  ];
+  const keep = R.screenWorks(works, 'College students struggle with exam stress and sleep and do not use campus counselling');
+  assert.ok(keep.indexOf(3) < 0, 'the bridge paper is left out');
+  assert.equal(keep.length, 3);
+});

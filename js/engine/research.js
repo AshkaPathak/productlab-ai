@@ -87,6 +87,32 @@
   const RESULT_CUE = /\b(found|find|finds|show(ed|s|n)?|reveal(ed|s)?|report(ed|s)?|associated|significant(ly)?|increase[ds]?|decrease[ds]?|majority|most|more likely|less likely|predict(ed|s)?|prevalence|percent|participants|respondents|users)\b|%|\d/i;
   const METHOD_CUE = /^(this|the present|the current|our|in this) (study|paper|article|research|work|review)|\b(aim(ed|s)? to|objective(s)? (was|were|is)|we (conducted|used|propose|present|developed|describe|performed)|method(s|ology)?:|background:|purpose:|keywords?:)|copyright|©|all rights reserved/i;
 
+  /* Sentences that describe what a study set out to do, ask a question or list
+     methods are not findings, however well they match the problem. */
+  const NOT_FINDING = [
+    /\?\s*["”’)]*\s*$/,                                                     // a question
+    /^\(?(\d+|[ivx]+|[a-e])\)\s/i,                                           // "(2) Does use differ ..."
+    /\b(we|this (study|paper|review|article|trial)|the (present|current) (study|paper|review)|our (study|review))\s+(sought|aim(s|ed)?|set out|asked|ask)\b/i,
+    /\bthe (purpose|aim|objective|goal)s? of (this|the present|the current|our) (study|paper|research|review|trial|project)\b/i,
+    /^(conclusions?|background|objectives?|aims?|methods?)\s*:\s*this\b.*\b(study|trial|review|paper)\b.*\b(evaluated|examined|investigated|explored|assessed|describes?)\b/i,
+    /\b(were|was) (examined|assessed|measured|recruited|randomi[sz]ed|surveyed|interviewed|enrolled|collected)\b(?!.*\b(found|show(ed|s|n)?|reveal(ed|s)?|increased|decreased|significant(ly)?|associated)\b)/i
+  ];
+  function isFinding(sentence) { return !NOT_FINDING.some((re) => re.test(String(sentence || '').trim())); }
+
+  /**
+   * Word-match check of each paper against the problem, used when no AI model
+   * is connected. Returns the indexes of papers worth reading, best first.
+   */
+  function screenWorks(works, problem, options) {
+    const o = Object.assign({ relative: 0.3, floor: 0.04 }, options || {});
+    if (works.length < 3) return works.map((w, i) => i);
+    const corpus = new T.Corpus(works.map((w, i) => ({ id: String(i), text: w.title + '. ' + w.title + '. ' + (w.abstract || '') })));
+    const q = corpus.vectorize(problem);
+    const scored = works.map((w, i) => ({ i, s: T.cosine(q, corpus.vector(String(i))) }));
+    const best = Math.max(...scored.map((x) => x.s));
+    return scored.filter((x) => x.s >= Math.max(o.floor, best * o.relative)).sort((a, b) => b.s - a.s).map((x) => x.i);
+  }
+
   /**
    * Extract the most relevant result sentences from abstracts.
    * Returns [{refIndex, text, score, kind}] with text quoted verbatim.
@@ -96,7 +122,7 @@
     const cands = [];
     works.forEach((w, wi) => splitSentences(w.abstract).forEach((s, si) => {
       const n = s.split(/\s+/).length;
-      if (n < o.minWords || n > o.maxWords) return;
+      if (n < o.minWords || n > o.maxWords || !isFinding(s)) return;
       cands.push({ id: wi + ':' + si, refIndex: wi, text: s });
     }));
     if (!cands.length) return [];
@@ -170,5 +196,5 @@
     return { sources: chunks, findings, queries: gm.webSearchQueries || [] };
   }
 
-  return { OPENALEX, reconstructAbstract, splitSentences, normalizeWork, searchOpenAlex, extractFindings, webResearch, WEB_PROMPT };
+  return { OPENALEX, reconstructAbstract, splitSentences, normalizeWork, searchOpenAlex, isFinding, screenWorks, extractFindings, webResearch, WEB_PROMPT };
 });

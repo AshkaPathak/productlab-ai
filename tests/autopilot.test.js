@@ -84,3 +84,27 @@ test('when the chosen model is busy, the run switches models once and records th
   assert.equal(logs.filter((m) => /busy or out of free quota/.test(m)).length, 1);
   require('../js/engine/llm.js').resetBusy();
 });
+
+test('with a model connected, papers on a different topic are left out before findings are taken', async () => {
+  const inner = makeFetch();
+  const offTopic = { id: 'https://openalex.org/W999', doi: 'https://doi.org/10.9999/offtopic', display_name: 'Barriers to voluntary HIV counselling and testing among undergraduates', publication_year: 2020, type: 'article',
+    authorships: [{ author: { display_name: 'A. Author' } }], primary_location: { source: { display_name: 'Journal X' } }, biblio: {}, cited_by_count: 1,
+    abstract_inverted_index: Object.fromEntries('Results showed that most undergraduates saved no posts but reported barriers to HIV counselling and testing on campus because of stigma and fear of results.'.split(' ').map((w, i) => [w, [i]])) };
+  const f = async (url, init) => {
+    if (url.startsWith('https://api.openalex.org/')) {
+      const r = await inner(url, init); const j = await r.json();
+      return { ok: true, json: async () => Object.assign({}, j, { results: j.results.concat([offTopic]) }) };
+    }
+    if (/generateContent$/.test(url) && /paper numbers/.test(init.body)) {
+      const body = JSON.parse(init.body).contents[0].parts[0].text;
+      const nums = body.split('\n').filter((l) => /^\d+\. /.test(l) && !/HIV/.test(l)).map((l) => Number(l.split('.')[0]));
+      return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ relevant: nums }) }] } }] }) };
+    }
+    return inner(url, init);
+  };
+  const logs = [];
+  const p = await A.run(PROBLEM, gemini, { fetch: f, web: false, onLog: (m) => logs.push(m) });
+  assert.ok(!p.references.some((r) => /HIV/.test(r.title)), 'the HIV paper is not a source');
+  assert.ok(!p.findings.some((x) => /HIV/.test(x.text)), 'and gives no findings');
+  assert.ok(logs.some((m) => /Left out 1 paper about a different topic/.test(m)), 'the run log says what was left out');
+});

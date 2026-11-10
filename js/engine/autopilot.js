@@ -73,6 +73,32 @@
 
   /* ---------------- step 2: research ---------------- */
 
+  /**
+   * Leave out papers that share words with the problem but are about something
+   * else (for example HIV testing when the problem is exam stress). With a
+   * model connected it reads the titles and openings; otherwise a word-match
+   * check is used. Never leaves fewer than three papers.
+   */
+  async function screenPapers(works, problemText, settings, f, log) {
+    if (works.length < 4) return works.slice();
+    let keep = null;
+    if (hasModel(settings)) {
+      try {
+        const listing = works.map((w, i) => (i + 1) + '. ' + w.title + ' \u2014 ' + clip(w.abstract || '', 220)).join('\n');
+        const j = await ask(settings, 'Problem: ' + problemText + '\n\nPapers:\n' + listing + '\n\n' +
+          'Which papers are directly about this problem, the people who have it or ways to address it? Leave out papers about a different topic, even if they share words. ' +
+          'Return JSON {"relevant": [paper numbers]}.', f);
+        const nums = j && Array.isArray(j.relevant) ? j.relevant.map(Number).filter((x) => x >= 1 && x <= works.length) : [];
+        if (nums.length >= 3) keep = Array.from(new Set(nums)).map((x) => x - 1);
+      } catch (e) { log('Paper screening skipped: ' + e.message); }
+    }
+    if (!keep) keep = R.screenWorks(works, problemText);
+    if (keep.length < 3) return works.slice();
+    const dropped = works.filter((w, i) => keep.indexOf(i) < 0);
+    if (dropped.length) log('Left out ' + n(dropped.length, 'paper', 'papers') + ' about a different topic: ' + dropped.slice(0, 3).map((w) => '\u201c' + clip(w.title, 70) + '\u201d').join('; ') + (dropped.length > 3 ? ' and more' : '') + '.');
+    return works.filter((w, i) => keep.indexOf(i) >= 0);
+  }
+
   async function research(problem, planOut, settings, opts, f, log) {
     const refs = []; const findings = [];
     const works = []; const seen = new Set();
@@ -83,7 +109,9 @@
         log('Papers for “' + q + '”: ' + list.length);
       } catch (e) { log('Paper search failed for “' + q + '”: ' + e.message); if (/limit/.test(e.message)) break; }
     }
-    const extracted = R.extractFindings(works, problem + ' ' + planOut.challenge, { max: opts.maxPaperFindings || 24, perWork: 2 });
+    const kept = await screenPapers(works, problem + ' ' + planOut.challenge, settings, f, log);
+    const extracted = R.extractFindings(kept, problem + ' ' + planOut.challenge, { max: opts.maxPaperFindings || 24, perWork: 2 });
+    works.length = 0; kept.forEach((w) => works.push(w));
     const used = Array.from(new Set(extracted.map((x) => x.refIndex)));
     const refIdOf = new Map();
     used.forEach((wi) => {
