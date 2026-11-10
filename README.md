@@ -8,6 +8,14 @@ Throughout, a **citation guard** checks every claim against the evidence it cite
 
 Built for **DE 401 Creative Intelligence for Engineers** (Group Innovation Project) by Ashka Pathak, Farzan Bhalara and Dhruvika Rathod.
 
+**Try it live: [ashkapathak.github.io/productlab-ai](https://ashkapathak.github.io/productlab-ai/)** (no sign-up; add a free Gemini key in Settings to run your own problem).
+
+![Home: describe a problem in everyday words](docs/img/home.jpg)
+
+| Each step opens on a plain summary | The whole project as one scrolling story |
+|---|---|
+| ![Decide step: summary first, details folded below](docs/img/decide.jpg) | ![Story view of the PCOS case study](docs/img/story.jpg) |
+
 ---
 
 ## Quick start

@@ -68,7 +68,8 @@
       pts.push(flips.length ? 'A ' + Math.min(...flips) + '-point change in one weight would change the winner, so check the weights you care about.' : 'No single change of weight changes the winner. The choice is robust.');
     }
     const risk = (p.risks || []).slice().sort((a, b) => b.likelihood * b.impact - a.likelihood * a.impact)[0];
-    if (risk) pts.push('Biggest risk: ' + clip(risk.failure, 80).toLowerCase() + '. Plan: ' + clip(risk.mitigation, 110).replace(/^./, (c) => c.toLowerCase()) + '.');
+    const end = (t) => t.replace(/[.\s]+$/, '') + '.';
+    if (risk) pts.push(end('Biggest risk: ' + end(clip(risk.failure, 80).toLowerCase()) + ' Plan: ' + clip(risk.mitigation, 110).replace(/^./, (c) => c.toLowerCase())));
     return { headline: top.name + ' comes out on top, at ' + fix2(top.total) + ' out of 5.', points: pts, next: 'build' };
   }
 

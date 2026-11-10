@@ -56,3 +56,19 @@ test('bar chart labels get room for long names and are shortened only past the l
   assert.match(long, /…<\/text>/);
   assert.match(long, /<title>A very long concept name that keeps going/);
 });
+
+test('step summaries read as clean sentences for the sample projects', () => {
+  require('../js/app/guide.js');
+  ['../js/engine/text.js', '../js/engine/evidence.js', '../js/engine/cluster.js', '../js/engine/decision.js', '../js/engine/planning.js'].forEach((f) => {
+    const m = require(f); const k = f.split('/').pop().replace('.js', ''); PL[k] = PL[k] || m;
+  });
+  const pcos = require('../js/data/pcos.js'); const p = typeof pcos === 'function' ? pcos() : (pcos.project || pcos);
+  const ctx = { project: p, index: PL.evidence.buildIndex(p) };
+  ['evidence', 'discover', 'ideate', 'evaluate', 'build', 'report'].forEach((r) => {
+    const sm = PL.guide.summary(r, ctx);
+    assert.ok(sm && sm.headline.length > 10, r + ' has a headline');
+    [sm.headline].concat(sm.points).forEach((t) => {
+      assert.ok(!/\.\.(?!\.)|\s\.|undefined|NaN|\[object/.test(t), r + ': ' + t);
+    });
+  });
+});
