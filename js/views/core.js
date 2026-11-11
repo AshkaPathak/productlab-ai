@@ -92,7 +92,8 @@
       const next = nextAction(steps);
       const top = ranked[0];
       const stagesP = C.stepProgress(p, audit).map((x) => ({ label: x.label, kind: x.kind, state: x.done > 0 ? 'done' : 'pending', fill: x.done, big: x.big, sub: x.sub, href: '#/' + x.id, current: next && next.id === x.id }));
-      return (p.caveats ? '<div class="warnbox">' + esc(p.caveats) + '</div>' : '') +
+      const researchOnly = /^Research-only run/.test(p.caveats || '');
+      return (p.caveats ? '<div class="warnbox">' + esc(p.caveats) + (researchOnly ? ' <a href="#/settings">Add a free Gemini key</a>, then run it again from <a href="#/start">Home</a>: your problem is still in the box.' : '') + '</div>' : '') +
         (next ? '<div class="next"><span>Next</span><b>' + esc(next.label) + '</b><span class="muted small">' + esc(next.detail) + '</span><a class="btn primary" href="#/' + next.id + '">Continue</a></div>'
           : '<div class="next"><b>Every step has content.</b><span class="muted small">Check the audit, then export the report.</span><a class="btn primary" href="#/report">Open the audit</a></div>') +
         '<div class="press-wrap">' + C.press(stagesP, { label: 'Project progress' }) + '</div>' +

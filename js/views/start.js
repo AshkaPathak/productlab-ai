@@ -186,6 +186,15 @@
         const problem = document.getElementById('problem').value.trim();
         if (problem.split(/\s+/).length < 6) { toast('Describe the problem in at least one full sentence', 'bad'); document.getElementById('problem').focus(); return; }
         const u = ctx.ui('start');
+        if (!A.hasModel(aiSettings(ctx.state))) {
+          u.problem = problem; S.save();
+          const go = await PL.ui.formModal('No AI key connected yet', [], {
+            intro: 'Without an AI key, ProductLab can only gather research papers. It cannot find the people affected, suggest ideas, help you decide or plan the build. A free Gemini key takes about two minutes to get.',
+            submit: 'Add a free key first', alt: { label: 'Research only', value: 'research' }
+          });
+          if (!go) return;
+          if (go !== 'research') { location.hash = '#/settings'; return; }
+        }
         u.problem = problem; u.web = document.getElementById('opt-web').checked; u.papers = Number(document.getElementById('opt-papers').value);
         S.save();
         Object.assign(run, { running: true, problem, steps: {}, log: [], projectId: null, error: '', entered: false });

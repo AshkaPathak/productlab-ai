@@ -145,7 +145,8 @@
 
   /**
    * Form modal. fields: [{name, label, type:'text'|'textarea'|'number'|'select'|'checkbox', options, value, help, required}]
-   * Resolves with values or null on cancel.
+   * Resolves with values or null on cancel. With options.alt = {label, value},
+   * a second button resolves with that value (Escape still resolves null).
    */
   function formModal(title, fields, options) {
     const o = Object.assign({ submit: 'Save', intro: '' }, options || {});
@@ -165,7 +166,7 @@
       wrap.innerHTML = '<form class="modal" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><h3>' + esc(title) + '</h3>' +
         (o.intro ? '<p class="muted">' + esc(o.intro) + '</p>' : '') +
         '<div class="form-grid">' + fields.map(field).join('') + '</div>' +
-        '<div class="modal-actions"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="submit" class="btn primary">' + esc(o.submit) + '</button></div></form>';
+        '<div class="modal-actions"><button type="button" class="btn ghost" data-cancel>Cancel</button>' + (o.alt ? '<button type="button" class="btn" data-alt>' + esc(o.alt.label) + '</button>' : '') + '<button type="submit" class="btn primary">' + esc(o.submit) + '</button></div></form>';
       document.body.appendChild(wrap);
       const form = wrap.querySelector('form');
       const first = form.querySelector('input,textarea,select');
@@ -175,6 +176,7 @@
       document.addEventListener('keydown', onKey);
       wrap.addEventListener('mousedown', (e) => { if (e.target === wrap) close(null); });
       form.querySelector('[data-cancel]').addEventListener('click', () => close(null));
+      if (o.alt) form.querySelector('[data-alt]').addEventListener('click', () => close(o.alt.value));
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const vals = {};

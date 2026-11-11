@@ -108,3 +108,12 @@ test('with a model connected, papers on a different topic are left out before fi
   assert.ok(!p.findings.some((x) => /HIV/.test(x.text)), 'and gives no findings');
   assert.ok(logs.some((m) => /Left out 1 paper about a different topic/.test(m)), 'the run log says what was left out');
 });
+
+test('without a model, a "need an app that helps me…" problem gets a clean name and question', () => {
+  const f = A.fallbackPlan('need a tool or an app that helps me reach me destination the quickest. tell me alternate routes, public commute options');
+  assert.equal(f.name, 'Reach their destination the quickest');
+  assert.equal(f.hmw, 'How might we help people reach their destination the quickest?');
+  const g = A.fallbackPlan('People save posts, reels and videos on Instagram, YouTube and X but can never find them again.');
+  assert.equal(g.name, 'People save posts');
+  assert.match(g.hmw, /^How might we address this: people save posts/);
+});

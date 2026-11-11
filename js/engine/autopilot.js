@@ -55,10 +55,33 @@
 
   /* ---------------- step 1: plan ---------------- */
 
+  /* Without a model: turn "I need an app that helps me get there faster" into a
+     short name ("Get there faster") and a proper How-might-we question. */
+  function problemCore(problem) {
+    const first = String(problem || '').split(/(?<=[.?!])\s+|\n/)[0].replace(/[.?!]+$/, '').trim();
+    const core = first
+      .replace(/^(i|we)\s+(really\s+)?(need|want|would like|wish for)\s+/i, '')
+      .replace(/^(need|want)\s+/i, '')
+      .replace(/^(a|an|some)\s+(\w+\s+){0,2}?(tool|app|application|platform|website|site|system|product|service|way)(\s+or\s+(a|an)\s+(\w+\s+){0,2}?(tool|app|application|platform|website|site|system|product|service))?\s+(that|which|to)\s+/i, '')
+      .replace(/^(helps?|lets?|allows?)\s+(me|us|people|users|students|everyone)\s+(to\s+)?/i, '')
+      .trim();
+    const changed = core.length && core.length < first.length;
+    return { first, core: core || first, changed };
+  }
+
   function fallbackPlan(problem) {
     const words = T.normalize(problem).split(' ').filter((w) => w.length > 2 && !T.STOPWORDS.has(w));
     const q = words.slice(0, 7).join(' ');
-    return { name: clip(problem.split(/[.?!]/)[0], 60), domain: '', challenge: problem, hmw: 'How might we ' + clip(problem.replace(/[.?!]+$/, ''), 160).replace(/^./, (c) => c.toLowerCase()) + '?', queries: [q] };
+    const c = problemCore(problem);
+    // stop at the first natural break (a comma, "but", "and", "so") when it comes early enough
+    const clause = c.core.split(/,|;|\s+(?:but|and|so|because|while)\s+/i)[0];
+    const shortWords = (clause.split(/\s+/).length >= 2 ? clause : c.core).split(/\s+/).slice(0, 7).join(' ').replace(/[,;:]+$/, '');
+    const personal = (t) => t.replace(/\bme\s+(?=(destination|home|work|office|place|goal|way|money|time)\b)/gi, 'their ').replace(/\b(me|myself)\b/gi, 'them').replace(/\bmy\b/gi, 'their').replace(/\bi\b/g, 'they');
+    const name = personal(shortWords).replace(/^./, (x) => x.toUpperCase());
+    const hmw = c.changed
+      ? 'How might we help people ' + personal(clip(c.core, 150)).replace(/^./, (x) => x.toLowerCase()) + '?'
+      : 'How might we address this: ' + clip(c.first, 150).replace(/^./, (x) => x.toLowerCase()) + '?';
+    return { name: clip(name, 60), domain: '', challenge: problem, hmw, queries: [q] };
   }
 
   async function plan(problem, settings, f) {
@@ -350,5 +373,5 @@
     return project;
   }
 
-  return { STEPS, CRITERIA, run, plan, research, users, morph, evaluate, buildPlan, fallbackPlan, needsFromThemes, hasModel };
+  return { problemCore, STEPS, CRITERIA, run, plan, research, users, morph, evaluate, buildPlan, fallbackPlan, needsFromThemes, hasModel };
 });
