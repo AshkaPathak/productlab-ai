@@ -8,10 +8,30 @@
   const X = PL.experiment;
   let lastResults = null;
 
+  /* Each idea is checked against the evidence of the problem it was written for,
+     so one study can hold ideas for two different problems. */
+  const indexCache = new Map();
+  function indexFor(ctx, entry) {
+    const id = entry.evidenceFrom;
+    if (!id || id === ctx.project.id) return ctx.index;
+    const other = PL.store.state.projects.find((p) => p.id === id);
+    if (!other) return ctx.index;
+    const key = id + ':' + (other.updatedAt || '') + ':' + other.findings.length;
+    if (!indexCache.has(key)) indexCache.set(key, PL.evidence.buildIndex(other));
+    return indexCache.get(key);
+  }
+
+  function problemName(ctx, entry) {
+    const p = PL.store.state.projects.find((x) => x.id === (entry.evidenceFrom || ctx.project.id)) || ctx.project;
+    const n = String(p.name || '').split(/[:(]/)[0].trim();
+    return n.length > 28 ? n.slice(0, 27) + '\u2026' : n;
+  }
+
   function traceOf(ctx, entry) {
     const claims = entry.claims || [];
     if (!claims.length) return 0;
-    const ok = claims.filter((cl) => { const s = PL.evidence.verify(ctx.index, cl).status; return s === 'supported' || s === 'partial'; }).length;
+    const idx = indexFor(ctx, entry);
+    const ok = claims.filter((cl) => { const s = PL.evidence.verify(idx, cl).status; return s === 'supported' || s === 'partial'; }).length;
     return ok / claims.length;
   }
 
@@ -57,8 +77,8 @@
         '<p class="muted small">Full protocol: <span class="mono">docs/evaluation-protocol.md</span> in the repository.</p></div>' +
         '<div class="stats">' + C.stat('Participants', parts.length) + C.stat('Concepts (A / B)', ex.entries.filter((e) => e.condition === 'A').length + ' / ' + ex.entries.filter((e) => e.condition === 'B').length) + C.stat('Ratings imported', ex.ratings.length) + '</div>' +
         '<div class="card"><div class="row between"><h2>Concepts in the study</h2><div class="row"><button class="btn" data-act="from-concepts">Add project concepts (B)</button><button class="btn primary" data-act="add-entry">+ Add concept</button></div></div>' +
-        (ex.entries.length ? '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Participant</th><th>Condition</th><th>Concept</th><th class="num">Claims</th><th class="num">Traceability</th><th></th></tr></thead><tbody>' +
-          ex.entries.map((e) => '<tr><td class="mono">' + esc(e.id) + '</td><td>' + esc(e.participant) + '</td><td><span class="pill' + (e.condition === 'A' ? ' grey' : '') + '">' + esc(e.condition) + '</span></td><td><b>' + esc(e.name) + '</b><div class="muted small">' + esc((e.description || '').slice(0, 140)) + '</div></td><td class="num">' + (e.claims || []).length + '</td><td class="num">' + pct(traceOf(ctx, e)) + '</td>' +
+        (ex.entries.length ? '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Participant</th><th>Condition</th><th>Concept</th><th>Problem</th><th class="num">Claims</th><th class="num">Traceability</th><th></th></tr></thead><tbody>' +
+          ex.entries.map((e) => '<tr><td class="mono">' + esc(e.id) + '</td><td>' + esc(e.participant) + '</td><td><span class="pill' + (e.condition === 'A' ? ' grey' : '') + '">' + esc(e.condition) + '</span></td><td><b>' + esc(e.name) + '</b><div class="muted small">' + esc((e.description || '').slice(0, 140)) + '</div></td><td class="small">' + esc(problemName(ctx, e)) + '</td><td class="num">' + (e.claims || []).length + '</td><td class="num">' + pct(traceOf(ctx, e)) + '</td>' +
             '<td><button class="icon-btn" data-act="del" data-path="experiment.entries.' + esc(e.id) + '" data-confirm="Remove this concept from the study?" aria-label="Remove">' + C.icon('x') + '</button></td></tr>').join('') + '</tbody></table></div>' : C.empty('No study concepts yet.')) + '</div>' +
         '<div class="grid two"><div class="card"><h2>1. Blind rating sheet</h2><div class="field"><label>Raters (comma separated)</label><input class="wide" data-focus="raters" id="raters" value="' + esc(u.raters || 'R1, R2') + '"></div>' +
         '<button class="btn primary" data-act="sheet"' + (ex.entries.length ? '' : ' disabled') + '>Generate & download sheet (CSV)</button>' +
@@ -73,12 +93,13 @@
         const v = await formModal('Add study concept', [
           { name: 'participant', label: 'Participant / team ID', required: true, value: 'P1' },
           { name: 'condition', label: 'Condition', type: 'select', value: 'A', options: [{ value: 'A', label: 'A – baseline (ordinary AI brainstorming)' }, { value: 'B', label: 'B – ProductLab evidence-linked workflow' }] },
+          { name: 'evidenceFrom', label: 'Problem it was written for (its citations are checked against this project\u2019s evidence)', type: 'select', value: ctx.project.id, options: PL.store.state.projects.map((x) => ({ value: x.id, label: x.name })) },
           { name: 'name', label: 'Concept name', required: true },
           { name: 'description', label: 'Description', type: 'textarea' },
           { name: 'claims', label: 'Claims (one per line; add citations at the end like [E3, E7])', type: 'textarea', rows: 5 }
         ]);
         if (!v || !v.name) return;
-        ctx.commit((p) => p.experiment.entries.push({ id: nextId(p.experiment.entries, 'X'), participant: v.participant, condition: v.condition, name: v.name, description: v.description, claims: parseClaims(v.claims), source: 'manual' }));
+        ctx.commit((p) => p.experiment.entries.push({ id: nextId(p.experiment.entries, 'X'), participant: v.participant, condition: v.condition, name: v.name, description: v.description, claims: parseClaims(v.claims), source: 'manual', evidenceFrom: v.evidenceFrom || ctx.project.id }));
       },
       async 'from-concepts'(el, e, ctx) {
         const p = ctx.project;
@@ -88,7 +109,7 @@
         let n = 0;
         ctx.commit((pr) => pr.concepts.forEach((c) => {
           if (!v['c_' + c.id]) return;
-          pr.experiment.entries.push({ id: nextId(pr.experiment.entries, 'X'), participant: v.participant, condition: 'B', name: c.name, description: c.description, claims: JSON.parse(JSON.stringify(c.claims || [])), source: 'concept:' + c.id });
+          pr.experiment.entries.push({ id: nextId(pr.experiment.entries, 'X'), participant: v.participant, condition: 'B', name: c.name, description: c.description, claims: JSON.parse(JSON.stringify(c.claims || [])), source: 'concept:' + c.id, evidenceFrom: pr.id });
           n++;
         }));
         toast(n + ' concept(s) added as condition B', 'ok');

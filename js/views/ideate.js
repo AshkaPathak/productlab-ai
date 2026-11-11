@@ -200,7 +200,7 @@
         const c = u.ai.concepts[Number(el.dataset.i)];
         const v = await formModal('Add to evaluation study', [{ name: 'participant', label: 'Participant / session ID', required: true, value: 'P1' }, { name: 'condition', label: 'Condition', type: 'select', value: u.ai.mode === 'grounded' ? 'B' : 'A', options: [{ value: 'A', label: 'A – baseline (ordinary AI brainstorming)' }, { value: 'B', label: 'B – ProductLab evidence-linked workflow' }] }]);
         if (!v) return;
-        ctx.commit((p) => p.experiment.entries.push({ id: nextId(p.experiment.entries, 'X'), participant: v.participant, condition: v.condition, name: c.name, description: c.description, claims: JSON.parse(JSON.stringify(c.claims)), source: 'ai-' + u.ai.mode }));
+        ctx.commit((p) => p.experiment.entries.push({ id: nextId(p.experiment.entries, 'X'), participant: v.participant, condition: v.condition, name: c.name, description: c.description, claims: JSON.parse(JSON.stringify(c.claims)), source: 'ai-' + u.ai.mode, evidenceFrom: p.id }));
         toast('Added to study as condition ' + v.condition, 'ok');
       }
     }
