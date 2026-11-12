@@ -7,6 +7,6 @@
 (function (root) {
   'use strict';
   (root.PL = root.PL || {}).config = {
-    sharedAI: ''
+    sharedAI: 'https://productlab-ai.ashka-tds.workers.dev'
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
