@@ -77,7 +77,8 @@
     if (o.apiKey) params.set('api_key', o.apiKey);
     const res = await f(OPENALEX + '?' + params.toString(), { headers: { Accept: 'application/json' } });
     if (!res.ok) {
-      const msg = res.status === 429 ? 'OpenAlex daily limit reached — add a free OpenAlex API key in Settings or try tomorrow' : 'OpenAlex error ' + res.status;
+      const g = typeof globalThis !== 'undefined' ? globalThis : {}; const hosted = !!(g.PL && g.PL.config && g.PL.config.sharedAI);
+      const msg = res.status === 429 ? 'OpenAlex daily limit reached \u2014 ' + (hosted ? 'try again later' : 'add a free OpenAlex API key in Settings or try tomorrow') : 'OpenAlex error ' + res.status;
       throw new Error(msg);
     }
     const data = await res.json();

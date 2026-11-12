@@ -103,6 +103,11 @@
     if (state.settings && state.settings.ai && state.settings.ai.model === 'gemini-3.5-flash') state.settings.ai.model = 'gemini-3.8-flash';
     // people who never added a key get the shared AI, so the AI features just work
     const sh = PL.llm && PL.llm.PRESETS.shared;
+    // on the hosted site there are no AI settings at all: everyone uses ProductLab's AI
+    if (PL.llm && PL.llm.hosted && PL.llm.hosted()) {
+      state.settings.ai = Object.assign({}, state.settings.ai, defaultAI());
+      if (state.apiKey) { state.apiKey = ''; safeDel(root.sessionStorage, KEY_SECRET); safeDel(root.localStorage, KEY_SECRET); }
+    }
     if (sh && sh.baseUrl && !state.apiKey && state.settings.ai.preset === 'gemini') state.settings.ai = Object.assign({}, state.settings.ai, defaultAI());
     if (state.settings.ai.preset === 'shared' && sh) Object.assign(state.settings.ai, { provider: sh.provider, baseUrl: sh.baseUrl, model: sh.model });
     if (!state.projects.find((p) => p.id === state.currentId)) state.currentId = state.projects[0] ? state.projects[0].id : null;

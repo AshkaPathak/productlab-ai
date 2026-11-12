@@ -101,7 +101,7 @@
       const top = ranked[0];
       const stagesP = C.stepProgress(p, audit).map((x) => ({ label: x.label, kind: x.kind, state: x.done > 0 ? 'done' : 'pending', fill: x.done, big: x.big, sub: x.sub, href: '#/' + x.id, current: next && next.id === x.id }));
       const researchOnly = /^Research-only run/.test(p.caveats || '');
-      return (p.caveats ? '<div class="warnbox">' + esc(p.caveats) + (researchOnly ? ' <a href="#/settings">Add a free Gemini key</a>, then run it again from <a href="#/start">Home</a>: your problem is still in the box.' : '') + '</div>' : '') +
+      return (p.caveats ? '<div class="warnbox">' + esc(p.caveats) + (researchOnly && !PL.llm.hosted() ? ' <a href="#/settings">Add a free Gemini key</a>, then run it again from <a href="#/start">Home</a>: your problem is still in the box.' : '') + '</div>' : '') +
         (next ? '<div class="next"><span>Next</span><b>' + esc(next.label) + '</b><span class="muted small">' + esc(next.detail) + '</span><a class="btn primary" href="#/' + next.id + '">Continue</a></div>'
           : '<div class="next"><b>Every step has content.</b><span class="muted small">Check the audit, then export the report.</span><a class="btn primary" href="#/report">Open the audit</a></div>') +
         '<div class="press-wrap">' + C.press(stagesP, { label: 'Project progress' }) + '</div>' +
@@ -156,7 +156,7 @@
       const presets = PL.llm.PRESETS;
       const shared = ai.preset === 'shared';
       const keys = Object.keys(presets).filter((k) => k !== 'shared' || presets.shared.baseUrl);
-      return '<div class="grid two"><div class="card"><h2>AI assistant</h2>' +
+      const aiCard = PL.llm.hosted() ? '' : '<div class="card"><h2>AI assistant</h2>' +
         (presets.shared.baseUrl
           ? '<p class="muted small">ProductLab\u2019s shared AI works without any setup. If you use ProductLab a lot, or the shared AI reaches its daily limit, you can add your own free Gemini key instead. Every claim the AI writes is checked by the citation guard.</p>'
           : '<p class="muted small">Without a model, ProductLab still finds research papers and groups them into themes. Connect one to get people, ideas, scores and a build plan. Every claim the model writes is checked by the citation guard.</p>') +
@@ -166,12 +166,13 @@
             '<div class="row" style="margin-top:12px"><button class="btn primary" data-act="test">Test connection</button><span class="muted small" id="ai-status"></span></div>'
           : ownKey(ctx, ai)) +
         '<h2 style="margin-top:22px">Paper search (OpenAlex)</h2><p class="muted small">Autopilot searches the free OpenAlex index of research papers. Without a key it allows about 100 searches a day; a free key from openalex.org raises that.</p>' +
-        '<div class="field"><label for="oa-key">OpenAlex API key (optional)</label><input id="oa-key" class="wide mono" type="password" autocomplete="off" data-act="oakey" value="' + esc(ctx.state.settings.openAlexKey || '') + '"></div></div>' +
+        '<div class="field"><label for="oa-key">OpenAlex API key (optional)</label><input id="oa-key" class="wide mono" type="password" autocomplete="off" data-act="oakey" value="' + esc(ctx.state.settings.openAlexKey || '') + '"></div></div>';
+      return '<div class="grid two">' + aiCard +
         '<div class="card"><h2>Citation guard</h2><p class="muted small">Each claim is compared with the evidence it cites using TF-IDF cosine similarity. Above the <b>strong</b> threshold a claim counts as supported; between the thresholds it is partially supported; below, the citation is flagged as not supporting the claim.</p>' +
         '<div class="field"><label>Strong threshold: <b>' + fix(s.guard.strong) + '</b></label><input type="range" min="0.05" max="0.5" step="0.01" value="' + s.guard.strong + '" data-act="guard" data-key="strong"></div>' +
         '<div class="field"><label>Weak threshold: <b>' + fix(s.guard.weak) + '</b></label><input type="range" min="0.01" max="0.3" step="0.01" value="' + s.guard.weak + '" data-act="guard" data-key="weak"></div>' +
-        '<button class="btn small" data-act="guard-reset">Reset to defaults (0.20 / 0.08)</button>' +
-        '<h2 style="margin-top:22px">Data</h2><div class="row"><button class="btn" data-act="export-all">Export all projects</button><button class="btn danger" data-act="wipe">Clear all data in this browser</button></div>' +
+        '<button class="btn small" data-act="guard-reset">Reset to defaults (0.20 / 0.08)</button></div>' +
+        '<div class="card"><h2>Data</h2><div class="row"><button class="btn" data-act="export-all">Export all projects</button><button class="btn danger" data-act="wipe">Clear all data in this browser</button></div>' +
         '<p class="muted small" style="margin-top:10px">All projects live in this browser’s local storage. Nothing is uploaded anywhere.</p></div></div>';
     },
     actions: {

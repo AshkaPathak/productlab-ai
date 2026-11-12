@@ -344,7 +344,7 @@
     project.references = r.refs; project.findings = r.findings;
     if (project.findings.length < 3) {
       mark('research', 'failed', r.limited && project.findings.length === 0
-        ? 'The free paper search (OpenAlex) is not answering this connection right now because too many searches were made today. Try again tomorrow, or add a free OpenAlex key in Settings.'
+        ? 'The free paper search (OpenAlex) is not answering this connection right now because too many searches were made recently. Try again later' + (L.hosted && L.hosted() ? '.' : ', or add a free OpenAlex key in Settings.')
         : 'Found only ' + n(project.findings.length, 'fact', 'facts') + ' in research papers. Rephrase the problem with more specific words, or add evidence by hand on the Research page.');
       project.caveats = 'Autopilot could not find enough evidence. Add sources and findings on the Evidence page.';
       return project;

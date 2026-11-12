@@ -35,7 +35,7 @@ test('shared-AI errors tell people what to do', async () => {
   const L = freshLLM('https://proxy.example');
   const s = { preset: 'shared', provider: 'gemini', baseUrl: 'https://proxy.example/v1beta', model: 'gemini-3.5-flash-lite', retryScale: 0 };
   await assert.rejects(L.chat(s, [{ role: 'user', content: 'hi' }], async () => reply(429, { error: { message: 'Quota exceeded for metric: generate_content_free_tier_requests, limit: GenerateRequestsPerDayPerProjectPerModel-FreeTier' } })),
-    /shared AI has used today.s free allowance.*add your own free Gemini key/);
+    (e) => /reached today.s limit/.test(e.message) && !/key|Settings/i.test(e.message));
   await assert.rejects(L.chat(s, [{ role: 'user', content: 'hi' }], async () => reply(403, { error: { message: 'This service only answers the ProductLab site.' } })),
     /only works on the ProductLab website/);
 });
@@ -68,4 +68,14 @@ test('shared-AI errors never point people to model settings, and offline is expl
     (e) => /internet connection/.test(e.message) && e.offline === true);
   assert.match(L.explain(413, 'too large', sh.model, true), /too large/);
   L.resetBusy();
+});
+
+test('on a site with its own AI, no error message mentions keys or settings', async () => {
+  const L = freshLLM('https://proxy.example/');
+  assert.equal(L.hosted(), true);
+  for (const [status, msg] of [[429, 'limit: GenerateRequestsPerDayPerProjectPerModel'], [429, 'Too many requests from this device'], [403, 'x'], [500, 'not set up'], [401, 'API key not valid'], [413, 'too large'], [503, 'high demand']]) {
+    const text = L.explain(status, msg, 'gemini-3.5-flash-lite', true);
+    assert.doesNotMatch(text, /\bkey\b|Settings|shared AI/i, status + ': ' + text);
+  }
+  assert.equal(freshLLM('').hosted(), false);
 });

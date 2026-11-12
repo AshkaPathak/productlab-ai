@@ -114,14 +114,13 @@
   function explain(status, message, model, shared) {
     const msg = String(message || '');
     if (shared) {
-      const own = ' To keep going now, add your own free Gemini key in Settings.';
-      if (status === 413) return 'This request is too large for the shared AI. Shorten the problem description and try again.';
+      // people using ProductLab's own AI never deal with keys, so nothing here mentions them
+      if (status === 413) return 'This request is too large for the AI. Shorten the problem description and try again.';
       if (status >= 500 && !/not set up/i.test(msg)) return 'Google\u2019s AI is very busy right now, even with ProductLab\u2019s backup model. Wait a few minutes and try again.';
-      if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'ProductLab\u2019s shared AI has used today\u2019s free allowance. It resets at midnight US Pacific time.' + own;
-      if (status === 429 && /this device/i.test(msg)) return 'You are sending requests faster than the shared AI allows. Wait a minute and try again.';
-      if (status === 403) return 'The shared AI only works on the ProductLab website (ashkapathak.github.io/productlab-ai). Here, add your own key in Settings.';
-      if (status === 500 && /not set up/i.test(msg)) return 'The shared AI is not set up yet.' + own;
-      if (status === 401 || /API key not valid|API_KEY_INVALID/i.test(msg)) return 'The shared AI\u2019s key is not working right now.' + own;
+      if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'ProductLab\u2019s AI has reached today\u2019s limit. It resets at midnight US Pacific time (1:30 pm in India), so please try again then.';
+      if (status === 429 && /this device/i.test(msg)) return 'You are sending requests too quickly. Wait a minute and try again.';
+      if (status === 403) return 'ProductLab\u2019s AI only works on the ProductLab website (ashkapathak.github.io/productlab-ai).';
+      if (status === 500 || status === 401 || /API key not valid|API_KEY_INVALID/i.test(msg)) return 'ProductLab\u2019s AI is not available right now. Please try again later.';
     }
     if (/API key not valid|API_KEY_INVALID|invalid api key|Incorrect API key/i.test(msg) || status === 401) return 'The AI provider did not accept the key. Check in Settings that the whole key was copied (Gemini keys start with "AQ." or "AIza").';
     if (status === 404 || /not found|is not supported/i.test(msg)) return 'The model "' + model + '" is not available to this key. In Settings, try gemini-3.8-flash or gemini-3.5-flash-lite.';
@@ -257,6 +256,9 @@
     return { concepts: normalizeConcepts(extractJSON(reply), o.mode === 'grounded' ? 'ai' : 'ai-baseline'), raw: reply, messages };
   }
 
+  /* True when this site has its own AI service: people are never asked for keys or AI settings. */
+  function hosted() { return !!SHARED; }
+
   /* The shared backend holds the key, so no key is sent from the browser. */
   function isShared(s) { return !!(s && (s.noKey || s.preset === 'shared')); }
 
@@ -270,5 +272,5 @@
 
   function resetBusy() { Object.keys(busyUntil).forEach((k) => { delete busyUntil[k]; }); }
 
-  return { PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, SHARED_FALLBACK, fallbackFor, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy, isShared, ready, SHARED };
+  return { hosted, PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, SHARED_FALLBACK, fallbackFor, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy, isShared, ready, SHARED };
 });

@@ -8,7 +8,7 @@ Throughout, a **citation guard** checks every claim against the evidence it cite
 
 Built for **DE 401 Creative Intelligence for Engineers** (Group Innovation Project) by Ashka Pathak, Farzan Bhalara and Dhruvika Rathod.
 
-**Try it live: [ashkapathak.github.io/productlab-ai](https://ashkapathak.github.io/productlab-ai/)** (no sign-up; add a free Gemini key in Settings to run your own problem).
+**Try it live: [ashkapathak.github.io/productlab-ai](https://ashkapathak.github.io/productlab-ai/)** (no sign-up and no set-up: type a problem and run it).
 
 ![Home: describe a problem in everyday words](docs/img/home.jpg)
 
@@ -68,7 +68,9 @@ When you choose a different concept in the matrix, open **Build plan → Re-plan
 
 Everything the model writes must cite evidence IDs. The citation guard then checks every claim, so an invented citation shows up as *Missing evidence*.
 
-**Setup: none.** On the live site, ProductLab uses its **shared AI**: a small backend ([`proxy/`](proxy/README.md)) that holds the team's Gemini key, so visitors need no sign-up or key. Everyone shares its free daily quota; people who use ProductLab a lot, or arrive after the quota runs out, can add their own free Gemini key in **Settings**. Without any AI, autopilot still searches papers and groups the evidence into themes.
+**Setup: none.** On the live site, ProductLab uses its own AI service: a small backend ([`proxy/`](proxy/README.md)) that holds the team's Gemini key, so visitors never sign up, see a key or choose a model. Because nobody is asked for one, the site hides every AI and key setting; Settings only shows the citation guard and data tools. Everyone shares the service's free daily quota, which resets at midnight US Pacific time.
+
+For developers: when `sharedAI` in `js/app/config.js` is empty (a fork, or a local copy), the AI settings come back, so each person can connect their own Gemini key, another OpenAI-compatible provider or a local Ollama model. Without any AI, autopilot still searches papers and groups the evidence into themes.
 
 ## Colours and themes
 
@@ -123,7 +125,7 @@ Details and formulas are in [`docs/methodology.md`](docs/methodology.md).
 ProductLab uses AI in two layers:
 
 1. **Built in, offline, explainable.** Information retrieval (TF-IDF vector space model), unsupervised clustering of evidence into themes, retrieval-grounded concept drafting, combinatorial search over the morphological space, Monte Carlo simulation, and rule-based recommendation. None of it needs an internet connection or an API key, and every output can be traced to its inputs.
-2. **Optional language model.** Connect Google Gemini (a free key works), OpenAI, Groq, OpenRouter, or a local Ollama model in **Settings**. Generated concepts must cite evidence IDs, and the citation guard audits them before they can be used.
+2. **Language model.** The live site uses Google Gemini through its own AI service. A copy without that service can connect Gemini (a free key works), OpenAI, Groq, OpenRouter, or a local Ollama model in **Settings**. Generated concepts must cite evidence IDs, and the citation guard audits them before they can be used.
 
 The model is used for divergent thinking (generating options). Convergent steps (verification, scoring, ranking) stay transparent and deterministic.
 

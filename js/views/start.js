@@ -67,9 +67,9 @@
 
   const FAQ = [
     ['Do I need to know product design or research methods?', 'No. Write the problem the way you would explain it to a friend. Every step explains itself, and you can change anything it suggests.'],
-    ['What do I need to start?', PL.llm.PRESETS.shared.baseUrl ? 'Just the problem. ProductLab\u2019s shared AI is ready to use with no sign-up or key. If it reaches its daily limit, or you use ProductLab a lot, you can add your own free Google Gemini key in Settings.' : 'Just the problem. For people, ideas, scores and a build plan, add a free Google Gemini API key in Settings; the steps are shown there and take about two minutes.'],
+    ['What do I need to start?', PL.llm.hosted() ? 'Just the problem. There is nothing to install and no sign-up.' : 'Just the problem. For people, ideas, scores and a build plan, add a free Google Gemini API key in Settings; the steps are shown there and take about two minutes.'],
     ['How do I know it is not making things up?', 'Facts are only taken from sources, never written from the model’s memory, and every claim is checked against the fact it cites. Anything unsupported is flagged in red.'],
-    ['Where is my work saved?', 'In this browser only. The only things sent anywhere are search phrases to OpenAlex and the text the AI needs, through ProductLab\u2019s shared AI or your own key. On Google\u2019s free tier, Google may use that text to improve its products, so leave out anything confidential. You can export any project as a file from Projects.']
+    ['Where is my work saved?', 'In this browser only. The only things sent anywhere are search phrases to OpenAlex, a free index of research papers, and the text the AI (Google Gemini) needs. On Google\u2019s free tier, Google may use that text to improve its products, so leave out anything confidential. You can export any project as a file from Projects.']
   ];
 
   function idle(ctx) {
@@ -91,8 +91,8 @@
       '<span class="spacer"></span><button class="btn primary big" data-act="run">Find users, ideas and a plan <span aria-hidden="true">\u2192</span></button></div>' +
       '<details class="run-options"><summary>Search options</summary><div class="row">' +
       '<label class="small" for="opt-papers">Papers per search</label><select id="opt-papers">' + [5, 8, 12].map((n) => '<option' + (Number(u.papers || 8) === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select>' +
-      '<label class="check small" title="Uses Google Search grounding, which Google includes only on paid Gemini projects"><input type="checkbox" id="opt-web"' + (canWeb && u.web === true ? ' checked' : '') + (canWeb ? '' : ' disabled') + '> Search the web too (needs a paid Gemini key)</label></div></details></div>' +
-      (ai ? '<p class="hero-note">' + (sharedAI ? 'No sign-up or key needed.' : 'Using ' + esc(s.model) + '.') + ' Takes 1 to 2 minutes, and you can watch each step happen. <button class="linkish" data-act="try-example">Or see a finished example</button></p>'
+      (PL.llm.hosted() ? '' : '<label class="check small" title="Uses Google Search grounding, which Google includes only on paid Gemini projects"><input type="checkbox" id="opt-web"' + (canWeb && u.web === true ? ' checked' : '') + (canWeb ? '' : ' disabled') + '> Search the web too (needs a paid Gemini key)</label>') + '</div></details></div>' +
+      (ai ? '<p class="hero-note">' + (sharedAI ? 'No sign-up needed.' : 'Using ' + esc(s.model) + '.') + ' Takes 1 to 2 minutes, and you can watch each step happen. <button class="linkish" data-act="try-example">Or see a finished example</button></p>'
         : '<p class="hero-note">First, <a href="#/settings">add a free Gemini key</a> (two minutes). Without one, ProductLab only gathers research. <button class="linkish" data-act="try-example">See a finished example</button></p>') +
       '</header>' +
 
@@ -235,7 +235,7 @@
           if (!go) return;
           if (go !== 'research') { location.hash = '#/settings'; return; }
         }
-        u.problem = problem; u.web = document.getElementById('opt-web').checked; u.papers = Number(document.getElementById('opt-papers').value);
+        u.problem = problem; u.web = !!(document.getElementById('opt-web') || {}).checked; u.papers = Number(document.getElementById('opt-papers').value);
         S.save();
         Object.assign(run, { running: true, problem, steps: {}, log: [], projectId: null, error: '', entered: false });
         ctx.render();
