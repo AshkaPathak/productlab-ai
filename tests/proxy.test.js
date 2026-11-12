@@ -10,7 +10,7 @@ const req = (path, init) => new Request('https://proxy.example' + path, Object.a
 
 let W; let seen;
 test.before(async () => {
-  W = await import('../proxy/worker.mjs');
+  W = (await import('../proxy/worker.mjs')).default;
   global.fetch = async (url, init) => { seen = { url, init }; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] }), { status: 200 }); };
 });
 test.beforeEach(() => { W.hits.clear(); seen = null; });

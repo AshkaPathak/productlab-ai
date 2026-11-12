@@ -100,11 +100,12 @@ async function handle(request, env, now) {
   return new Response(text, { status: upstream.status, headers: Object.assign({ 'Content-Type': 'application/json' }, h) });
 }
 
-const worker = {
+export default {
   async fetch(request, env) {
     try { return await handle(request, env, Date.now()); } catch (e) { return json(502, { error: { message: 'The shared AI could not reach Google: ' + e.message } }); }
-  }
+  },
+  // exposed for the tests in tests/proxy.test.js
+  handle,
+  hits,
+  MODELS
 };
-
-export default worker;
-export { handle, MODELS, hits };
