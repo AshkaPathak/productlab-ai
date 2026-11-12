@@ -170,3 +170,19 @@ test('a problem written in another language still finds evidence through the Eng
   assert.ok(p.findings.length >= 3, 'found ' + p.findings.length + ' findings');
   assert.equal(p.autopilot.steps.research.status, 'done');
 });
+
+test('a cut-off JSON reply is asked for once more before a step fails', async () => {
+  require('../js/engine/llm.js').resetBusy();
+  const inner = makeFetch();
+  let cut = 1;
+  const f = async (url, init) => {
+    if (cut > 0 && /generateContent$/.test(url) && /Score each concept/.test(init.body)) {
+      cut--;
+      return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ratings": {"C1": {"desirability": {"value": 4, "note": "cut off' }] } }] }) };
+    }
+    return inner(url, init);
+  };
+  const p = await A.run(PROBLEM, gemini, { fetch: f, web: false });
+  assert.equal(p.autopilot.steps.evaluate.status, 'done');
+  assert.ok(p.selectedConcept);
+});

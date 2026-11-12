@@ -20,7 +20,7 @@ const DEFAULT_ORIGINS = ['https://ashkapathak.github.io'];
 const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.6-flash'];
 const UPSTREAM = 'https://generativelanguage.googleapis.com/v1beta/models/';
 const MAX_BODY = 120000;          // bytes; ProductLab's largest prompt is about 40 KB
-const MAX_OUTPUT_TOKENS = 4096;
+const MAX_OUTPUT_TOKENS = 16384;
 const PER_MINUTE = 12;            // per visitor
 const PER_HOUR = 120;             // per visitor
 

@@ -23,7 +23,7 @@ test('forwards a request from the site to Gemini with the server key, trimmed to
   assert.equal(seen.init.headers['x-goog-api-key'], 'server-secret-key');
   const sent = JSON.parse(seen.init.body);
   assert.equal(sent.tools, undefined, 'search grounding is stripped');
-  assert.equal(sent.generationConfig.maxOutputTokens, 4096, 'output length is capped');
+  assert.equal(sent.generationConfig.maxOutputTokens, 16384, 'output length is capped');
   assert.ok(!(await r.text()).includes('server-secret-key'), 'the key is never sent back');
 });
 

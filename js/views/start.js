@@ -165,7 +165,9 @@
     }
     const steps = (p.autopilot && p.autopilot.steps) || run.steps;
     const failed = ['ideas', 'evaluate', 'build'].filter((id) => steps[id] && steps[id].status === 'failed');
-    if (steps.research && steps.research.status === 'failed') {
+    if (run.resuming) {
+      out += '<div class="infobox"><span class="spin dark"></span> Trying the missing steps again. This usually takes under a minute; the circles above fill in as each step finishes.</div>';
+    } else if (steps.research && steps.research.status === 'failed') {
       out += '<div class="warnbox"><p><b>Research did not find enough evidence.</b> ' + esc(steps.research.detail || '') + '</p>' +
         '<p>Without evidence ProductLab cannot ground people, ideas or a plan, so it stopped here.</p></div>';
     } else if (failed.length) {

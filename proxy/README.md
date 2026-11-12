@@ -6,7 +6,7 @@
 
 - Requests only from the ProductLab site (`https://ashkapathak.github.io` by default).
 - Only text generation with `gemini-3.5-flash-lite`, `gemini-3.8-flash` or `gemini-3.6-flash`; no search grounding and no other Gemini APIs.
-- Requests up to 120 KB and answers up to 4,096 tokens.
+- Requests up to 120 KB and answers up to 16,384 tokens.
 - Per visitor (IP address): 12 requests a minute and 120 an hour. These limits are kept in memory, so they slow abuse rather than guarantee an exact count.
 
 Everyone shares the key's free Gemini quota, which resets at midnight US Pacific time. When it runs out, the app tells people they can add their own free key in Settings.

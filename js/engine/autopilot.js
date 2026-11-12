@@ -43,9 +43,14 @@
   const ids = (a, re) => (Array.isArray(a) ? a : typeof a === 'string' ? a.split(/[,\s]+/) : []).map((x) => String(x).trim().toUpperCase()).filter((x) => re.test(x)).slice(0, 8);
   const EID = /^E\d+$/; const NID = /^N\d+$/;
 
+  /* Ask for JSON. A reply that is cut off or garbled gets one more try before the step fails. */
   async function ask(settings, user, f) {
-    const reply = await L.chat(Object.assign({ temperature: 0.4 }, settings), [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }], f);
-    return L.extractJSON(reply);
+    const messages = [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }];
+    const reply = await L.chat(Object.assign({ temperature: 0.4 }, settings), messages, f);
+    try { return L.extractJSON(reply); } catch (e) {
+      const again = await L.chat(Object.assign({ temperature: 0.2 }, settings), messages, f);
+      return L.extractJSON(again);
+    }
   }
 
   function evidenceList(project, max) {
