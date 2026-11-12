@@ -57,8 +57,20 @@
   function evaluate(p) {
     const D = PL.decision;
     if (!p.concepts.length) return { headline: 'Nothing to decide yet.', points: ['Add ideas first, then score them here.'], next: 'ideate' };
-    const rated = p.concepts.every((c) => p.criteria.every((k) => p.ratings[c.id] && p.ratings[c.id][k.id] && p.ratings[c.id][k.id].value !== '' && p.ratings[c.id][k.id].value != null));
-    if (!rated) return { headline: 'Score each idea to find the winner.', points: ['Open the details below and give every idea a score from 1 to 5 on each criterion.', 'Add a short reason with each score so others can follow it.'], next: null };
+    const full = (c) => p.criteria.every((k) => p.ratings[c.id] && p.ratings[c.id][k.id] && p.ratings[c.id][k.id].value !== '' && p.ratings[c.id][k.id].value != null);
+    const unrated = p.concepts.filter((c) => !full(c));
+    if (unrated.length === p.concepts.length) return { headline: 'Score each idea to find the winner.', points: ['Open the details below and give every idea a score from 1 to 5 on each criterion.', 'Add a short reason with each score so others can follow it.'], next: null };
+    if (unrated.length) {
+      const scored = p.concepts.filter(full);
+      const lead = D.wdm(scored, p.criteria, p.ratings)[0];
+      return {
+        headline: plural(unrated.length, 'idea still needs', 'ideas still need') + ' scores.',
+        points: ['Not scored yet: ' + unrated.slice(0, 3).map((c) => c.name).join(', ') + (unrated.length > 3 ? ' and ' + (unrated.length - 3) + ' more' : '') + '.',
+          'Among the ideas already scored, ' + lead.name + ' leads at ' + fix2(lead.total) + ' out of 5.',
+          'Open the details below and score the new ideas so the ranking covers all of them.'],
+        next: null
+      };
+    }
     const ranked = D.wdm(p.concepts, p.criteria, p.ratings);
     const top = ranked[0]; const second = ranked[1];
     const pts = [];

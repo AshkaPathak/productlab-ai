@@ -1,6 +1,7 @@
 /* ProductLab AI - Ideate view: concepts, morphological analysis, random association, AI assist */
 (function (root) {
   'use strict';
+  const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
   const PL = (root.PL = root.PL || {});
   PL.views = PL.views || {};
   const { esc, fix, pct, formModal, nextId, toast, parseIds, confirmModal } = PL.ui;
@@ -99,7 +100,7 @@
           (c.tagline ? '<div class="muted">' + esc(c.tagline) + '</div>' : '') + '<p class="small">' + esc(c.description) + '</p>' +
           c.claims.map((cl, j) => '<div class="claim small"><div>' + esc(cl.text) + '</div><div class="cite">' + C.badge(verdicts[j].status) + (cl.evidence || []).map((id) => '<span class="chip ' + (ctx.index.byId.has(id) ? '' : 'bad') + '" title="' + esc(C.findingTitle(ctx, id)) + '">' + esc(id) + '</span>').join('') + '</div></div>').join('') +
           (halluc ? '<div class="warnbox">' + halluc + ' citation(s) point to evidence IDs that do not exist — the guard caught them.</div>' : '') +
-          '<div class="row" style="margin-top:10px"><button class="btn small primary" data-act="ai-add" data-i="' + i + '">Add to concepts</button><button class="btn small" data-act="ai-study" data-i="' + i + '">Add to evaluation study</button></div></div>';
+          '<div class="row" style="margin-top:10px">' + (ctx.project.concepts.some((x) => same(x.name, c.name)) ? '<button class="btn small" disabled>Added to concepts \u2713</button>' : '<button class="btn small primary" data-act="ai-add" data-i="' + i + '">Add to concepts</button>') + '<button class="btn small" data-act="ai-study" data-i="' + i + '">Add to evaluation study</button></div></div>';
       }).join('');
       out = '<p class="muted small">Generated ' + esc(res.at || '') + ' in ' + (res.mode === 'grounded' ? 'evidence-grounded' : 'baseline') + ' mode with ' + esc(res.model || '') + '.</p>' + out +
         '<details class="card"><summary>Show the exact prompt (for your methodology section)</summary><pre class="code">' + esc((res.messages || []).map((m) => m.role.toUpperCase() + ':\n' + m.content).join('\n\n')) + '</pre></details>';
@@ -192,6 +193,7 @@
       },
       'ai-add'(el, e, ctx) {
         const c = ctx.ui('ideate').ai.concepts[Number(el.dataset.i)];
+        if (ctx.project.concepts.some((x) => same(x.name, c.name))) { toast('"' + c.name + '" is already in your concepts', 'bad'); return; }
         ctx.commit((p) => p.concepts.push(Object.assign(JSON.parse(JSON.stringify(c)), { id: nextId(p.concepts, 'C') })));
         toast('Added "' + c.name + '" to concepts', 'ok');
       },
@@ -200,6 +202,7 @@
         const c = u.ai.concepts[Number(el.dataset.i)];
         const v = await formModal('Add to evaluation study', [{ name: 'participant', label: 'Participant / session ID', required: true, value: 'P1' }, { name: 'condition', label: 'Condition', type: 'select', value: u.ai.mode === 'grounded' ? 'B' : 'A', options: [{ value: 'A', label: 'A – baseline (ordinary AI brainstorming)' }, { value: 'B', label: 'B – ProductLab evidence-linked workflow' }] }]);
         if (!v) return;
+        if (ctx.project.experiment.entries.some((x) => same(x.participant, v.participant) && same(x.name, c.name))) { toast(v.participant + ' already has "' + c.name + '" in the study', 'bad'); return; }
         ctx.commit((p) => p.experiment.entries.push({ id: nextId(p.experiment.entries, 'X'), participant: v.participant, condition: v.condition, name: c.name, description: c.description, claims: JSON.parse(JSON.stringify(c.claims)), source: 'ai-' + u.ai.mode, evidenceFrom: p.id }));
         toast('Added to study as condition ' + v.condition, 'ok');
       }

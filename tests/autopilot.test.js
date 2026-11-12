@@ -117,3 +117,42 @@ test('without a model, a "need an app that helps me…" problem gets a clean nam
   assert.equal(g.name, 'People save posts');
   assert.match(g.hmw, /^How might we address this: people save posts/);
 });
+
+test('text that is not a problem stops the run before any research', async () => {
+  const inner = makeFetch();
+  let searched = false;
+  const f = async (url, init) => {
+    if (url.startsWith('https://api.openalex.org/')) searched = true;
+    if (/generateContent$/.test(url) && /isProblem/.test(init.body)) {
+      return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"isProblem": false}' }] } }] }) };
+    }
+    return inner(url, init);
+  };
+  const steps = {};
+  await assert.rejects(A.run('hello hello hello hello hello hello', gemini, { fetch: f, web: false, onStep: (id, st) => { steps[id] = st; } }), (e) => e.unclear === true && /does not read like a problem/.test(e.message));
+  assert.equal(searched, false);
+  assert.equal(steps.plan, 'failed');
+});
+
+test('when ideas fail, the run says why and the missing steps can be retried', async () => {
+  require('../js/engine/llm.js').resetBusy();
+  const inner = makeFetch();
+  let down = true;
+  const f = async (url, init) => (down && /generateContent$/.test(url) && /Generate 4 distinct product concepts/.test(init.body)
+    ? { ok: false, status: 400, statusText: 'x', json: async () => ({ error: { message: 'Bad request' } }) }
+    : inner(url, init));
+  const p = await A.run(PROBLEM, Object.assign({}, gemini, { retryScale: 0 }), { fetch: f, web: false });
+  assert.equal(p.concepts.length, 0);
+  assert.equal(p.autopilot.steps.ideas.status, 'failed');
+  assert.equal(p.autopilot.steps.evaluate.status, 'skipped');
+  assert.match(p.caveats, /could not generate ideas/);
+  const evidence = p.findings.length;
+  down = false;
+  await A.resume(p, Object.assign({}, gemini, { retryScale: 0 }), { fetch: f });
+  assert.ok(p.concepts.length > 0);
+  assert.equal(p.autopilot.steps.ideas.status, 'done');
+  assert.equal(p.autopilot.steps.evaluate.status, 'done');
+  assert.ok(p.features.length > 0);
+  assert.equal(p.findings.length, evidence, 'evidence is kept');
+  require('../js/engine/llm.js').resetBusy();
+});

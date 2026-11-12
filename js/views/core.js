@@ -60,10 +60,18 @@
         const file = el.files && el.files[0];
         if (!file) return;
         try {
-          const data = JSON.parse(await readFile(file));
-          const list = Array.isArray(data.projects) ? data.projects : [data];
-          list.forEach((p) => { if (!p || typeof p !== 'object' || !Array.isArray(p.findings || [])) throw new Error('Not a ProductLab project file'); S.addProject(p); });
-          toast('Imported ' + list.length + ' project(s)', 'ok');
+          let data;
+          try { data = JSON.parse(await readFile(file)); } catch (err) { throw new Error('the file is damaged or is not a ProductLab export'); }
+          const list = data && Array.isArray(data.projects) ? data.projects : [data];
+          const real = (p) => p && typeof p === 'object' && !Array.isArray(p) && Array.isArray(p.findings || []) && Array.isArray(p.concepts || []) &&
+            !!(String(p.name || '').trim() || (p.findings || []).length || (p.concepts || []).length || String(p.challenge || '').trim());
+          if (!list.length || !list.every(real)) throw new Error('this file does not contain a ProductLab project');
+          list.forEach((p) => {
+            const copy = Object.assign({}, p);
+            if (ctx.state.projects.some((x) => x.name === copy.name)) copy.name = (copy.name || 'Project') + ' (imported copy)';
+            S.addProject(copy);
+          });
+          toast('Imported ' + list.length + ' project' + (list.length > 1 ? 's' : ''), 'ok');
           ctx.go('overview');
         } catch (err) { toast('Import failed: ' + err.message, 'bad'); }
         el.value = '';

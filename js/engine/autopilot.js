@@ -84,11 +84,20 @@
     return { name: clip(name, 60), domain: '', challenge: problem, hmw, queries: [q] };
   }
 
+  /** Raised when the text does not describe any problem, so no research is wasted on it. */
+  function unclear() {
+    const e = new Error('This does not read like a problem we can research. Write a sentence or two about who has the problem and what goes wrong, for example: \u201cStudents in hostels skip breakfast because the mess opens after their first class.\u201d');
+    e.unclear = true;
+    return e;
+  }
+
   async function plan(problem, settings, f) {
     const j = await ask(settings, 'Problem statement: "' + clip(problem, 1200) + '"\n\nReturn JSON with keys:\n' +
       '"name": short project name (max 8 words),\n"domain": the field (e.g. "Digital wellbeing"),\n' +
       '"challenge": the problem restated in 2 sentences (who is affected, what goes wrong),\n"hmw": one "How might we ...?" question,\n' +
-      '"queries": 3 or 4 short search queries (3-6 words each) to find academic papers about these users, their behaviour and existing solutions.', f);
+      '"queries": 3 or 4 short search queries (3-6 words each) to find academic papers about these users, their behaviour and existing solutions,\n' +
+      '"isProblem": false only if the text is random letters, keyboard mashing or contains no recognisable problem, need or situation at all; otherwise true.', f);
+    if (j && j.isProblem === false) throw unclear();
     const fb = fallbackPlan(problem);
     const queries = (Array.isArray(j.queries) ? j.queries : []).map((x) => clip(x, 80)).filter(Boolean).slice(0, 4);
     return { name: clip(j.name || fb.name, 80), domain: clip(j.domain || '', 60), challenge: clip(j.challenge || problem, 800), hmw: clip(j.hmw || fb.hmw, 300), queries: queries.length ? queries : fb.queries };
@@ -283,10 +292,8 @@
    */
   const n = (k, one, many) => k + ' ' + (k === 1 ? one : many);
 
-  async function run(problem, rawSettings, options) {
-    const o = Object.assign({ web: true, papersPerQuery: 8, openAlexKey: '', fetch: null, onStep() {}, onLog() {} }, options || {});
-    const log = (m) => o.onLog(m);
-    // free AI keys allow only a few requests a minute: say so when the provider asks us to wait
+  /* Free AI keys allow only a few requests a minute: say so when the provider asks us to wait. */
+  function wrap(rawSettings, log) {
     let switched = false;
     const usedModels = [];
     const settings = Object.assign({}, rawSettings, {
@@ -294,6 +301,13 @@
       onWait: (sec) => log('The AI provider asked for a short pause; waiting ' + Math.round(sec) + ' seconds.'),
       onFallback: (from, to) => { if (!switched) { switched = true; log(from + ' is busy or out of free quota, so the AI steps use ' + to + ' for now.'); } }
     });
+    return { settings, usedModels };
+  }
+
+  async function run(problem, rawSettings, options) {
+    const o = Object.assign({ web: true, papersPerQuery: 8, openAlexKey: '', fetch: null, onStep() {}, onLog() {} }, options || {});
+    const log = (m) => o.onLog(m);
+    const { settings, usedModels } = wrap(rawSettings, log);
     const f = o.fetch; const ai = hasModel(settings);
     const step = (id, status, detail) => o.onStep(id, status, detail || '');
     const started = new Date();
@@ -310,7 +324,10 @@
     // 1. plan
     mark('plan', 'running');
     let p;
-    try { p = ai ? await plan(problem, settings, f) : fallbackPlan(problem); mark('plan', 'done', 'Search queries: ' + p.queries.join('; ')); } catch (e) { p = fallbackPlan(problem); mark('plan', 'warn', 'Used the problem text directly (' + e.message + ')'); }
+    try { p = ai ? await plan(problem, settings, f) : fallbackPlan(problem); mark('plan', 'done', 'Search queries: ' + p.queries.join('; ')); } catch (e) {
+      if (e.unclear) { mark('plan', 'failed', e.message); throw e; }
+      p = fallbackPlan(problem); mark('plan', 'warn', 'Used the problem text directly (' + e.message + ')');
+    }
     Object.assign(project, { name: p.name, domain: p.domain, challenge: p.challenge, hmw: p.hmw });
 
     // 2. research
@@ -336,26 +353,43 @@
       return project;
     }
 
+    await finish(project, settings, f, mark, started, usedModels, log, 'ideas');
+    return project;
+  }
+
+  /* Steps 4 to 6: ideas, decision and build plan. Shared by a full run and by a retry of the missing steps. */
+  async function finish(project, settings, f, mark, started, usedModels, log, from) {
+    const at = Math.max(0, ['ideas', 'evaluate', 'build'].indexOf(from || 'ideas'));
+
     // 4. ideas
-    mark('ideas', 'running');
-    try {
-      const m = await morph(project, settings, f).catch((e) => { log('Morphological parameters skipped: ' + e.message); return { params: [], rules: [] }; });
-      project.morph = m;
-      const g = await L.generateConcepts(project, settings, { mode: 'grounded', count: 4 }, f);
-      project.concepts = g.concepts.map((c, i) => Object.assign(c, { id: 'C' + (i + 1), needs: ids(c.needs, NID) }));
-      mark('ideas', project.concepts.length ? 'done' : 'failed', n(project.concepts.length, 'concept', 'concepts') + (m.params.length ? ' and a morphological box with ' + n(m.params.length, 'parameter', 'parameters') : ''));
-    } catch (e) { mark('ideas', 'failed', e.message); }
-    if (!project.concepts.length) { ['evaluate', 'build'].forEach((id) => mark(id, 'skipped', 'No concepts')); return project; }
+    if (at === 0) {
+      mark('ideas', 'running');
+      try {
+        const m = await morph(project, settings, f).catch((e) => { log('Morphological parameters skipped: ' + e.message); return { params: [], rules: [] }; });
+        project.morph = m;
+        const g = await L.generateConcepts(project, settings, { mode: 'grounded', count: 4 }, f);
+        project.concepts = g.concepts.map((c, i) => Object.assign(c, { id: 'C' + (i + 1), needs: ids(c.needs, NID) }));
+        mark('ideas', project.concepts.length ? 'done' : 'failed', n(project.concepts.length, 'concept', 'concepts') + (m.params.length ? ' and a morphological box with ' + n(m.params.length, 'parameter', 'parameters') : ''));
+      } catch (e) { mark('ideas', 'failed', e.message); }
+    }
+    if (!project.concepts.length) {
+      ['evaluate', 'build'].forEach((id) => mark(id, 'skipped', 'No concepts'));
+      const why = (project.autopilot.steps.ideas || {}).detail || '';
+      project.caveats = 'Autopilot gathered evidence, people and needs, but could not generate ideas' + (why ? ' (' + why.replace(/[.\s]+$/, '') + ')' : '') + '. Use \u201cTry the missing steps again\u201d on the Home page, or open Ideas to add some.';
+      return;
+    }
 
     // 5. evaluate
-    mark('evaluate', 'running');
-    try {
-      const ev = await evaluate(project, settings, f);
-      project.ratings = ev.ratings; project.risks = ev.risks;
-      const ranked = D.wdm(project.concepts, project.criteria, project.ratings);
-      project.selectedConcept = ranked[0].id;
-      mark('evaluate', 'done', ranked.map((x) => x.name + ' ' + x.total.toFixed(2)).join(', '));
-    } catch (e) { project.selectedConcept = project.concepts[0].id; mark('evaluate', 'failed', e.message); }
+    if (at <= 1 || !project.selectedConcept) {
+      mark('evaluate', 'running');
+      try {
+        const ev = await evaluate(project, settings, f);
+        project.ratings = ev.ratings; project.risks = ev.risks;
+        const ranked = D.wdm(project.concepts, project.criteria, project.ratings);
+        project.selectedConcept = ranked[0].id;
+        mark('evaluate', 'done', ranked.map((x) => x.name + ' ' + x.total.toFixed(2)).join(', '));
+      } catch (e) { project.selectedConcept = project.concepts[0].id; mark('evaluate', 'failed', e.message); }
+    }
 
     // 6. build
     mark('build', 'running');
@@ -368,8 +402,29 @@
     const modelsUsed = usedModels.length ? usedModels : [settings.model];
     project.autopilot.model = modelsUsed.join(', ');
     project.caveats = 'Generated by ProductLab autopilot on ' + started.toISOString().slice(0, 10) + ' with ' + modelsUsed.join(' and ') + '. Findings are taken from the cited sources; needs, personas, concepts, ratings and estimates are AI drafts. Review them, then choose the concept your team wants to build.';
+  }
+
+
+  /**
+   * Retry the steps that did not finish (ideas, decision, build plan) on a
+   * project autopilot already started. Evidence, people and needs are kept.
+   */
+  async function resume(project, rawSettings, options) {
+    const o = Object.assign({ fetch: null, onStep() {}, onLog() {} }, options || {});
+    const { settings, usedModels } = wrap(rawSettings, (m) => o.onLog(m));
+    if (!hasModel(settings)) throw new Error('Connect an AI model in Settings first.');
+    if (!project.findings.length) throw new Error('This project has no evidence yet, so ideas cannot be grounded.');
+    project.autopilot = project.autopilot || { steps: {} };
+    project.autopilot.steps = project.autopilot.steps || {};
+    const mark = (id, status, detail) => { project.autopilot.steps[id] = { status, detail }; o.onStep(id, status, detail || ''); };
+    const st = project.autopilot.steps;
+    const ok = (id) => st[id] && (st[id].status === 'done' || st[id].status === 'warn');
+    const from = !project.concepts.length ? 'ideas' : !ok('evaluate') ? 'evaluate' : 'build';
+    if (from === 'ideas') Object.assign(project, { concepts: [], ratings: {}, selectedConcept: null, features: [] });
+    if (from === 'evaluate') Object.assign(project, { ratings: {}, selectedConcept: null, features: [] });
+    await finish(project, settings, o.fetch, mark, new Date(), usedModels, (m) => o.onLog(m), from);
     return project;
   }
 
-  return { problemCore, STEPS, CRITERIA, run, plan, research, users, morph, evaluate, buildPlan, fallbackPlan, needsFromThemes, hasModel };
+  return { resume, unclear, problemCore, STEPS, CRITERIA, run, plan, research, users, morph, evaluate, buildPlan, fallbackPlan, needsFromThemes, hasModel };
 });

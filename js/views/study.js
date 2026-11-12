@@ -106,13 +106,15 @@
         if (!p.concepts.length) { toast('No project concepts yet', 'bad'); return; }
         const v = await formModal('Add project concepts to the study', [{ name: 'participant', label: 'Participant / team ID', required: true, value: 'P1' }].concat(p.concepts.map((c) => ({ name: 'c_' + c.id, label: c.name, type: 'checkbox', value: c.origin !== 'ai-baseline' }))), { intro: 'Selected concepts are added as condition B for this participant.' });
         if (!v) return;
-        let n = 0;
+        let n = 0; let dup = 0;
+        const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
         ctx.commit((pr) => pr.concepts.forEach((c) => {
           if (!v['c_' + c.id]) return;
+          if (pr.experiment.entries.some((x) => same(x.participant, v.participant) && same(x.name, c.name))) { dup++; return; }
           pr.experiment.entries.push({ id: nextId(pr.experiment.entries, 'X'), participant: v.participant, condition: 'B', name: c.name, description: c.description, claims: JSON.parse(JSON.stringify(c.claims || [])), source: 'concept:' + c.id, evidenceFrom: pr.id });
           n++;
         }));
-        toast(n + ' concept(s) added as condition B', 'ok');
+        toast(n + ' concept(s) added as condition B' + (dup ? '; ' + dup + ' already in the study for ' + v.participant + ' were skipped' : ''), n || !dup ? 'ok' : 'bad');
       },
       sheet(el, e, ctx) {
         const raters = (document.getElementById('raters').value || 'R1').split(',').map((x) => x.trim()).filter(Boolean);

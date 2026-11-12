@@ -115,6 +115,8 @@
     const msg = String(message || '');
     if (shared) {
       const own = ' To keep going now, add your own free Gemini key in Settings.';
+      if (status === 413) return 'This request is too large for the shared AI. Shorten the problem description and try again.';
+      if (status >= 500 && !/not set up/i.test(msg)) return 'Google\u2019s AI is very busy right now, even with ProductLab\u2019s backup model. Wait a few minutes and try again.';
       if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'ProductLab\u2019s shared AI has used today\u2019s free allowance. It resets at midnight US Pacific time.' + own;
       if (status === 429 && /this device/i.test(msg)) return 'You are sending requests faster than the shared AI allows. Wait a minute and try again.';
       if (status === 403) return 'The shared AI only works on the ProductLab website (ashkapathak.github.io/productlab-ai). Here, add your own key in Settings.';
@@ -125,8 +127,9 @@
     if (status === 404 || /not found|is not supported/i.test(msg)) return 'The model "' + model + '" is not available to this key. In Settings, try gemini-3.8-flash or gemini-3.5-flash-lite.';
     if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'Today\u2019s free quota for ' + model + ' is used up. It resets at midnight US Pacific time.' + (model === GEMINI_FALLBACK ? '' : ' Meanwhile, switch the model to ' + GEMINI_FALLBACK + ' in Settings, which allows more free requests.');
     if (status === 429) return 'The AI provider is limiting how fast this key can make requests. Wait a minute and run again.';
+    if (status === 413) return 'This request is too large for the AI provider. Shorten the problem description and try again.';
     if (status === 403) return 'This key is not allowed to use ' + model + '. Check the key\u2019s project in Google AI Studio.';
-    if (status === 503 && /demand|overloaded/i.test(msg)) return model + ' is very busy at Google right now. Try again in a few minutes, or pick a lighter model in Settings.';
+    if (status === 503 && /demand|overloaded/i.test(msg)) return model + ' is very busy at Google right now. Try again in a few minutes' + (model === GEMINI_FALLBACK ? '.' : ', or pick a lighter model in Settings.');
     if (status >= 500) return 'The AI provider had a temporary problem (' + status + '). Try again in a minute.';
     return 'AI provider error ' + status + ': ' + msg;
   }
@@ -140,8 +143,13 @@
       return await f(url, ctl ? Object.assign({}, init, { signal: ctl.signal }) : init);
     } catch (err) {
       if (err && err.name === 'AbortError') {
-        const e = new Error('The AI provider did not answer within ' + Math.round(limit / 1000) + ' seconds. Try again, or pick a lighter model in Settings.');
+        const e = new Error('The AI did not answer within ' + Math.round(limit / 1000) + ' seconds. It is probably very busy; wait a few minutes and try again.');
         e.timeout = true;
+        throw e;
+      }
+      if (err && (err.name === 'TypeError' || /Failed to fetch|NetworkError|Load failed/i.test(err.message || ''))) {
+        const e = new Error('Could not reach the AI. Check your internet connection and try again.');
+        e.offline = true;
         throw e;
       }
       throw err;
@@ -173,6 +181,12 @@
      free daily quota. A busy model is skipped for a while so every later
      request in a run does not pay the same wait again. */
   const GEMINI_FALLBACK = 'gemini-3.5-flash-lite';
+  /* The shared AI already uses the light model, so its backup is the previous Flash. */
+  const SHARED_FALLBACK = 'gemini-3.6-flash';
+  function fallbackFor(s) {
+    if (isShared(s) && !s.apiKey) return s.model === SHARED_FALLBACK ? GEMINI_FALLBACK : SHARED_FALLBACK;
+    return GEMINI_FALLBACK;
+  }
   const BUSY_MS = 10 * 60 * 1000;
   const busyUntil = {};
   const now = () => Date.now();
@@ -202,19 +216,20 @@
         body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { temperature: s.temperature, responseMimeType: 'application/json' } })
       };
       const url = (m) => base + '/models/' + encodeURIComponent(m) + ':generateContent';
-      const canFall = s.fallback !== false && s.model !== GEMINI_FALLBACK;
+      const backup = fallbackFor(s);
+      const canFall = s.fallback !== false && s.model !== backup;
       let used = s.model;
       if (canFall && busyUntil[s.model] > now()) {
-        used = GEMINI_FALLBACK;
+        used = backup;
       } else {
         try {
           // an overloaded model sometimes hangs instead of answering 503: give it less time when a fallback exists
           const first = canFall ? Object.assign({}, s, { timeoutMs: s.timeoutMs == null ? 40000 : s.timeoutMs }) : s;
           ({ res, data } = await send(f, url(s.model), init, first, canFall));
-          if (canFall && shouldFallBack(res, data)) { busyUntil[s.model] = now() + BUSY_MS; used = GEMINI_FALLBACK; }
+          if (canFall && shouldFallBack(res, data)) { busyUntil[s.model] = now() + BUSY_MS; used = backup; }
         } catch (err) {
           if (!(canFall && err && err.timeout)) throw err;
-          busyUntil[s.model] = now() + BUSY_MS; used = GEMINI_FALLBACK;
+          busyUntil[s.model] = now() + BUSY_MS; used = backup;
         }
       }
       if (used !== s.model) {
@@ -255,5 +270,5 @@
 
   function resetBusy() { Object.keys(busyUntil).forEach((k) => { delete busyUntil[k]; }); }
 
-  return { PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy, isShared, ready, SHARED };
+  return { PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, SHARED_FALLBACK, fallbackFor, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy, isShared, ready, SHARED };
 });

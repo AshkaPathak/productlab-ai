@@ -45,7 +45,8 @@
       const c = withCounts && counts[s.id];
       return {
         label: LABEL[s.id], kind: s.id === 'build' ? 'build' : 'think', state: st.status === 'warn' ? 'done' : st.status, fill: st.status === 'warn' ? 0.6 : 1,
-        big: c && st.status !== 'skipped' ? c.big : null, sub: st.status === 'skipped' ? 'needs an AI key' : c ? c.sub : OUTPUT[s.id],
+        big: c && st.status !== 'skipped' && st.status !== 'failed' ? c.big : null,
+        sub: st.status === 'skipped' ? (st.detail === 'No concepts' ? 'waits for ideas' : 'needs an AI key') : st.status === 'failed' ? 'did not finish' : c ? c.sub : OUTPUT[s.id],
         justDone: st.doneAt && Date.now() - st.doneAt < 1200
       };
     });
@@ -110,6 +111,15 @@
       '</section>';
   }
 
+  /* Keyboard mashing such as "asdf qwer zxcv" passes a word count but is not a problem. Words in other scripts are left alone. */
+  function looksRandom(text) {
+    const words = (text.toLowerCase().match(/[a-z]{3,}/g) || []);
+    if (words.length < 4) return false;
+    const noVowel = words.filter((w) => !/[aeiouy]/.test(w)).length;
+    const rows = (text.toLowerCase().match(/qwer|wert|asdf|sdfg|dfgh|ghjk|hjkl|zxcv|xcvb|cvbn|bnm|uiop|poiu|lkjh/g) || []).length;
+    return noVowel / words.length >= 0.34 || rows >= 2;
+  }
+
   function mini(kind) {
     return '<svg viewBox="0 0 22 22" aria-hidden="true">' + C.orb(11, 11, 10, kind === 'ink' ? 'deep' : kind) + '</svg>';
   }
@@ -153,7 +163,14 @@
       out += '<section class="block"><h2>What it takes to build ' + esc(sel.name) + '</h2>' + C.plates(rows) +
         '<p class="muted small">Prefer another idea? Select it, then use Re-plan in Build plan.</p><a class="more" href="#/build" data-act="jump" data-view="build" data-tab="stack">Open the full build plan</a></section>';
     }
-    if (Object.values(run.steps).some((x) => x.status === 'skipped')) out += '<div class="infobox">This run gathered research only. <a href="#/settings">Add a free Gemini key</a> and run it again to get people, ideas, scores and a build plan.</div>';
+    const steps = (p.autopilot && p.autopilot.steps) || run.steps;
+    const failed = ['ideas', 'evaluate', 'build'].filter((id) => steps[id] && steps[id].status === 'failed');
+    if (failed.length) {
+      out += '<div class="warnbox"><p><b>' + esc(failed.map((id) => LABEL[id]).join(', ')) + ' did not finish.</b> ' + esc(steps[failed[0]].detail || '') + '</p>' +
+        '<p>Your evidence, people and needs are saved. ' + (run.resuming ? '<span class="spin dark"></span> Trying again\u2026' : '<button class="btn primary" data-act="resume">Try the missing steps again</button>') + '</p></div>';
+    } else if (Object.values(steps).some((x) => x.status === 'skipped' && x.detail !== 'No concepts')) {
+      out += '<div class="infobox">This run gathered research only. <a href="#/settings">Add a free Gemini key</a> and run it again to get people, ideas, scores and a build plan.</div>';
+    }
     out += '<p class="muted small">' + Math.round(audit.summary.traceability * 100) + '% of claims are backed by the evidence they cite' + (audit.summary.invalid ? '; ' + audit.summary.invalid + ' made-up citation' + (audit.summary.invalid > 1 ? 's were' : ' was') + ' caught and flagged' : '') + '.</p>';
     out += '<div class="row"><button class="btn accent" data-act="go" data-to="story">Scroll through the story</button><button class="btn primary" data-act="go" data-to="overview">Open the project</button><button class="btn" data-act="go" data-to="report">Audit and report</button><button class="btn ghost" data-act="again">Try another problem</button></div>';
     return out;
@@ -183,9 +200,26 @@
       example(el, e, ctx) { ctx.ui('start').problem = EXAMPLES[Number(el.dataset.i)].text; S.save(); ctx.render(); },
       again(el, e, ctx) { Object.assign(run, { projectId: null, steps: {}, log: [], error: '', entered: false }); ctx.render(); },
       jump(el, e, ctx) { ctx.state.currentId = run.projectId; Object.assign(ctx.ui(el.dataset.view), { tab: el.dataset.tab, details: true }); S.save(); ctx.go(el.dataset.view); },
+      async resume(el, e, ctx) {
+        const p = ctx.state.projects.find((x) => x.id === run.projectId);
+        if (!p || run.resuming) return;
+        run.resuming = true; ctx.render();
+        try {
+          await A.resume(p, aiSettings(ctx.state), {
+            onStep: (id, status, detail) => { run.steps[id] = { status, detail, doneAt: status === 'done' ? Date.now() : (run.steps[id] || {}).doneAt }; PL.app.render(); },
+            onLog: (m) => { run.log.push(m); }
+          });
+          p.updatedAt = new Date().toISOString(); S.save();
+          const left = ['ideas', 'evaluate', 'build'].filter((id) => (p.autopilot.steps[id] || {}).status === 'failed');
+          toast(left.length ? 'Some steps still did not finish' : 'All steps finished', left.length ? 'bad' : 'ok');
+        } catch (err) { toast(err.message, 'bad'); }
+        run.resuming = false;
+        PL.app.render();
+      },
       async run(el, e, ctx) {
         const problem = document.getElementById('problem').value.trim();
         if (problem.split(/\s+/).length < 6) { toast('Describe the problem in at least one full sentence', 'bad'); document.getElementById('problem').focus(); return; }
+        if (looksRandom(problem)) { toast('That looks like random letters. Describe a real problem in a sentence or two.', 'bad'); document.getElementById('problem').focus(); return; }
         const u = ctx.ui('start');
         if (!A.hasModel(aiSettings(ctx.state))) {
           u.problem = problem; S.save();
