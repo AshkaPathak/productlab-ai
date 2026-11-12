@@ -156,3 +156,17 @@ test('when ideas fail, the run says why and the missing steps can be retried', a
   assert.equal(p.findings.length, evidence, 'evidence is kept');
   require('../js/engine/llm.js').resetBusy();
 });
+
+test('when the paper search is rate limited, the run says so instead of asking for a new wording', async () => {
+  const p = await A.run(PROBLEM, gemini, { fetch: makeFetch({ failOpenAlex: true }), web: false });
+  assert.equal(p.autopilot.steps.research.status, 'failed');
+  assert.match(p.autopilot.steps.research.detail, /OpenAlex/);
+  assert.doesNotMatch(p.autopilot.steps.research.detail, /Rephrase/);
+});
+
+test('a problem written in another language still finds evidence through the English search queries', async () => {
+  const hindi = 'लोग इंस्टाग्राम और यूट्यूब पर पोस्ट सेव करते हैं लेकिन बाद में उन्हें कभी ढूँढ नहीं पाते।';
+  const p = await A.run(hindi, gemini, { fetch: makeFetch(), web: false });
+  assert.ok(p.findings.length >= 3, 'found ' + p.findings.length + ' findings');
+  assert.equal(p.autopilot.steps.research.status, 'done');
+});

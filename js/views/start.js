@@ -46,7 +46,7 @@
       return {
         label: LABEL[s.id], kind: s.id === 'build' ? 'build' : 'think', state: st.status === 'warn' ? 'done' : st.status, fill: st.status === 'warn' ? 0.6 : 1,
         big: c && st.status !== 'skipped' && st.status !== 'failed' ? c.big : null,
-        sub: st.status === 'skipped' ? (st.detail === 'No concepts' ? 'waits for ideas' : 'needs an AI key') : st.status === 'failed' ? 'did not finish' : c ? c.sub : OUTPUT[s.id],
+        sub: withCounts && st.status === 'pending' ? 'not started' : st.status === 'skipped' ? (st.detail === 'No concepts' ? 'waits for ideas' : 'needs an AI key') : st.status === 'failed' ? 'did not finish' : c ? c.sub : OUTPUT[s.id],
         justDone: st.doneAt && Date.now() - st.doneAt < 1200
       };
     });
@@ -165,13 +165,16 @@
     }
     const steps = (p.autopilot && p.autopilot.steps) || run.steps;
     const failed = ['ideas', 'evaluate', 'build'].filter((id) => steps[id] && steps[id].status === 'failed');
-    if (failed.length) {
+    if (steps.research && steps.research.status === 'failed') {
+      out += '<div class="warnbox"><p><b>Research did not find enough evidence.</b> ' + esc(steps.research.detail || '') + '</p>' +
+        '<p>Without evidence ProductLab cannot ground people, ideas or a plan, so it stopped here.</p></div>';
+    } else if (failed.length) {
       out += '<div class="warnbox"><p><b>' + esc(failed.map((id) => LABEL[id]).join(', ')) + ' did not finish.</b> ' + esc(steps[failed[0]].detail || '') + '</p>' +
         '<p>Your evidence, people and needs are saved. ' + (run.resuming ? '<span class="spin dark"></span> Trying again\u2026' : '<button class="btn primary" data-act="resume">Try the missing steps again</button>') + '</p></div>';
     } else if (Object.values(steps).some((x) => x.status === 'skipped' && x.detail !== 'No concepts')) {
       out += '<div class="infobox">This run gathered research only. <a href="#/settings">Add a free Gemini key</a> and run it again to get people, ideas, scores and a build plan.</div>';
     }
-    out += '<p class="muted small">' + Math.round(audit.summary.traceability * 100) + '% of claims are backed by the evidence they cite' + (audit.summary.invalid ? '; ' + audit.summary.invalid + ' made-up citation' + (audit.summary.invalid > 1 ? 's were' : ' was') + ' caught and flagged' : '') + '.</p>';
+    if (audit.summary.total) out += '<p class="muted small">' + Math.round(audit.summary.traceability * 100) + '% of claims are backed by the evidence they cite' + (audit.summary.invalid ? '; ' + audit.summary.invalid + ' made-up citation' + (audit.summary.invalid > 1 ? 's were' : ' was') + ' caught and flagged' : '') + '.</p>';
     out += '<div class="row"><button class="btn accent" data-act="go" data-to="story">Scroll through the story</button><button class="btn primary" data-act="go" data-to="overview">Open the project</button><button class="btn" data-act="go" data-to="report">Audit and report</button><button class="btn ghost" data-act="again">Try another problem</button></div>';
     return out;
   }
