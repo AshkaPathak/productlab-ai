@@ -11,7 +11,11 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
+  // the shared backend, when the site is configured with one (js/app/config.js)
+  const SHARED = String((typeof globalThis !== 'undefined' && globalThis.PL && globalThis.PL.config && globalThis.PL.config.sharedAI) || '').replace(/\/+$/, '');
+
   const PRESETS = {
+    shared: { label: 'ProductLab shared AI (no key needed)', provider: 'gemini', baseUrl: SHARED ? SHARED + '/v1beta' : '', model: 'gemini-3.5-flash-lite', noKey: true },
     gemini: { label: 'Google Gemini (free tier available)', provider: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-3.8-flash' },
     openai: { label: 'OpenAI', provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
     groq: { label: 'Groq (OpenAI-compatible)', provider: 'openai', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
@@ -107,8 +111,16 @@
   }
 
   /** Turn a provider error into something a non-expert can act on. */
-  function explain(status, message, model) {
+  function explain(status, message, model, shared) {
     const msg = String(message || '');
+    if (shared) {
+      const own = ' To keep going now, add your own free Gemini key in Settings.';
+      if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'ProductLab\u2019s shared AI has used today\u2019s free allowance. It resets at midnight US Pacific time.' + own;
+      if (status === 429 && /this device/i.test(msg)) return 'You are sending requests faster than the shared AI allows. Wait a minute and try again.';
+      if (status === 403) return 'The shared AI only works on the ProductLab website (ashkapathak.github.io/productlab-ai). Here, add your own key in Settings.';
+      if (status === 500 && /not set up/i.test(msg)) return 'The shared AI is not set up yet.' + own;
+      if (status === 401 || /API key not valid|API_KEY_INVALID/i.test(msg)) return 'The shared AI\u2019s key is not working right now.' + own;
+    }
     if (/API key not valid|API_KEY_INVALID|invalid api key|Incorrect API key/i.test(msg) || status === 401) return 'The AI provider did not accept the key. Check in Settings that the whole key was copied (Gemini keys start with "AQ." or "AIza").';
     if (status === 404 || /not found|is not supported/i.test(msg)) return 'The model "' + model + '" is not available to this key. In Settings, try gemini-3.8-flash or gemini-3.5-flash-lite.';
     if (status === 429 && /per ?day|PerDay|daily/i.test(msg)) return 'Today\u2019s free quota for ' + model + ' is used up. It resets at midnight US Pacific time.' + (model === GEMINI_FALLBACK ? '' : ' Meanwhile, switch the model to ' + GEMINI_FALLBACK + ' in Settings, which allows more free requests.');
@@ -180,12 +192,13 @@
     const base = String(s.baseUrl || '').replace(/\/+$/, '');
     let res; let data;
     if (s.provider === 'gemini') {
-      if (!s.apiKey) throw new Error('Gemini needs an API key');
+      const shared = isShared(s);
+      if (!s.apiKey && !shared) throw new Error('Gemini needs an API key');
       const sys = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
       const contents = messages.filter((m) => m.role !== 'system').map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
       const init = {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': s.apiKey },
+        headers: shared && !s.apiKey ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json', 'x-goog-api-key': s.apiKey },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { temperature: s.temperature, responseMimeType: 'application/json' } })
       };
       const url = (m) => base + '/models/' + encodeURIComponent(m) + ':generateContent';
@@ -209,7 +222,7 @@
         ({ res, data } = await send(f, url(used), init, s, false));
       }
       if (typeof s.onModel === 'function') s.onModel(used);
-      if (!res.ok) throw new Error(explain(res.status, (data.error && data.error.message) || res.statusText, used));
+      if (!res.ok) throw new Error(explain(res.status, (data.error && data.error.message) || res.statusText, used, shared && !s.apiKey));
       const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
       return parts.map((p) => p.text || '').join('');
     }
@@ -229,7 +242,18 @@
     return { concepts: normalizeConcepts(extractJSON(reply), o.mode === 'grounded' ? 'ai' : 'ai-baseline'), raw: reply, messages };
   }
 
+  /* The shared backend holds the key, so no key is sent from the browser. */
+  function isShared(s) { return !!(s && (s.noKey || s.preset === 'shared')); }
+
+  /** True when the AI features can run with these settings. */
+  function ready(s) {
+    if (!s || !s.model) return false;
+    if (s.apiKey) return true;
+    if (isShared(s)) return !!s.baseUrl;
+    return /localhost|127\.0\.0\.1/.test(s.baseUrl || '');
+  }
+
   function resetBusy() { Object.keys(busyUntil).forEach((k) => { delete busyUntil[k]; }); }
 
-  return { PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy };
+  return { PRESETS, GEMINI_MODELS, GEMINI_FALLBACK, buildConceptPrompt, extractJSON, normalizeConcepts, chat, generateConcepts, explain, retryDelay, resetBusy, isShared, ready, SHARED };
 });

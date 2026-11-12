@@ -274,9 +274,7 @@
 
   /* ---------------- orchestration ---------------- */
 
-  function hasModel(settings) {
-    return !!(settings && settings.model && (settings.apiKey || /localhost|127\.0\.0\.1/.test(settings.baseUrl || '')));
-  }
+  function hasModel(settings) { return L.ready(settings); }
 
   /**
    * Run the whole pipeline. opts: {web, papersPerQuery, openAlexKey, fetch, onStep(id, status, detail), onLog(msg)}

@@ -86,7 +86,7 @@
 
   function aiTab(ctx, u) {
     const ai = ctx.state.settings.ai;
-    const ready = ai.model && (ctx.state.apiKey || /localhost|127\.0\.0\.1/.test(ai.baseUrl));
+    const ready = PL.llm.ready(Object.assign({}, ai, { apiKey: ctx.state.apiKey }));
     const res = u.ai || null;
     const mode = u.aiMode || 'grounded';
     let out = '';

@@ -78,7 +78,7 @@
     projects: [],
     currentId: null,
     ui: {},
-    settings: { ai: { preset: 'gemini', provider: 'gemini', baseUrl: PL.llm ? PL.llm.PRESETS.gemini.baseUrl : '', model: PL.llm ? PL.llm.PRESETS.gemini.model : '', remember: false }, guard: { strong: 0.2, weak: 0.08 } },
+    settings: { ai: defaultAI(), guard: { strong: 0.2, weak: 0.08 } },
     apiKey: '',
     persisted: true
   };
@@ -101,7 +101,18 @@
     state.apiKey = safeGet(root.sessionStorage, KEY_SECRET) || safeGet(root.localStorage, KEY_SECRET) || '';
     // gemini-3.5-flash is no longer offered in AI Studio (Google routes it to 3.6 Flash); move to the recommended model
     if (state.settings && state.settings.ai && state.settings.ai.model === 'gemini-3.5-flash') state.settings.ai.model = 'gemini-3.8-flash';
+    // people who never added a key get the shared AI, so the AI features just work
+    const sh = PL.llm && PL.llm.PRESETS.shared;
+    if (sh && sh.baseUrl && !state.apiKey && state.settings.ai.preset === 'gemini') state.settings.ai = Object.assign({}, state.settings.ai, defaultAI());
+    if (state.settings.ai.preset === 'shared' && sh) Object.assign(state.settings.ai, { provider: sh.provider, baseUrl: sh.baseUrl, model: sh.model });
     if (!state.projects.find((p) => p.id === state.currentId)) state.currentId = state.projects[0] ? state.projects[0].id : null;
+  }
+
+  function defaultAI() {
+    const P = PL.llm ? PL.llm.PRESETS : null;
+    const k = P && P.shared && P.shared.baseUrl ? 'shared' : 'gemini';
+    const pr = P ? P[k] : null;
+    return { preset: k, provider: 'gemini', baseUrl: pr ? pr.baseUrl : '', model: pr ? pr.model : '', remember: false };
   }
 
   function save() {

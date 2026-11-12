@@ -68,7 +68,7 @@ When you choose a different concept in the matrix, open **Build plan → Re-plan
 
 Everything the model writes must cite evidence IDs. The citation guard then checks every claim, so an invented citation shows up as *Missing evidence*.
 
-**Setup:** add a free Google Gemini API key in **Settings**. Without a key, autopilot still searches papers and groups the evidence into themes; the other steps need a model.
+**Setup: none.** On the live site, ProductLab uses its **shared AI**: a small backend ([`proxy/`](proxy/README.md)) that holds the team's Gemini key, so visitors need no sign-up or key. Everyone shares its free daily quota; people who use ProductLab a lot, or arrive after the quota runs out, can add their own free Gemini key in **Settings**. Without any AI, autopilot still searches papers and groups the evidence into themes.
 
 ## Colours and themes
 
@@ -184,11 +184,12 @@ js/engine/            framework-free engine, shared by app, CLI and tests
   autopilot.js        problem statement -> complete project pipeline
   experiment.js       blind rating sheets and statistics
 js/data/              sample case studies (verified evidence)
-js/app/               store, router, step guide (plain summaries), shared UI components, figures and scroll motion
+js/app/               site config, store, router, step guide (plain summaries), shared UI components, figures and scroll motion
 js/views/             one file per workflow step
 cli/                  command-line tool and static server
 tests/                unit tests
 docs/                 methodology, evaluation protocol, case-study evidence
+proxy/                shared-AI backend (Cloudflare Worker) so visitors need no API key
 ```
 
 ## Using it for your own problem
