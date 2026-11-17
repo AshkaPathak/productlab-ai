@@ -71,6 +71,8 @@ Everything the model writes must cite evidence IDs. The citation guard then chec
 
 **Setup: none.** On the live site, ProductLab uses its own AI service: a small backend ([`proxy/`](proxy/README.md)) that holds the team's Gemini key, so visitors never sign up, see a key or choose a model. Because nobody is asked for one, the site hides every AI and key setting; Settings only shows the citation guard and data tools. Everyone shares the service's free daily quota, which resets at midnight US Pacific time.
 
+When releasing, change the `?v=` tag on the script and style links in `index.html`, so visitors' browsers load the new files instead of cached ones.
+
 For developers: when `sharedAI` in `js/app/config.js` is empty (a fork, or a local copy), the AI settings come back, so each person can connect their own Gemini key, another OpenAI-compatible provider or a local Ollama model. Without any AI, autopilot still searches papers and groups the evidence into themes.
 
 ## Colours and themes
