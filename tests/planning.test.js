@@ -83,3 +83,13 @@ test('the team can pick another way, and older projects still get sensible optio
   assert.equal(old.kind, 'webapp');
   assert.equal(old.options[0].id, 'browser');
 });
+
+test('an idea that wants generative AI still sees simpler options, with the trade-off stated', () => {
+  const o = P.buildOptions({ kind: 'webapp', ai: 'llm' });
+  assert.equal(o.options[0].id, 'serverless', 'the AI key needs a small backend');
+  const b = o.options.find((w) => w.id === 'browser');
+  assert.ok(b, 'a browser-only version is offered');
+  assert.match(b.watch[0], /generative AI/);
+  assert.ok(b.stack.some((x) => /instead of generative AI/.test(x.choice)));
+  assert.ok(!o.options.some((w) => w.id === 'accounts'), 'still no sign-in when nobody needs one');
+});

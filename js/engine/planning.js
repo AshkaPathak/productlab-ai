@@ -190,10 +190,12 @@
       id: 'static', name: 'A simple website', tagline: 'HTML pages, no server, no database, no logins', complexity: 1, cost: 'Free to host',
       languages: ['HTML', 'CSS', 'JavaScript'],
       fit(k) {
-        if (k.accounts || k.sharedData || k.hardware || k.messaging || k.ai === 'llm' || k.ai === 'ml' || ['mobile', 'service', 'hardware', 'chat'].includes(k.kind)) return null;
+        if (k.accounts || k.sharedData || k.hardware || k.messaging || k.ai === 'ml' || ['mobile', 'service', 'hardware', 'chat'].includes(k.kind)) return null;
         const why = ['No sign-in and no shared data, so nothing needs a server'];
         if (k.kind === 'website') why.unshift('The idea is mainly information people read');
-        return { score: k.kind === 'website' ? 10 : 4, why, watch: ['Anything people type stays in their browser unless you add a form service', 'Hard to grow into an app with accounts later'] };
+        const watch = ['Anything people type stays in their browser unless you add a form service', 'Hard to grow into an app with accounts later'];
+        if (k.ai === 'llm') { why.push('Could start without generative AI, as clear pages and a short checklist'); watch.unshift('Leaves out the generative AI feature for now'); }
+        return { score: (k.kind === 'website' ? 10 : 4) - (k.ai === 'llm' ? 2 : 0), why, watch };
       },
       stack: (k) => [L('Pages', 'HTML and CSS, or Astro / Eleventy if there are many pages', ['Plain files any browser opens']), L('Interactivity', 'A little JavaScript (calculators, filters, maps)', ['Only where the page must react to input']), L('Forms', 'Google Forms, Tally or Formspree', ['Collect sign-ups or feedback without a server'], ['Netlify Forms']), L('Hosting', 'GitHub Pages or Netlify (free)', ['Free, fast and needs no maintenance'])],
       steps: ['Sketch the pages on paper, then write them in HTML and CSS', 'Add a form service for anything people send you', 'Publish on GitHub Pages and share the link', 'Add privacy-friendly analytics (GoatCounter or Plausible) to see what people use']
@@ -202,13 +204,15 @@
       id: 'browser', name: 'An app that runs in the browser', tagline: 'Works on any phone or laptop, data saved on the device, can work offline', complexity: 2, cost: 'Free to host',
       languages: ['JavaScript or TypeScript', 'HTML', 'CSS'],
       fit(k) {
-        if (k.accounts || k.sharedData || k.hardware || k.messaging || k.ai === 'llm' || ['service', 'hardware', 'chat'].includes(k.kind)) return null;
+        if (k.accounts || k.sharedData || k.hardware || k.messaging || ['service', 'hardware', 'chat'].includes(k.kind)) return null;
         const why = ['No sign-in and no shared data, so each person’s data can stay on their own device'];
         if (k.offline) why.push('A progressive web app keeps working offline');
         if (k.kind === 'mobile') why.push('Installs from the browser like an app, without an app store');
-        return { score: k.kind === 'webapp' ? 9 : k.kind === 'mobile' ? 6 : 6, why, watch: ['Data lives in one browser: offer export and import so people do not lose it', 'No push notifications on older iPhones'] };
+        const watch = ['Data lives in one browser: offer export and import so people do not lose it', 'No push notifications on older iPhones'];
+        if (k.ai === 'llm') { why.push('Plain rules in the page (for example eligibility questions) can stand in for generative AI, so it runs free with no server'); watch.unshift('Leaves out the generative AI feature, or adds it later with a small backend'); }
+        return { score: (k.kind === 'webapp' ? 9 : 6) - (k.ai === 'llm' ? 3 : 0), why, watch };
       },
-      stack: (k) => [L('App', has(k, 'typescript') || has(k, 'javascript') ? 'React or Svelte with Vite, or plain JavaScript for small tools' : 'Plain JavaScript, or Svelte with Vite', ['Runs entirely in the browser']), L('Storage', 'localStorage or IndexedDB on the device, with file export', ['No database server to run or pay for']), L('Offline and install', 'Progressive web app (service worker and manifest)', ['Works without signal and installs to the home screen']), L('Hosting', 'GitHub Pages, Netlify or Vercel (free)', ['Static files only'])].concat([aiLayer(k, 'device')].filter(Boolean)),
+      stack: (k) => [L('App', has(k, 'typescript') || has(k, 'javascript') ? 'React or Svelte with Vite, or plain JavaScript for small tools' : 'Plain JavaScript, or Svelte with Vite', ['Runs entirely in the browser']), L('Storage', 'localStorage or IndexedDB on the device, with file export', ['No database server to run or pay for']), L('Offline and install', 'Progressive web app (service worker and manifest)', ['Works without signal and installs to the home screen']), L('Hosting', 'GitHub Pages, Netlify or Vercel (free)', ['Static files only'])].concat(k.ai === 'llm' ? [L('Intelligence', 'Plain rules in the page instead of generative AI', ['Free, private and easy to check'], ['Add an AI feature later through a serverless function'])] : [aiLayer(k, 'device')].filter(Boolean)),
       steps: ['Build the core screen first with sample data', 'Save to the device with localStorage or IndexedDB', 'Add export and import so data can move between devices', 'Turn it into a progressive web app so it works offline and installs', 'Host it free and test with five real users']
     },
     {
