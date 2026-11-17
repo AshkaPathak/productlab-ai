@@ -43,7 +43,8 @@ Projects are saved in the browser. Use **Export JSON** on the Projects page to b
 
 The app opens on **Home**, written for people with no background in product design or research:
 
-- one promise in two sentences, with the **What problem are you trying to solve?** box right below it, three examples to try and the button that starts the run (search options are folded away);
+- one promise in two sentences, with the **What problem are you trying to solve?** box right below it (always blank when you arrive; the ProductLab logo brings you back here), three examples to try and the button that starts the run (search options are folded away);
+- **Your work**: the project being made right now, with its progress, and your recent projects, so you can carry on with one or start something new. A run has its own page ("Working on it ..." with bouncing dots) and keeps going if you leave it;
 - **six steps, each with one clear question**, in the step's own colour, plus the claim check that follows;
 - **Questions?**: short answers on expertise, what you need to start, made-up facts and where work is saved, and plain definitions of every term, all folded until opened.
 
@@ -74,7 +75,9 @@ For developers: when `sharedAI` in `js/app/config.js` is empty (a fork, or a loc
 
 ## Colours and themes
 
-ProductLab uses vivid colour on a light, calm base so screens stay easy to read. Each step has its own colour, used for its number in the sidebar, its page header and its summary card: **1 Research** blue, **2 People** rose, **3 Ideas** sunflower, **4 Decide** violet, **5 Build** orange and **6 Check** green. Violet is the one colour for buttons and actions, and the Home page uses a violet-to-coral gradient. All text meets a contrast of at least 4.5:1, and body text is 16.5px.
+ProductLab follows a "warm page, cool accent" rule: a warm sand page with one cool sea-blue accent for buttons and actions, so the accent stands out without shouting. Each step has its own colour, used for its number in the sidebar, its page header and its summary card: **1 Research** blue, **2 People** terracotta, **3 Ideas** ochre, **4 Decide** plum, **5 Build** moss and **6 Check** teal. All colours are built in OKLCH at equal lightness, so no step looks louder than another, and all text meets a contrast of at least 4.5:1.
+
+Type: Familjen Grotesk for headings, Switzer for text and IBM Plex Mono for numbers and IDs. Borders are see-through (`rgb(... / 0.12)`) so they blend on any surface, nested corners are concentric (the inner radius is the outer radius minus the padding), the graphics are flat, and scrolling bars fade at their edges.
 
 Each project's **Story** takes on a theme that suits its subject, picked from the project's domain, name and problem text: Bloom (health and care), Harvest (food and the planet), Signal (digital life), Campus (learning and students) or Tide (water, cities and travel). A different theme can be chosen under *Story theme* on the project Overview. The rest of the app keeps the ProductLab colours. Every orb, liquid and chart accent reads its colour from a CSS variable, so a theme re-tints the whole Story without touching the markup. Chart category colours stay fixed and were checked for colour-blind separation.
 
@@ -104,7 +107,7 @@ The same graphics appear on the matching workflow screens, each with a one-line 
 | 2 | **Discover**: Opportunity Miner, Persona Studio | Design Thinking: define | Automatic clustering of evidence into themes, flags for themes no need covers, need statements with severity, proto-personas whose pain points cite evidence, How Might We |
 | 3 | **Ideate** | Random Association, Morphological Analysis, optional AI | Seeded random-stimulus prompts. A zwicky box that enumerates every option combination, removes incompatible ones and ranks the rest by how well they cover the needs, then drafts concepts with evidence-linked claims. An optional language model in grounded or baseline mode. |
 | 4 | **Evaluate** | Weighted Decision Matrix, Inverse Thinking | Editable criteria and weights, ratings with rationale and evidence, what-if weight sliders, one-at-a-time sensitivity (where the winner flips), Monte Carlo robustness, competitor positioning map, 5 × 5 risk register |
-| 5 | **Build plan**: Feature Prioritizer, Tech Stack Recommender, MVP Planner | Business Model Canvas | Evidence-adjusted RICE, MoSCoW, dependency-aware sprint roadmap (Gantt), explainable stack recommendations, Business Model Canvas |
+| 5 | **Build plan**: Feature Prioritizer, Tech Stack Recommender, MVP Planner | Business Model Canvas | Evidence-adjusted RICE, MoSCoW, dependency-aware sprint roadmap (Gantt), **ways to build it**: what the idea needs (sign-in, shared data, a server, hardware, WhatsApp) decides which of ten ways fit, from a plain website to a connected device, each with reasons, cost, effort, languages and steps; Business Model Canvas |
 | 6 | **Report** | | Traceability audit of every claim; full strategy report with numbered IEEE references, exported as Markdown, PDF (print) or JSON |
 | ★ | **Evaluation study** | | Tools to answer the research question: blind rating sheets, rating import, Wilcoxon signed-rank test, effect sizes, rater agreement |
 
@@ -179,7 +182,7 @@ js/engine/            framework-free engine, shared by app, CLI and tests
   cluster.js          opportunity mining (agglomerative clustering)
   ideation.js         random association, morphological analysis, concept synthesis
   decision.js         weighted decision matrix, sensitivity, Monte Carlo
-  planning.js         RICE, scheduling, tech stack rules
+  planning.js         RICE, scheduling, ways to build it
   report.js           strategy report generator
   llm.js              optional language-model client (Gemini / OpenAI-compatible)
   research.js         OpenAlex paper search, verbatim finding extraction, grounded web search

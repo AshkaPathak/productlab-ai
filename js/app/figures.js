@@ -11,8 +11,8 @@
 
   /* Categorical order, validated for colour-blind separation (adjacent pairs
      deltaE >= 10 under protan/deutan/tritan) on the light card surface. */
-  const CAT = ['#5866ec', '#d8961c', '#1f9e8f', '#e0604e', '#9a5fc0', '#7f8a2e'];
-  const STATUS_COL = { supported: '#3a9a6c', partial: '#e0a144', unsupported: '#cf4b63', invalid: '#8e2340', uncited: '#a9a59a' };
+  const CAT = ['#3a80b7', '#b16148', '#008e8e', '#a55f8f', '#9c721c', '#4d8b50'];
+  const STATUS_COL = { supported: '#3b834e', partial: '#c38c37', unsupported: '#af3c3a', invalid: '#71232f', uncited: '#a8a49e' };
   const STATUS_TONE = { supported: 'ok', partial: 'warn', unsupported: 'bad', invalid: 'bad2' };
   // Flat colours are CSS variables so a project theme can re-tint them (legends use them as backgrounds).
   const V = (name) => 'var(--' + name + ')';
@@ -412,7 +412,7 @@
         '<text x="' + (x0 + 200) + '" y="' + (y + 22) + '" class="lb">' + esc(trunc(short, 70)) + '</text></g>';
     });
     svg += '</svg>';
-    return fig(svg, '<b>' + rec.length + ' layers</b>, from the languages your team writes down to delivery. Each choice follows from the constraints on the left; hover a layer for the full pick.');
+    return fig(svg, '<b>' + rec.length + ' layers</b>, from the languages your team writes to how it reaches people. Each choice follows from what the idea needs; hover a layer for the full pick.');
   }
 
   /* ------------------------------------------------------------------ */

@@ -97,8 +97,10 @@
     };
     const group = (g) => NAV.filter((n) => n.group === g).map(item).join('');
     const pname = project ? project.name : '';
-    return '<aside class="sidebar"><a class="brand" href="#/start">' + C.logo() + '<span>ProductLab</span></a>' +
-      '<nav class="nav-group" aria-label="Main">' + group('Top') + '</nav>' +
+    const r = PL.views.run && PL.views.run.state ? PL.views.run.state() : null;
+    const live = r && r.running ? '<a href="#/run" class="nav-item live' + (route === 'run' ? ' active' : '') + '"><span class="nav-icon"><span class="pulse"></span></span><span class="nav-label">Making your project<span class="dots-anim" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></span></a>' : '';
+    return '<aside class="sidebar"><a class="brand" href="#/start" data-act="home" title="Home: start a new problem">' + C.logo() + '<span>ProductLab</span></a>' +
+      '<nav class="nav-group" aria-label="Main">' + group('Top') + live + '</nav>' +
       (project
         ? '<nav class="nav-group project-nav" aria-label="Your project"><div class="nav-title">Your project</div><div class="nav-project" title="' + esc(project.name) + '">' + esc(pname) + '</div>' + group('Project') + '</nav>'
         : '<div class="nav-hint">Describe a problem on Home to start a project.</div>') +
@@ -181,6 +183,11 @@
   }
 
   const GENERIC = {
+    home() {
+      if (PL.views.start && PL.views.start.reset) PL.views.start.reset();
+      go('start'); root.scrollTo(0, 0);
+      setTimeout(() => { const ta = document.getElementById('problem'); if (ta) ta.focus({ preventScroll: true }); }, 50);
+    },
     set(el, e, ctx) { ctx.commit((p) => setPath(p, el.dataset.path, coerce(el))); },
     go(el) { go(el.dataset.to); },
     tab(el, e, ctx) { ui(el.dataset.view).tab = el.dataset.tab; S.save(); render(); },

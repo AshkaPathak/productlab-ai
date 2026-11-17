@@ -94,11 +94,9 @@
     const sched = P.schedule(p, { priority: rows.map((r) => r.feature.id) });
     const must = (sched.phases[0] && sched.phases[0].tasks.length) || 0;
     const weeks = Math.ceil(sched.mvpWeeks || sched.totalWeeks || 0);
-    const stack = P.recommendStack(p.constraints || {});
-    const pick = (layer) => ((stack.find((s) => s.layer === layer) || {}).choice || '').replace(/\s*\(.*?\)\s*/g, ' ').trim();
-    const tools = [pick('Client'), pick('Backend')].filter(Boolean);
+    const ways = P.buildOptions(p.constraints || {});
     const pts = ['Build first: ' + list(rows.slice(0, 3).map((r) => r.feature.name)) + '.'];
-    if (tools.length) pts.push('Built with ' + list(tools) + ', chosen to suit your team and budget.');
+    pts.push('Build it as ' + ways.chosen.name.charAt(0).toLowerCase() + ways.chosen.name.slice(1) + ', in ' + list(ways.chosen.languages) + (ways.options.length > 1 ? '; ' + plural(ways.options.length - 1, 'other way fits', 'other ways fit') + '.' : '.'));
     pts.push('Planned for a team of ' + sched.settings.teamSize + ' working in ' + sched.settings.sprintWeeks + '-week sprints.');
     return { headline: 'A first version of ' + sel.name + ': ' + plural(must, 'must-have feature') + (weeks ? ' in about ' + plural(weeks, 'week') : '') + '.', points: pts, next: 'report' };
   }

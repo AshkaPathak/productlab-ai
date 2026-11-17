@@ -179,7 +179,7 @@
         log('Web facts linked to sources: ' + web.findings.length + (web.queries.length ? ' (searches: ' + web.queries.slice(0, 3).join('; ') + ')' : ''));
       } catch (e) { log('Web research skipped: ' + e.message); }
     }
-    return { refs, findings, limited };
+    return { refs, findings, limited, found: works.length, kept: kept.length };
   }
 
   /* ---------------- step 3: users, needs, vocabulary, competitors ---------------- */
@@ -262,7 +262,9 @@
       'Selected concept: ' + c.name + ' – ' + clip(c.description, 500) + '\nClaims:\n' + (c.claims || []).map((x) => '- ' + x.text).join('\n') + '\n\n' +
       'Plan a minimum viable product for a student team of 3. Return JSON with keys:\n' +
       '"features": 6-10 objects {"name","description","rationale": why the evidence justifies it,"evidence": ["E#"],"needs": ["N#"],"reach": 0-100 (% of target users),"impact": one of 0.25, 0.5, 1, 2, 3,"confidence": 0-100,"effort": person-weeks,"moscow": "Must"|"Should"|"Could"|"Won\'t","dependsOn": [names of other features]};\n' +
-      '"constraints": {"platform": "mobile"|"web"|"both","offline": true|false,"sensitiveData": true|false,"ai": "none"|"rules"|"ml"|"llm","wearables": true|false,"realtime": true|false,"budget": "low"|"medium"|"high","expectedUsers": number in the first year,"region": country or region};\n' +
+      '"constraints": what the first version really needs. Choose the simplest thing that works; most ideas need no accounts and no database. {"kind": "website" (mostly information to read) | "webapp" (an interactive tool in the browser) | "mobile" (used on the go, needs camera, location, notifications or offline) | "service" (many people share and change the same data) | "hardware" (needs sensors or a physical device) | "chat" (people are best reached on WhatsApp or SMS),' +
+      '"accounts": true only if people must sign in to keep private data or have roles,"sharedData": true only if people see each other\'s data or data must sync between devices,"payments": true|false,"hardware": true|false,"messaging": true if WhatsApp or SMS reaches the users better than an app,' +
+      '"offline": true|false,"sensitiveData": true|false,"ai": "none"|"rules"|"ml"|"llm","wearables": true|false,"realtime": true|false,"budget": "low"|"medium"|"high","expectedUsers": number in the first year,"region": country or region};\n' +
       '"bmc": Business Model Canvas with keys ' + BMC_KEYS.join(', ') + ' (one or two sentences each).', f);
     const raw = (Array.isArray(j.features) ? j.features : []).slice(0, 12);
     const features = raw.map((x, i) => ({
@@ -279,8 +281,10 @@
     });
     const k = j.constraints || {};
     const pick = (v, allowed, d) => (allowed.includes(v) ? v : d);
+    const kind = pick(k.kind, ['website', 'webapp', 'mobile', 'service', 'hardware', 'chat'], k.platform === 'web' ? 'webapp' : 'mobile');
     const constraints = {
-      platform: pick(k.platform, ['mobile', 'web', 'both'], 'mobile'), offline: !!k.offline, sensitiveData: !!k.sensitiveData,
+      kind, accounts: !!k.accounts, sharedData: !!k.sharedData, payments: !!k.payments, hardware: !!k.hardware || kind === 'hardware', messaging: !!k.messaging || kind === 'chat',
+      platform: kind === 'mobile' ? 'mobile' : pick(k.platform, ['mobile', 'web', 'both'], 'web'), offline: !!k.offline, sensitiveData: !!k.sensitiveData,
       ai: pick(k.ai, ['none', 'rules', 'ml', 'llm'], 'rules'), wearables: !!k.wearables, realtime: !!k.realtime, budget: pick(k.budget, ['low', 'medium', 'high'], 'low'),
       skills: (project.constraints && project.constraints.skills) || ['javascript', 'typescript'], expectedUsers: Math.round(num(k.expectedUsers, 10, 1e8, 1000)), region: clip(k.region || 'India', 40)
     };
@@ -323,7 +327,7 @@
       name: '', domain: '', team: [], challenge: problem, hmw: '', glossary: [], references: [], findings: [], needs: [], personas: [],
       morph: { params: [], rules: [] }, concepts: [], criteria: JSON.parse(JSON.stringify(CRITERIA)), ratings: {}, competitors: [], position: { x: 8, y: 8 },
       selectedConcept: null, features: [], plan: { teamSize: 3, sprintWeeks: 2, focus: 0.6, buffer: 0.2 },
-      constraints: { platform: 'mobile', offline: false, sensitiveData: false, ai: 'rules', wearables: false, realtime: false, budget: 'low', skills: ['javascript', 'typescript'], expectedUsers: 1000, region: 'India' },
+      constraints: { kind: 'webapp', accounts: false, sharedData: false, payments: false, hardware: false, messaging: false, platform: 'web', offline: false, sensitiveData: false, ai: 'rules', wearables: false, realtime: false, budget: 'low', skills: ['javascript', 'typescript'], expectedUsers: 1000, region: 'India' },
       bmc: {}, risks: [], ideas: [], experiment: { entries: [], ratings: [], key: [], seed: 2026 },
       autopilot: { problem, model: ai ? settings.model : null, ranAt: started.toISOString(), steps: {} }
     };
@@ -342,6 +346,7 @@
     mark('research', 'running');
     const r = await research(problem, p, settings, o, f, log);
     project.references = r.refs; project.findings = r.findings;
+    project.autopilot.search = { queries: p.queries.length, found: r.found || 0, kept: r.kept || 0 };
     if (project.findings.length < 3) {
       mark('research', 'failed', r.limited && project.findings.length === 0
         ? 'The free paper search (OpenAlex) is not answering this connection right now because too many searches were made recently. Try again later' + (L.hosted && L.hosted() ? '.' : ', or add a free OpenAlex key in Settings.')

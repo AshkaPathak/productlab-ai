@@ -68,7 +68,7 @@
   /* ---------------- charts (plain SVG) ---------------- */
 
   // Validated categorical order (see figures.js); colour follows position in the legend.
-  const PALETTE = ['#5866ec', '#d8961c', '#1f9e8f', '#e0604e', '#9a5fc0', '#7f8a2e'];
+  const PALETTE = ['#3a80b7', '#b16148', '#008e8e', '#a55f8f', '#9c721c', '#4d8b50'];
 
   /** Horizontal stacked bars. rows: [{label, segments:[{value,label}], total}] */
   function stackedBars(rows, legend, options) {
@@ -228,20 +228,29 @@
   /* Brand colours. Thinking (research, people, ideas, decisions) is blueprint
      blue; building is amber; a coral spark marks creative moments. Story pages
      re-tint the same slots to match each project (see theme.js). */
-  const INK = { ink: '#1a1a2e', ink2: '#3a3b55', think: '#5b3fe4', thinkInk: '#4a2fd0', thinkSoft: '#efebff', build: '#ffa51f', buildSoft: '#fff1dc', spark: '#ff4f79', paper: '#f6f5fb', white: '#ffffff', line: '#e6e4f0' };
+  const INK = { ink: '#1f1915', ink2: '#48413b', think: '#005993', thinkInk: '#004276', thinkSoft: '#ddeefb', build: '#c77f3e', buildSoft: '#f8ebd7', spark: '#b05139', paper: '#f8f3ea', white: '#fefcf7', line: '#e6dfd3' };
 
   /* [highlight, body, shade] per tone slot. Gradients read these through CSS
      variables (--tn-<slot>-0..2), so a theme can override any slot. */
   const TONES = {
-    ink: ['#6b6c8f', '#1a1a2e', '#0d0d1c'], deep: ['#a99af5', '#5b3fe4', '#3b22b8'], soft: ['#ffffff', '#e4defc', '#b3a6ee'],
-    mist: ['#ffffff', '#efede6', '#cfcbbf'], think: ['#e6e0ff', '#6e4ff0', '#3b22b8'], build: ['#fff0cc', '#ffa51f', '#d9700a'],
-    spark: ['#ffe0da', '#ff6a55', '#c23a2a'], sea: ['#d2f1f4', '#2fa7b8', '#17707d'], gold: ['#f6e8bd', '#c9a95a', '#8c7130'],
-    teal: ['#c6f0e8', '#1f9e8f', '#0f6359'], ok: ['#c8eed9', '#3a9a6c', '#1f6b47'], warn: ['#fde6c1', '#e0a144', '#a2681a'],
-    bad: ['#f8ccd4', '#cf4b63', '#8e2340'], bad2: ['#e9a9b6', '#8e2340', '#5a1027'],
+    ink: ['#47423f',  '#1f1915',  '#0d0805'],
+    deep: ['#2e648f',  '#004276',  '#002b5e'],
+    soft: ['#ffffff',  '#cae2f3',  '#a1c3db'],
+    mist: ['#ffffff',  '#ece7df',  '#c9c3ba'],
+    think: ['#2e77a6',  '#005993',  '#00427a'],
+    build: ['#d19661',  '#c77f3e',  '#ad6723'],
+    spark: ['#be705d',  '#b05139',  '#953922'],
+    sea: ['#2e99ab',  '#008399',  '#006b81'],
+    gold: ['#cfb06d',  '#c49f4d',  '#ab8632'],
+    teal: ['#2e938f',  '#007b76',  '#00635f'],
+    ok: ['#5e996e',  '#3b834e',  '#206b38'],
+    warn: ['#cea15b',  '#c38c37',  '#a97416'],
+    bad: ['#bd5f5d',  '#af3c3a',  '#942124'],
+    bad2: ['#8b4b54',  '#71232f',  '#58081b'],
     // brand-only slots: never re-tinted by a project theme (the logo stays ProductLab)
-    brandBuild: ['#fff0cc', '#ffa51f', '#d9700a'], brandThink: ['#e6e0ff', '#6e4ff0', '#3b22b8']
+    brandBuild: ['#d19661', '#c77f3e', '#ad6723'], brandThink: ['#2e77a6', '#005993', '#00427a']
   };
-  const LIQUID = { think: ['#a996ff', '#4a2fd0'], build: ['#ffd17a', '#f58a00'], spark: ['#ffb2a6', '#e5483a'], deep: ['#8c92c9', '#2a2f72'], mist: ['#f4f2ec', '#d9d5c9'] };
+  const LIQUID = { think: ['#4e8cbe', '#005189'], build: ['#e7b375', '#c16e2d'], spark: ['#db8e7a', '#ab4235'], deep: ['#4c759f', '#003666'], mist: ['#f5f1ea', '#d6d0c7'] };
 
   function toneVars() {
     let css = '';
@@ -306,16 +315,16 @@
 
   /* The ProductLab mark: a lab flask filled with the six step colours, bottom to top. */
   const FLASK = 'M19 5h10v13l11.2 18.6A5 5 0 0 1 35.9 44H12.1a5 5 0 0 1-4.3-7.4L19 18z';
-  const STEP_COLOURS = ['#1f6fe0', '#d42a63', '#ffc21a', '#6e45f5', '#ff7a1a', '#0c8a60'];
+  const STEP_COLOURS = ['#2677b2', '#ab553a', '#cf9a35', '#9f5387', '#3e8343', '#007d7e'];
   let logoN = 0;
   function logo() {
     const id = 'pl-flask-' + (++logoN);
     const bands = STEP_COLOURS.map((c, i) => '<rect x="0" y="' + (44 - (i + 1) * 3.6).toFixed(2) + '" width="48" height="3.7" fill="' + c + '"/>').join('');
     return '<svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + FLASK + '"/></clipPath></defs>' +
       '<path d="' + FLASK + '" fill="#fff"/><g clip-path="url(#' + id + ')">' + bands + '</g>' +
-      '<path d="' + FLASK + '" fill="none" stroke="#1a1a2e" stroke-width="2.6" stroke-linejoin="round"/>' +
-      '<path d="M17 5h14" stroke="#1a1a2e" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<circle cx="24" cy="12" r="1.9" fill="#6e45f5"/><circle cx="27" cy="16.5" r="1.3" fill="#ff4f79"/></svg>';
+      '<path d="' + FLASK + '" fill="none" stroke="#1f1915" stroke-width="2.6" stroke-linejoin="round"/>' +
+      '<path d="M17 5h14" stroke="#1f1915" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<circle cx="24" cy="12" r="1.9" fill="#005993"/><circle cx="27" cy="16.5" r="1.3" fill="#ab553a"/></svg>';
   }
 
   /** Small mark beside page titles. */
@@ -400,5 +409,42 @@
     return '<svg class="node" viewBox="0 0 28 28" aria-hidden="true">' + sphere(14, 14, 11, done ? Math.max(0.25, Math.min(0.92, done * 0.92)) : 0, kind === 'build' ? 'build' : 'think', { shadow: false, dashed: !done }) + '</svg>';
   }
 
-  PL.comp = { icon, INK, TONES, orb, sphere, defs, initials, logo, motif, heroArt, press, avatar, plates, stepProgress, railNode, badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
+  /**
+   * How this was made: separates what the AI drafted from what ProductLab's own
+   * code found, checked and calculated, with the real numbers for this project.
+   */
+  function howMade(p, index) {
+    const n = (k, one, many) => k + ' ' + (k === 1 ? one : many);
+    const rows = [];
+    const ap = p.autopilot || {};
+    const s = ap.search;
+    if (p.findings.length) {
+      rows.push(['Sources', 'Found the evidence', (s && s.found ? 'Searched OpenAlex, a free index of research papers, with ' + n(s.queries, 'query', 'queries') + '; read ' + n(s.found, 'paper', 'papers') + ' and kept ' + s.kept + ' on the topic. ' : '') +
+        'Quoted ' + n(p.findings.length, 'fact', 'facts') + ' word for word from ' + n(p.references.length, 'source', 'sources') + ', each linked to its paper and cited in IEEE style.']);
+      const th = PL.cluster.themes(p, index, { threshold: 0.12 }).filter((t) => t.members.length > 1).length;
+      rows.push(['Code', 'Grouped the facts', 'Clustered the facts into ' + n(th, 'theme', 'themes') + ' by comparing their words (TF-IDF), and flagged facts that no need uses yet.']);
+    }
+    const byAI = !!(ap.steps && ap.steps.users) || p.concepts.some((c) => /^ai/.test(c.origin || ''));
+    if (p.needs.length || p.concepts.length) rows.push([byAI ? 'AI' : 'Team', byAI ? 'Drafted the people and ideas' : 'Wrote the people and ideas', (byAI ? 'Wrote ' : 'The team wrote ') + n(p.needs.length, 'need', 'needs') + ', ' + n(p.personas.length, 'persona', 'personas') + ' and ' + n(p.concepts.length, 'idea', 'ideas') + '. Every one cites fact IDs; anything without evidence is marked.']);
+    const audit = PL.evidence.audit(p, index);
+    if (audit.summary.total) {
+      const flagged = audit.items.filter((i) => i.result && ['unsupported', 'invalid', 'uncited'].includes(i.result.status)).length;
+      rows.push(['Code', 'Checked every claim', 'Compared ' + n(audit.summary.total, 'claim', 'claims') + ' with the exact text they cite: ' + Math.round(audit.summary.traceability * 100) + '% backed' + (flagged ? ', ' + flagged + ' flagged for you to review' : '') + '. The AI cannot mark its own work.']);
+    }
+    const rated = p.concepts.filter((c) => p.ratings[c.id]);
+    if (rated.length > 1) {
+      const mc = PL.decision.monteCarlo(rated, p.criteria, p.ratings, { runs: 2000 });
+      const top = mc.slice().sort((a, b) => b.winRate - a.winRate)[0];
+      rows.push([byAI ? 'AI + code' : 'Team + code', 'Ranked the ideas', (byAI ? 'The AI suggested each score with a reason' : 'The team gave each score with a reason') + '; a weighted decision matrix ranked them, and 2,000 random changes to the weights tested the result: ' + top.name + ' stays on top in ' + Math.round(top.winRate * 100) + '% of them.']);
+    }
+    if (p.features.length) {
+      const ways = PL.planning.buildOptions(p.constraints);
+      rows.push(['Code', 'Planned the build', 'Ranked ' + n(p.features.length, 'feature', 'features') + ' by reach, impact, confidence and effort (RICE), lowered the ones without evidence, and fitted them into sprints. Compared ' + PL.planning.WAYS_COUNT + ' ways to build it and chose ' + ways.chosen.name.charAt(0).toLowerCase() + ways.chosen.name.slice(1) + '.']);
+    }
+    if (!rows.length) return '';
+    return '<section class="howmade"><h2>How this was made</h2><p class="muted small">The AI writes drafts. ProductLab\u2019s own code finds the sources, checks every claim against them, and does the maths.</p><ol>' +
+      rows.map((r) => '<li><span class="who who-' + r[0].replace(/[^a-z]/gi, '').toLowerCase() + '">' + esc(r[0]) + '</span><div><b>' + esc(r[1]) + '</b><p>' + esc(r[2]) + '</p></div></li>').join('') + '</ol></section>';
+  }
+
+  PL.comp = { howMade, icon, INK, TONES, orb, sphere, defs, initials, logo, motif, heroArt, press, avatar, plates, stepProgress, railNode, badge, strengthDots, citeEditor, tabs, empty, stat, stackedBars, scatter, gantt, evidenceGraph, riskMatrix, PALETTE, findingTitle, pct };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

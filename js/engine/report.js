@@ -154,8 +154,14 @@
     }
 
     if (project.constraints) {
-      line('## 11. Technology stack');
-      P.recommendStack(project.constraints).forEach((r) => line('- **' + r.layer + ':** ' + r.choice + ' - ' + r.why.join('; ') + (r.alternatives.length ? ' (alternatives: ' + r.alternatives.join(', ') + ')' : '')));
+      const ways = P.buildOptions(project.constraints);
+      line('## 11. How to build it');
+      line('What the idea needs: ' + ways.needs.join('; ') + '.');
+      line('');
+      line('**Chosen: ' + ways.chosen.name + '** (' + ways.chosen.tagline + '). Effort ' + ways.chosen.complexity + '/5, ' + ways.chosen.cost + '.');
+      ways.chosen.stack.forEach((r) => line('- **' + r.layer + ':** ' + r.choice + (r.why.length ? ' - ' + r.why.join('; ') : '') + (r.alternatives.length ? ' (alternatives: ' + r.alternatives.join(', ') + ')' : '')));
+      line('');
+      ways.options.filter((w) => w.id !== ways.chosen.id).forEach((w) => line('- Also fits: **' + w.name + '** - ' + w.why.join('; ') + '. Effort ' + w.complexity + '/5, ' + w.cost + '.'));
       line('');
     }
 

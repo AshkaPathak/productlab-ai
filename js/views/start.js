@@ -26,6 +26,8 @@
   const LABEL = { plan: 'Understand', research: 'Research', users: 'People', ideas: 'Ideas', evaluate: 'Decide', build: 'Build' };
 
   const run = { running: false, problem: '', steps: {}, log: [], projectId: null, error: '', entered: false };
+  // what is typed in the box on Home; kept only while the page is open, so Home always opens blank
+  let draft = '';
 
   function aiSettings(state) { return Object.assign({}, state.settings.ai, { apiKey: state.apiKey }); }
 
@@ -86,7 +88,7 @@
       '<h1 class="hook">Got a problem that\u2019s <em>everywhere?</em><br>Leave with a plan you can build.</h1>' +
       '<p class="home-sub">Describe it the way you\u2019d tell a friend. ProductLab reads the research, finds who it hurts, suggests ideas, helps you choose and plans the build. No expertise needed.</p>' +
       '<div class="composer"><label for="problem" class="composer-label">What problem are you trying to solve?</label>' +
-      '<textarea id="problem" rows="3" data-focus="problem" placeholder="e.g. ' + esc(EXAMPLES[0].text) + '">' + esc(u.problem || '') + '</textarea>' +
+      '<textarea id="problem" rows="3" data-focus="problem" data-live="draft" placeholder="e.g. ' + esc(EXAMPLES[0].text) + '">' + esc(draft) + '</textarea>' +
       '<div class="row composer-foot"><span class="muted small">Or try one:</span>' + EXAMPLES.map((x, i) => '<button class="example" data-act="example" data-i="' + i + '">' + esc(x.short) + '</button>').join('') +
       '<span class="spacer"></span><button class="btn primary big" data-act="run">Find users, ideas and a plan <span aria-hidden="true">\u2192</span></button></div>' +
       '<details class="run-options"><summary>Search options</summary><div class="row">' +
@@ -95,6 +97,7 @@
       (ai ? '<p class="hero-note">' + (sharedAI ? 'No sign-up needed.' : 'Using ' + esc(s.model) + '.') + ' Takes 1 to 2 minutes, and you can watch each step happen. <button class="linkish" data-act="try-example">Or see a finished example</button></p>'
         : '<p class="hero-note">First, <a href="#/settings">add a free Gemini key</a> (two minutes). Without one, ProductLab only gathers research. <button class="linkish" data-act="try-example">See a finished example</button></p>') +
       '</header>' +
+      yourWork(ctx) +
 
       // 2. the six steps, one colour each
       '<section class="home-section reveal"><h2 class="big-h">Six steps, each with one clear question.</h2>' +
@@ -111,6 +114,32 @@
       '</section>';
   }
 
+  /* The run in progress (or just finished) and recent projects, so people can carry on or start something new. */
+  function yourWork(ctx) {
+    const projects = ctx.state.projects.slice().sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+    const current = run.projectId ? projects.find((p) => p.id === run.projectId) : null;
+    const cards = [];
+    if (run.running) {
+      const now = A.STEPS.find((st) => (run.steps[st.id] || {}).status === 'running');
+      const done = A.STEPS.filter((st) => ['done', 'warn'].includes((run.steps[st.id] || {}).status)).length;
+      cards.push('<a class="work-card live" href="#/run"><span class="pill accent">Running now' + dotsAnim() + '</span><h3>' + esc(clip(run.problem, 110)) + '</h3>' +
+        '<p class="muted small">Step ' + Math.min(done + 1, A.STEPS.length) + ' of ' + A.STEPS.length + (now ? ': ' + esc(LABEL[now.id]) : '') + '</p><div class="bar"><i style="width:' + Math.round(done / A.STEPS.length * 100) + '%"></i></div><span class="more">Watch it work</span></a>');
+    } else if (run.error && !current) {
+      cards.push('<a class="work-card" href="#/run"><span class="pill bad">Stopped</span><h3>' + esc(clip(run.problem, 110)) + '</h3><p class="muted small">' + esc(clip(run.error, 120)) + '</p><span class="more">See what happened</span></a>');
+    } else if (current) {
+      cards.push('<a class="work-card" href="#/run"><span class="pill done">Just finished</span><h3>' + esc(current.name) + '</h3><p class="muted small">' + esc(clip(run.problem, 110)) + '</p><span class="more">See the results</span></a>');
+    }
+    projects.filter((p) => !current || p.id !== current.id).slice(0, run.running || current || run.error ? 2 : 3).forEach((p) => {
+      const bits = [p.findings.length ? p.findings.length + ' facts' : '', p.concepts.length ? p.concepts.length + ' ideas' : '', p.features.length ? p.features.length + ' features' : ''].filter(Boolean).join(' \u00b7 ');
+      cards.push('<button class="work-card" data-act="open-project" data-id="' + esc(p.id) + '"><span class="pill">' + esc(p.domain || 'Project') + '</span><h3>' + esc(p.name) + '</h3><p class="muted small">' + esc(bits || 'Just started') + '</p><span class="more">Open</span></button>');
+    });
+    if (!cards.length) return '';
+    return '<section class="home-section your-work"><div class="row between"><h2 class="mid-h">Your work</h2><a class="more" href="#/projects">All projects (' + projects.length + ')</a></div><div class="work-grid">' + cards.join('') + '</div></section>';
+  }
+
+  function dotsAnim() { return '<span class="dots-anim" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>'; }
+  function clip(t, n) { t = String(t || ''); return t.length > n ? t.slice(0, n - 1).trim() + '\u2026' : t; }
+
   /* Keyboard mashing such as "asdf qwer zxcv" passes a word count but is not a problem. Words in other scripts are left alone. */
   function looksRandom(text) {
     const words = (text.toLowerCase().match(/[a-z]{3,}/g) || []);
@@ -125,7 +154,8 @@
   }
 
   function working() {
-    return '<section class="start"><h1 class="ask small-ask">' + (run.running ? 'Working on it' : run.error ? 'Something stopped the run' : 'Here is your starting point') + '</h1>' +
+    return '<section class="start"><h1 class="ask small-ask">' + (run.running ? 'Working on it ' + dotsAnim() : run.error ? 'Something stopped the run' : 'Here is your starting point') + '</h1>' +
+      (run.running ? '<p class="muted">This takes 1 to 2 minutes. You can leave this page; it keeps going, and Home shows its progress.</p>' : '') +
       '<blockquote class="problem-quote">' + esc(run.problem) + '</blockquote>' +
       '<div class="press-wrap">' + C.press(stages(!run.running, run.projectId ? S.state.projects.find((p) => p.id === run.projectId) : null), { label: 'Progress', enter: !run.entered }) + '</div>' +
       (run.running ? '<div class="runlog">' + A.STEPS.map((s) => {
@@ -142,9 +172,8 @@
     const audit = PL.evidence.audit(p, idx);
     const ranked = p.concepts.length && Object.keys(p.ratings).length ? PL.decision.wdm(p.concepts, p.criteria, p.ratings) : [];
     const sel = p.concepts.find((c) => c.id === p.selectedConcept);
-    const stack = p.features.length ? PL.planning.recommendStack(p.constraints) : [];
+    const ways = p.features.length ? PL.planning.buildOptions(p.constraints) : null;
     const sched = p.features.length ? PL.planning.schedule(p) : null;
-    const pick = (layer) => (stack.find((r) => r.layer === layer) || {}).choice;
     let out = '';
     if (p.personas.length) {
       out += '<section class="block"><h2>Who this affects</h2><div class="people stagger">' + p.personas.map((x, i) => '<div class="persona" style="--i:' + i + '">' + C.avatar(x.name) +
@@ -156,13 +185,18 @@
         C.stackedBars(ranked.map((r) => ({ label: r.name, total: r.total, highlight: r.rank === 1, segments: r.breakdown.map((b, i) => ({ value: b.contribution, label: p.criteria[i].name })) })), p.criteria.map((c) => c.name), { max: 5 }) +
         '<a class="more" href="#/evaluate" data-act="jump" data-view="evaluate" data-tab="matrix">Review the scores and choose</a></section>';
     }
-    if (sel && stack.length) {
-      const rows = [['Languages', pick('Languages')], ['App', pick('Client') || pick('Web')], ['Backend', pick('Backend')], ['Database', pick('Database') || (/Supabase/.test(pick('Backend') || '') ? 'PostgreSQL (through Supabase)' : '')], ['Intelligence', pick('Intelligence')], ['Privacy', pick('Privacy & security')], ['Integrations', pick('Integrations')]]
-        .filter((r) => r[1]).map((r) => ({ label: r[0], value: r[1] }));
+    if (sel && ways) {
+      const w = ways.chosen;
+      const rows = [{ label: 'Build it as', value: w.name }, { label: 'Languages', value: w.languages.join(', ') }]
+        .concat(w.stack.slice(1, 5).map((r) => ({ label: r.layer, value: r.choice })));
       if (sched) rows.push({ label: 'First release', value: sched.phases[0].tasks.length + ' must-have features in about ' + Math.ceil(sched.mvpWeeks) + ' weeks for a team of ' + sched.settings.teamSize });
-      out += '<section class="block"><h2>What it takes to build ' + esc(sel.name) + '</h2>' + C.plates(rows) +
-        '<p class="muted small">Prefer another idea? Select it, then use Re-plan in Build plan.</p><a class="more" href="#/build" data-act="jump" data-view="build" data-tab="stack">Open the full build plan</a></section>';
+      const others = ways.options.filter((x) => x.id !== w.id);
+      out += '<section class="block"><h2>What it takes to build ' + esc(sel.name) + '</h2>' +
+        '<div class="needs-row">' + ways.needs.map((x) => '<span class="chip">' + esc(x) + '</span>').join('') + '</div>' + C.plates(rows) +
+        (others.length ? '<p class="muted small">Other ways that fit: ' + esc(others.map((x) => x.name).join(' \u00b7 ')) + '. Compare them, with costs and steps, in Build.</p>' : '') +
+        '<a class="more" href="#/build" data-act="jump" data-view="build" data-tab="stack">Compare the ways to build it</a></section>';
     }
+    out += C.howMade(p, idx);
     const steps = (p.autopilot && p.autopilot.steps) || run.steps;
     const failed = ['ideas', 'evaluate', 'build'].filter((id) => steps[id] && steps[id].status === 'failed');
     if (run.resuming) {
@@ -177,19 +211,26 @@
       out += '<div class="infobox">This run gathered research only. <a href="#/settings">Add a free Gemini key</a> and run it again to get people, ideas, scores and a build plan.</div>';
     }
     if (audit.summary.total) out += '<p class="muted small">' + Math.round(audit.summary.traceability * 100) + '% of claims are backed by the evidence they cite' + (audit.summary.invalid ? '; ' + audit.summary.invalid + ' made-up citation' + (audit.summary.invalid > 1 ? 's were' : ' was') + ' caught and flagged' : '') + '.</p>';
-    out += '<div class="row"><button class="btn accent" data-act="go" data-to="story">Scroll through the story</button><button class="btn primary" data-act="go" data-to="overview">Open the project</button><button class="btn" data-act="go" data-to="report">Audit and report</button><button class="btn ghost" data-act="again">Try another problem</button></div>';
+    out += '<div class="row"><button class="btn accent" data-act="go" data-to="story">Scroll through the story</button><button class="btn primary" data-act="go" data-to="overview">Open the project</button><button class="btn" data-act="go" data-to="report">Audit and report</button><button class="btn ghost" data-act="new-problem">Try another problem</button></div>';
     return out;
   }
 
-  PL.views.start = {
+  function blankHome() { draft = ''; }
+
+  PL.views.run = {
     render(ctx) {
-      if (run.running || run.projectId || run.error) {
-        const html = working() + (run.running ? '' : results(ctx)) + (run.error && !run.projectId ? '<button class="btn" data-act="again">Try again</button>' : '');
-        if (!run.running) run.entered = true;
-        return html;
-      }
-      return idle(ctx);
+      if (!(run.running || run.projectId || run.error)) return '<section class="start"><h1 class="ask small-ask">Nothing is running</h1><p class="muted">Describe a problem on Home to start a new project.</p><a class="btn primary" href="#/start">Go to Home</a></section>';
+      const html = working() + (run.running ? '' : results(ctx)) + (run.error && !run.projectId ? '<div class="row"><button class="btn primary" data-act="edit-again">Edit the problem and try again</button><button class="btn ghost" data-act="new-problem">Start a new problem</button></div>' : '');
+      if (!run.running) run.entered = true;
+      return html;
     },
+    actions: {},
+    state() { return run; }
+  };
+
+  PL.views.start = {
+    reset: blankHome,
+    render(ctx) { return idle(ctx); },
     actions: {
       'to-ask'() {
         const box = document.getElementById('ask'); const ta = document.getElementById('problem');
@@ -202,8 +243,11 @@
         if (!p) return;
         ctx.state.currentId = p.id; S.save(); ctx.go('story');
       },
-      example(el, e, ctx) { ctx.ui('start').problem = EXAMPLES[Number(el.dataset.i)].text; S.save(); ctx.render(); },
-      again(el, e, ctx) { Object.assign(run, { projectId: null, steps: {}, log: [], error: '', entered: false }); ctx.render(); },
+      draft(el) { draft = el.value; },
+      example(el, e, ctx) { draft = EXAMPLES[Number(el.dataset.i)].text; ctx.render(); const ta = document.getElementById('problem'); if (ta) ta.focus(); },
+      'open-project'(el, e, ctx) { ctx.state.currentId = el.dataset.id; S.save(); ctx.go('overview'); },
+      'new-problem'(el, e, ctx) { blankHome(); if (!run.running) Object.assign(run, { projectId: run.projectId, error: run.projectId ? '' : run.error }); ctx.go('start'); },
+      'edit-again'(el, e, ctx) { draft = run.problem; Object.assign(run, { error: '', steps: {}, log: [], entered: false, problem: '' }); ctx.go('start'); },
       jump(el, e, ctx) { ctx.state.currentId = run.projectId; Object.assign(ctx.ui(el.dataset.view), { tab: el.dataset.tab, details: true }); S.save(); ctx.go(el.dataset.view); },
       async resume(el, e, ctx) {
         const p = ctx.state.projects.find((x) => x.id === run.projectId);
@@ -222,6 +266,7 @@
         PL.app.render();
       },
       async run(el, e, ctx) {
+        if (run.running) { toast('A project is already being made. Watch it on its page, or start another when it finishes.', 'bad'); return; }
         const problem = document.getElementById('problem').value.trim();
         if (problem.split(/\s+/).length < 6) { toast('Describe the problem in at least one full sentence', 'bad'); document.getElementById('problem').focus(); return; }
         if (looksRandom(problem)) { toast('That looks like random letters. Describe a real problem in a sentence or two.', 'bad'); document.getElementById('problem').focus(); return; }
@@ -238,7 +283,8 @@
         u.problem = problem; u.web = !!(document.getElementById('opt-web') || {}).checked; u.papers = Number(document.getElementById('opt-papers').value);
         S.save();
         Object.assign(run, { running: true, problem, steps: {}, log: [], projectId: null, error: '', entered: false });
-        ctx.render();
+        draft = '';
+        ctx.go('run');
         run.entered = true;
         try {
           const project = await A.run(problem, aiSettings(ctx.state), {
@@ -260,4 +306,6 @@
       }
     }
   };
+  // the run page uses the same actions (retry, jump to a step, start again)
+  PL.views.run.actions = PL.views.start.actions;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

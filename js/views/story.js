@@ -83,7 +83,7 @@
     // 5. Build
     const sel = p.concepts.find((c) => c.id === p.selectedConcept);
     const rec = P.recommendStack(p.constraints || {});
-    out.push(chapter('stack', 'Step 5, build', 'What it takes to build ' + esc(sel ? sel.name : 'it') + '.', 'Languages, frameworks and services, each picked from your constraints with the reason recorded.', F().stackDiagram(rec)));
+    out.push(chapter('stack', 'Step 5, build', 'What it takes to build ' + esc(sel ? sel.name : 'it') + '.', 'Built as ' + esc((function (n) { return n.charAt(0).toLowerCase() + n.slice(1); })(P.buildOptions(p.constraints || {}).chosen.name)) + ': the simplest way that fits what the idea needs, with the reason for every layer.', F().stackDiagram(rec)));
     if (p.features.length) {
       const rows = P.prioritize(p, ctx.index);
       const sched = P.schedule(p, { priority: rows.map((r) => r.feature.id) });

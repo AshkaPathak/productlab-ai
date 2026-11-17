@@ -57,20 +57,36 @@
 
   function stackTab(ctx) {
     const p = ctx.project;
-    const k = p.constraints;
-    const rec = P.recommendStack(k);
+    const k = P.normalizeConstraints(p.constraints);
+    const o = P.buildOptions(k);
+    const concept = p.concepts.find((c) => c.id === p.selectedConcept);
     const chk = (key, label) => '<label class="check"><input type="checkbox" data-act="set" data-path="constraints.' + key + '"' + (k[key] ? ' checked' : '') + '> ' + esc(label) + '</label>';
-    const sel = (key, label, opts) => '<div class="field"><label>' + esc(label) + '</label><select data-act="set" data-path="constraints.' + key + '">' + opts.map((o) => '<option value="' + o[0] + '"' + (String(k[key]) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>';
-    return '<div class="card"><h2>What it takes to build' + (p.concepts.find((c) => c.id === p.selectedConcept) ? ' ' + esc(p.concepts.find((c) => c.id === p.selectedConcept).name) : ' it') + '</h2>' + PL.fig.stackDiagram(rec) + '</div><div class="grid two"><div class="card"><h2>Constraints</h2>' +
-      sel('platform', 'Platform', [['mobile', 'Mobile app'], ['web', 'Web app'], ['both', 'Mobile + web']]) +
-      sel('ai', 'Intelligence needed', [['none', 'None'], ['rules', 'Transparent rules / statistics'], ['ml', 'Trained ML models'], ['llm', 'Generative AI (LLM)']]) +
+    const sel = (key, label, opts) => '<div class="field"><label>' + esc(label) + '</label><select data-act="set" data-path="constraints.' + key + '">' + opts.map((x) => '<option value="' + x[0] + '"' + (String(k[key]) === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>').join('') + '</select></div>';
+    const dots = (n) => '<span class="dots" aria-label="' + n + ' out of 5">' + [1, 2, 3, 4, 5].map((i) => '<i class="' + (i <= n ? 'on' : '') + '"></i>').join('') + '</span>';
+    const card = (w) => '<article class="way' + (w.chosen ? ' chosen' : '') + '">' +
+      '<div class="way-top">' + (w.recommended ? '<span class="pill accent">Start here</span>' : '<span class="pill">Another way</span>') + (w.chosen ? '<span class="pill done">Your choice</span>' : '') + '</div>' +
+      '<h3>' + esc(w.name) + '</h3><p class="muted">' + esc(w.tagline) + '</p>' +
+      '<dl class="way-meta"><div><dt>Effort</dt><dd>' + dots(w.complexity) + '</dd></div><div><dt>Cost</dt><dd>' + esc(w.cost) + '</dd></div><div><dt>Languages</dt><dd>' + esc(w.languages.join(', ')) + '</dd></div></dl>' +
+      '<h4>Why it fits</h4><ul>' + w.why.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+      '<h4>What you would use</h4><ul class="way-stack">' + w.stack.slice(1).map((r) => '<li><b>' + esc(r.layer) + '</b> ' + esc(r.choice) + '</li>').join('') + '</ul>' +
+      '<details><summary>How to build it</summary><ol>' + w.steps.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol></details>' +
+      '<details><summary>Watch out for</summary><ul>' + w.watch.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></details>' +
+      (w.chosen ? '' : '<button class="btn small" data-act="choose-way" data-id="' + w.id + '">Use this way</button>') + '</article>';
+    return '<div class="card"><h2>Ways to build ' + esc(concept ? concept.name : 'it') + '</h2>' +
+      '<p class="muted small">Not every idea needs accounts, a server or a database. ProductLab works out what this idea needs, then scores ' + P.WAYS_COUNT + ' ways of building it and shows the ones that fit, simplest first.</p>' +
+      '<div class="needs-row">' + o.needs.map((x) => '<span class="chip">' + esc(x) + '</span>').join('') + '</div>' +
+      '<div class="ways">' + o.options.map(card).join('') + '</div></div>' +
+      '<div class="grid two"><div class="card"><h2>' + esc(o.chosen.name) + ', layer by layer</h2>' + PL.fig.stackDiagram(o.chosen.stack) + '</div>' +
+      '<div class="card"><h2>What the idea needs</h2><p class="muted small">Change these and the options above update.</p>' +
+      sel('kind', 'It is mostly', Object.keys(P.KINDS).map((x) => [x, P.KINDS[x]])) +
+      chk('accounts', 'People sign in to keep their own data') + chk('sharedData', 'People share data, or it syncs between devices') + chk('offline', 'Must work offline') +
+      chk('hardware', 'Needs sensors or a device') + chk('messaging', 'Reach people on WhatsApp or SMS') + chk('payments', 'Takes payments') +
+      chk('sensitiveData', 'Handles sensitive personal data (health, money)') + chk('wearables', 'Uses wearables or phone health data') + chk('realtime', 'Needs instant updates') +
+      sel('ai', 'Intelligence needed', [['none', 'None'], ['rules', 'Plain rules and statistics'], ['ml', 'A trained model'], ['llm', 'Generative AI']]) +
       sel('budget', 'Budget', [['low', 'Low (student / pilot)'], ['medium', 'Medium'], ['high', 'High']]) +
       '<div class="field"><label>Expected users (first year)</label><input type="number" min="10" step="100" data-act="set" data-type="number" data-path="constraints.expectedUsers" value="' + esc(k.expectedUsers) + '" style="width:140px"></div>' +
       '<div class="field"><label>Team skills (comma separated)</label><input class="wide" data-act="set" data-type="list" data-path="constraints.skills" value="' + esc((k.skills || []).join(', ')) + '"></div>' +
-      '<div class="field"><label>Region</label><input data-act="set" data-path="constraints.region" value="' + esc(k.region || '') + '"></div>' +
-      chk('sensitiveData', 'Handles sensitive personal data (health, finance)') + chk('offline', 'Must work offline') + chk('wearables', 'Integrates wearables / phone health data') + chk('realtime', 'Needs realtime updates') + '</div>' +
-      '<div class="card"><h2>Recommended stack</h2><p class="muted small">Rule-based and explainable: every pick lists the constraint that triggered it.</p>' +
-      rec.map((r) => '<div class="claim"><div class="row between"><b>' + esc(r.layer) + '</b><span>' + esc(r.choice) + '</span></div><ul class="small">' + r.why.map((w) => '<li>' + esc(w) + '</li>').join('') + '</ul>' + (r.alternatives.length ? '<div class="muted small">Alternatives: ' + esc(r.alternatives.join(', ')) + '</div>' : '') + '</div>').join('') + '</div></div>';
+      '<div class="field"><label>Region</label><input data-act="set" data-path="constraints.region" value="' + esc(k.region || '') + '"></div></div></div>';
   }
 
   function canvasTab(ctx) {
@@ -90,11 +106,17 @@
       return C.tabs('build', tab, [
         { id: 'features', label: 'Features', count: p.features.length },
         { id: 'roadmap', label: 'MVP roadmap' },
-        { id: 'stack', label: 'Tech stack' },
+        { id: 'stack', label: 'Ways to build it' },
         { id: 'canvas', label: 'Business model' }
       ]) + (tab === 'roadmap' ? roadmapTab(ctx) : tab === 'stack' ? stackTab(ctx) : tab === 'canvas' ? canvasTab(ctx) : featuresTab(ctx));
     },
     actions: {
+      'choose-way'(el, e, ctx) {
+        const w = P.buildOptions(ctx.project.constraints).options.find((x) => x.id === el.dataset.id);
+        if (!w) return;
+        ctx.commit((pr) => { pr.constraints = Object.assign({}, pr.constraints, { stack: w.id }); });
+        toast('Plan switched to: ' + w.name, 'ok');
+      },
       async replan(el, e, ctx) {
         const p = ctx.project;
         const settings = Object.assign({}, ctx.state.settings.ai, { apiKey: ctx.state.apiKey });
