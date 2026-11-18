@@ -1106,3 +1106,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--think); box-shad
 .howmade li { grid-template-columns: 112px 1fr; }
 .home-hero h1.hook { font-size: clamp(2.2rem, 4.2vw, 3.5rem); max-width: 19ch; }
 textarea::placeholder, input::placeholder { color: oklch(62% 0.014 65); }
+.howmade-key { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: 12px 0 0; color: var(--ink-2); }
+.key-item { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }

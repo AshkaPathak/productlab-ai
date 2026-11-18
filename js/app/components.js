@@ -442,7 +442,10 @@
       rows.push(['Code', 'Planned the build', 'Ranked ' + n(p.features.length, 'feature', 'features') + ' by reach, impact, confidence and effort (RICE), lowered the ones without evidence, and fitted them into sprints. Compared ' + PL.planning.WAYS_COUNT + ' ways to build it and chose ' + ways.chosen.name.charAt(0).toLowerCase() + ways.chosen.name.slice(1) + '.']);
     }
     if (!rows.length) return '';
-    return '<section class="howmade"><h2>How this was made</h2><p class="muted small">The AI writes drafts. ProductLab\u2019s own code finds the sources, checks every claim against them, and does the maths.</p><ol>' +
+    return '<section class="howmade"><h2>How this was made</h2><p class="muted small">The AI only writes drafts. ProductLab\u2019s own code finds the sources, checks every claim against them, and does the maths.</p>' +
+      '<p class="howmade-key small">' + [['Sources', 'sources', 'taken from research papers'], ['AI', 'ai', 'drafted by the AI, then checked'], ['Team', 'team', 'written by a person'], ['Code', 'code', 'calculated by ProductLab, no AI']]
+        .filter((k) => rows.some((r) => r[0].split(' + ').map((x) => x.toLowerCase()).includes(k[1])))
+        .map((k) => '<span class="key-item"><span class="who who-' + k[1] + '">' + k[0] + '</span> ' + k[2] + '</span>').join('') + '</p><ol>' +
       rows.map((r) => '<li><span class="who who-' + r[0].replace(/[^a-z]/gi, '').toLowerCase() + '">' + esc(r[0]) + '</span><div><b>' + esc(r[1]) + '</b><p>' + esc(r[2]) + '</p></div></li>').join('') + '</ol></section>';
   }
 

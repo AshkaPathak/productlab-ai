@@ -46,24 +46,22 @@ Projects are saved in the browser. Use **Export** on the Projects page to back t
 
 The app opens on **Home**, written for people with no background in product design or research:
 
-- **The problem box.** One promise in two sentences, with the **What problem are you trying to solve?** box right below it. It is always blank when you arrive, and the ProductLab logo always brings you back here. Three examples to try, and the **Find users, ideas and a plan** button. Search options are folded away.
+- **The problem box.** *What problem are you trying to solve?* It is always blank when you arrive, and the ProductLab logo always brings you back here. Three examples to try, and the **Find users, ideas and a plan** button.
 - **Your work.** The project being made right now, with the step it is on, and your recent projects, so you can carry on with one or start something new.
-- **Six steps, each with one clear question**, in the step's own colour, plus the claim check that follows.
+- **Six steps, each with one clear question**, plus the claim check that follows.
 - **Questions?** Short answers on expertise, what you need to start, made-up facts and where work is saved, and plain definitions of every term, all folded until opened.
 
 Text that is not a problem (for example keyboard mashing, or a phrase repeated over and over) is caught before any research is done.
 
-## Summary first, details on demand
+## The six steps
 
-Each of the six steps asks one plain question (*What do we already know? Who does this affect, and what do they need? How could we solve it? Which idea should we build? What will it take to build? Can we trust it?*) and opens on a short **summary**: one headline, up to three points and a button to the next step.
-
-Everything else (charts, tables, sources and every editable field) sits in a folded **All the details and editing tools** section. The app remembers which steps you have opened, so experienced users see the full tools straight away, and links that point at a specific table open it directly.
+Each step answers one plain question: *What do we already know? Who does this affect, and what do they need? How could we solve it? Which idea should we build? What will it take to build? Can we trust it?* It opens with a short answer, and the full tools (charts, tables, sources and every editable field) are under **All the details and editing tools**.
 
 ## Start from a problem statement
 
 Type a problem in one or two sentences, for example *"People save posts on Instagram, YouTube and X but can never find them again"*, and click **Find users, ideas and a plan**.
 
-The run gets its own page: **Working on it**, with three bouncing dots while work is being done, and a circle for each step that fills as it finishes. You can leave the page; the run keeps going, the sidebar shows *Making your project…*, and Home shows its progress under **Your work**. In one to two minutes ProductLab produces:
+The run has its own page that shows each step as it finishes. You can leave it; the run keeps going, and Home shows its progress under **Your work**. In one to two minutes ProductLab produces:
 
 | Step | Output | Where it comes from |
 |---|---|---|
@@ -115,30 +113,29 @@ Each way comes with why it fits, effort, cost, languages, what you would use lay
 
 ## How this was made: more than a chatbot
 
-A chatbot answers from memory. ProductLab uses the language model only to draft. Its own code finds the sources, checks every claim against them and does the maths.
+A common question is: *isn't this just ChatGPT with an API key?* It isn't. A chatbot writes everything from memory, so you cannot tell which parts are real. In ProductLab, the language model only writes **drafts**. Finding the sources, checking the AI's statements against them and doing all the calculations are done by ProductLab's own code, which gives the same result every time for the same input.
 
-The **How this was made** panel (on the results page and the Overview) shows this with each project's real numbers. Every row is labelled **Sources**, **Code**, **AI** or **Team**:
+To make this visible, every project shows a **How this was made** panel (at the end of the results page, and on the Overview). It lists each stage of the work, labels who did it, and gives the real numbers for that project. The labels mean:
 
-- **Sources.** The papers searched, read and kept, and the facts quoted word for word.
-- **Code.** How the facts were clustered into themes.
-- **AI or Team.** Who drafted the needs, personas and ideas.
-- **Code.** How many claims the citation guard checked, and how many it flagged.
-- **AI or Team, plus code.** Who suggested the scores, and how robust the ranking is across 2,000 random weight changes.
-- **Code.** How the features were prioritised and which way to build it was chosen.
+| Label | Who did the work |
+|---|---|
+| **Sources** | Taken directly from published research papers; nothing is written by the AI |
+| **AI** | Drafted by the language model (Gemini), and always checked afterwards |
+| **Team** | Written by a person (the two sample projects were written by hand, so they show *Team*) |
+| **Code** | Calculated by ProductLab's own program, with no AI involved |
 
-## Colours and type
+The panel has six rows. Here is what each one tells you, with the numbers from a real run on *"People in small towns do not know which government schemes they qualify for"*:
 
-ProductLab follows a "warm page, cool accent" rule: a warm sand page with one cool sea-blue accent for buttons and actions, so the accent stands out without shouting.
+| Row | Label | What it tells you | Example from the real run |
+|---|---|---|---|
+| Found the evidence | Sources | How many paper searches were made, how many papers were read and kept, and how many facts were copied word for word from them | 4 searches; 6 papers read and kept; 12 facts quoted from 6 sources |
+| Grouped the facts | Code | How many themes the facts fall into. The program groups facts that use similar words, a method called TF-IDF | 3 themes |
+| Drafted the people and ideas | AI or Team | How many needs, personas and ideas were written. Each one must point to the facts it is based on | 4 needs, 3 personas and 4 ideas, written by the AI |
+| Checked every claim | Code | How many statements the citation guard compared with the exact facts they cite, what share are backed, and how many need a person to look at them | 55 statements checked; 82% backed; 10 flagged for review |
+| Ranked the ideas | AI or Team, plus Code | Who suggested the scores, and how safe the winner is. The program ranks the ideas, then changes the importance of each criterion at random 2,000 times to see whether the same idea still wins | The AI suggested the scores; *AI Profile Matcher* won in 100% of the 2,000 trials |
+| Planned the build | Code | How many features were put in order of value for effort (a method called RICE), and which way to build it was chosen from the ten | 6 features planned; built as a web app with a small backend and no logins |
 
-Each step has its own colour, used for its number in the sidebar, its page header and its summary card: **1 Research** blue, **2 People** terracotta, **3 Ideas** ochre, **4 Decide** plum, **5 Build** moss and **6 Check** teal. All colours are built in OKLCH at equal lightness, so no step looks louder than another, and all text meets a contrast of at least 4.5:1.
-
-Type: Familjen Grotesk for headings, Switzer for text and IBM Plex Mono for numbers and IDs. Other details:
-
-- borders are see-through (`rgb(... / 0.12)`), so they blend on any surface;
-- nested corners are concentric (the inner radius is the outer radius minus the padding);
-- graphics are flat, and scrolling bars fade at their edges.
-
-Each project's **Story** takes on a theme that suits its subject, picked from the project's domain, name and problem text: Bloom (health and care), Harvest (food and the planet), Signal (digital life), Campus (learning and students) or Tide (water, cities and travel). A different theme can be chosen under *Story theme* on the project Overview. Every orb, liquid and chart accent reads its colour from a CSS variable, so a theme re-tints the whole Story without touching the markup. Chart category colours stay fixed and were checked for colour-blind separation.
+In short: **the AI suggests, the code checks and calculates, and you decide.** Every number in the panel comes from the project itself, so it can be verified.
 
 ## Story view
 
@@ -156,7 +153,7 @@ Each project's **Story** takes on a theme that suits its subject, picked from th
 | Build | Stack slabs, value against effort, roadmap | The chosen way to build it, layer by layer; quick wins; sprints to a first release |
 | Trust | Claim dots | Every claim, coloured by what the citation guard found |
 
-The same graphics appear on the matching workflow screens, each with a one-line caption that says what it shows. Hover any mark for its exact value. Reduced-motion settings turn the animation off.
+The same graphics appear on the matching step pages, each with a one-line caption that says what it shows. Hover any mark for its exact value.
 
 ## What it does
 
