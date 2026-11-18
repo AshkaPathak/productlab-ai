@@ -167,7 +167,7 @@
     return fig(svg, cap);
   }
 
-  /** Circle packing of evidence themes. Cyan = no need covers it yet. */
+  /** Circle packing of evidence themes. Blue = no need covers it yet. */
   /** Turn a stemmed term ("diagnos") back into the commonest real word in the texts ("diagnosis"). */
   function unstem(stem, texts) {
     const tally = new Map(); const re = new RegExp('\\b(' + String(stem).replace(/[^a-z0-9]/gi, '') + '[a-z]*)', 'gi');
@@ -283,7 +283,7 @@
     if (centres.length > 1) path = '<path d="M' + centres.map((c) => c[0].toFixed(1) + ' ' + c[1].toFixed(1)).join(' L') + '" fill="none" style="stroke:var(--think)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>';
     const n = Object.keys(sel).length;
     return fig('<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Morphological box" style="max-width:' + W + 'px">' + path + boxes + '</svg>',
-      n ? '<b>' + n + ' of ' + params.length + '</b> parameters chosen. The cyan line is your combination through the box of ' + params.reduce((n, pm) => n * pm.options.length, 1) + ' possibilities.' : 'Pick one option per parameter below. The cyan line will trace your combination through the box.');
+      n ? '<b>' + n + ' of ' + params.length + '</b> parameters chosen. The blue line is your combination through the box of ' + params.reduce((n, pm) => n * pm.options.length, 1) + ' possibilities.' : 'Pick one option per parameter below. The blue line will trace your combination through the box.');
   }
 
   /* ------------------------------------------------------------------ */

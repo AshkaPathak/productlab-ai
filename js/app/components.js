@@ -221,7 +221,7 @@
   /* ---------------- glass graphics ----------------
    * Everything is drawn from one set of shared gradients (injected once into
    * the page): glossy orbs for marks and portraits, and clear glass spheres
-   * that fill with liquid to show progress. One accent (cyan) means
+   * that fill with liquid to show progress. One accent (blue) means
    * "current / act here"; the rest of the palette stays soft.
    */
 

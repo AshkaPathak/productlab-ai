@@ -42,7 +42,7 @@
       const themes = PL.cluster.themes(p, ctx.index, { threshold: 0.12 });
       const multi = themes.filter((t) => t.members.length > 1);
       if (multi.length) out.push(chapter('themes', 'What the evidence keeps saying', 'It clusters into ' + pl(multi.length, 'theme', 'themes') + '.',
-        'Findings that use the same language are grouped. Cyan themes have no need written for them yet.', F().themeBubbles(themes, p.findings)));
+        'Findings that use the same language are grouped. Blue themes have no need written for them yet.', F().themeBubbles(themes, p.findings)));
     }
 
     // 2. People and needs
